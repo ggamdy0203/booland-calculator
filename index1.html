@@ -1051,10 +1051,10 @@ function computeAll() {
   const agentR       = getAgentRate(saleP);
   const loanInterest = loan * (loanRateP / 100) * holdYear;
   const agentFee     = agentFeeManual ? parseVal('agentFee') : saleP * agentR;
-  const capGain      = saleP - bid - taxTotal - miscTotal - loanInterest - agentFee;
+  const capGain      = saleP - bid - taxTotal - miscTotal;
   const { tax: capGainTax, basicDed: capGainBasicDed } = calcCapGainTax(capGain);
   const prepayFee    = loan * (prepayRp / 100);
-  const saleExpTotal = capGainTax + prepayFee;
+  const saleExpTotal = loanInterest + capGainTax + prepayFee + agentFee;
 
   const monthlyLoanInterest = loan * (loanRateP / 100) / 12;
   const monthlyNet  = monthly - monthlyLoanInterest;
@@ -1239,10 +1239,10 @@ function updateSensTable() {
       const agentR = getAgentRate(saleP);
       const loanInt= loan * (loanRateP / 100) * hy;
       const aFee   = saleP * agentR;
-      const cg     = saleP - bid - taxTotal - miscTotal - loanInt - aFee;
+      const cg     = saleP - bid - taxTotal - miscTotal;
       const cgTax  = calcCapGainTax(cg).tax;
       const pFee   = loan * (prepayRp / 100);
-      const saleExp= cgTax + pFee;
+      const saleExp= loanInt + cgTax + pFee + aFee;
       const netP   = cg - saleExp;
       const holdR  = annualRent * hy;
       const totalR = netP + holdR;
