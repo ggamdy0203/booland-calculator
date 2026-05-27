@@ -1,0 +1,1963 @@
+<!DOCTYPE html>
+<!-- saved from url=(0067)file:///C:/Users/%EC%9D%B4%EB%AF%BC%EC%9A%B0/Downloads/index_4.html -->
+<html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Booland Calculator</title>
+<meta name="description" content="경매 투자 수익률 분석기 — 낙찰가·취득세·대출·양도소득세 자동 계산">
+<meta name="theme-color" content="#1a56db">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Booland">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 64 64&#39;%3E%3Cdefs%3E%3ClinearGradient id=&#39;bg&#39; x1=&#39;0&#39; y1=&#39;0&#39; x2=&#39;1&#39; y2=&#39;1&#39;%3E%3Cstop offset=&#39;0&#39; stop-color=&#39;%231a56db&#39;/%3E%3Cstop offset=&#39;1&#39; stop-color=&#39;%231e3a8a&#39;/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=&#39;64&#39; height=&#39;64&#39; rx=&#39;13&#39; fill=&#39;url(%23bg)&#39;/%3E%3Cpolygon points=&#39;32,11 5,34 15,34 15,54 49,54 49,34 59,34&#39; fill=&#39;white&#39;/%3E%3Crect x=&#39;26&#39; y=&#39;39&#39; width=&#39;12&#39; height=&#39;15&#39; rx=&#39;2&#39; fill=&#39;%231e40af&#39;/%3E%3Crect x=&#39;16&#39; y=&#39;36&#39; width=&#39;8&#39; height=&#39;8&#39; rx=&#39;1.5&#39; fill=&#39;%2393c5fd&#39;/%3E%3Crect x=&#39;40&#39; y=&#39;36&#39; width=&#39;8&#39; height=&#39;8&#39; rx=&#39;1.5&#39; fill=&#39;%2393c5fd&#39;/%3E%3Cpolyline points=&#39;10,58 20,51 30,54 42,46 54,40&#39; stroke=&#39;%23fbbf24&#39; stroke-width=&#39;2.5&#39; fill=&#39;none&#39; stroke-linecap=&#39;round&#39; stroke-linejoin=&#39;round&#39;/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 180 180&#39;%3E%3Crect width=&#39;180&#39; height=&#39;180&#39; rx=&#39;38&#39; fill=&#39;%231a56db&#39;/%3E%3Cpolygon points=&#39;90,28 12,94 38,94 38,152 142,152 142,94 168,94&#39; fill=&#39;white&#39;/%3E%3Crect x=&#39;72&#39; y=&#39;108&#39; width=&#39;36&#39; height=&#39;44&#39; rx=&#39;4&#39; fill=&#39;%231e40af&#39;/%3E%3Crect x=&#39;42&#39; y=&#39;100&#39; width=&#39;26&#39; height=&#39;22&#39; rx=&#39;4&#39; fill=&#39;%2393c5fd&#39;/%3E%3Crect x=&#39;112&#39; y=&#39;100&#39; width=&#39;26&#39; height=&#39;22&#39; rx=&#39;4&#39; fill=&#39;%2393c5fd&#39;/%3E%3Cpolyline points=&#39;25,164 52,146 82,154 116,134 155,118&#39; stroke=&#39;%23fbbf24&#39; stroke-width=&#39;7&#39; fill=&#39;none&#39; stroke-linecap=&#39;round&#39; stroke-linejoin=&#39;round&#39;/%3E%3C/svg%3E">
+<script src="file:///C:/Users/%EC%9D%B4%EB%AF%BC%EC%9A%B0/Downloads/index_files/chart.umd.min.js.%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C"></script>
+<script src="file:///C:/Users/%EC%9D%B4%EB%AF%BC%EC%9A%B0/Downloads/index_files/xlsx.bundle.js.%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C"></script>
+<script src="file:///C:/Users/%EC%9D%B4%EB%AF%BC%EC%9A%B0/Downloads/index_files/firebase-app-compat.js.%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C"></script>
+<script src="file:///C:/Users/%EC%9D%B4%EB%AF%BC%EC%9A%B0/Downloads/index_files/firebase-auth-compat.js.%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C"></script>
+<script src="file:///C:/Users/%EC%9D%B4%EB%AF%BC%EC%9A%B0/Downloads/index_files/firebase-firestore-compat.js.%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C"></script>
+<style>
+  :root {
+    --blue: #1a56db;
+    --blue-light: #e8f0fe;
+    --green: #0e9f6e;
+    --green-light: #def7ec;
+    --red: #e02424;
+    --red-light: #fde8e8;
+    --yellow: #c27803;
+    --yellow-light: #fdf6b2;
+    --gold: #d4a017;
+    --gold-bg: #fffbeb;
+    --gray: #6b7280;
+    --gray-light: #f3f4f6;
+    --border: #e5e7eb;
+    --text: #111827;
+    --text-sub: #6b7280;
+    --card-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; background: #f0f4f8; color: var(--text); font-size: 13px; }
+
+  .header {
+    background: #121b3a;
+    color: white;
+    padding: 0 28px;
+    position: relative;
+    overflow: hidden;
+    height: 72px;
+    display: flex;
+    align-items: center;
+  }
+  .header-shape { position: absolute; pointer-events: none; }
+  /* 좌측 작은 빨간 직사각형 */
+  .header-shape.s1 { width:14px; height:28px; background:#e8344e; top:8px; left:220px; transform:rotate(-12deg); border-radius:2px; opacity:0.9; }
+  /* 상단 초록 원 */
+  .header-shape.s2 { width:32px; height:32px; background:#2dba6d; border-radius:50%; top:-10px; left:50%; }
+  /* 우상단 노란 삼각형 */
+  .header-shape.s3 { width:0; height:0; border-left:18px solid transparent; border-right:18px solid transparent; border-bottom:32px solid #f5c518; top:6px; right:180px; opacity:0.95; }
+  /* 우하단 초록 사각형 */
+  .header-shape.s4 { width:20px; height:20px; background:#2dba6d; bottom:-4px; right:155px; transform:rotate(8deg); border-radius:2px; }
+  /* 우측 빨간 원 */
+  .header-shape.s5 { width:24px; height:24px; background:#e8344e; border-radius:50%; bottom:-6px; right:120px; opacity:0.85; }
+  /* 좌하단 주황 원 */
+  .header-shape.s6 { width:28px; height:28px; background:#f47c2e; border-radius:50%; bottom:-10px; left:38%; opacity:0.8; }
+
+  .header-inner { display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; position:relative; z-index:1; }
+  .header-brand { display:flex; flex-direction:column; gap:1px; }
+  .header-sub   { font-size:10px; letter-spacing:3px; color:rgba(255,255,255,0.65); font-weight:400; }
+  .header-title { font-size:26px; font-weight:900; letter-spacing:1px; line-height:1.1; color:white; }
+  .header-title .bu { color:#ff2244; text-shadow: 0 0 12px rgba(255,34,68,0.8), 0 0 24px rgba(255,34,68,0.4); }
+  .header-desc  { font-size:11px; color:rgba(255,255,255,0.55); margin-top:2px; }
+  .auth-area { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  .auth-btn { padding:7px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .auth-btn-login  { background:rgba(255,255,255,0.12); color:white; border:1.5px solid rgba(255,255,255,0.35); }
+  .auth-btn-login:hover { background:rgba(255,255,255,0.22); }
+  .auth-btn-logout { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.85); border:1px solid rgba(255,255,255,0.25); }
+  .auth-user-name { font-size:13px; color:rgba(255,255,255,0.9); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  /* 로그인 모달 */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 9000; align-items: center; justify-content: center; }
+  .modal-box { background: white; border-radius: 14px; padding: 32px; width: 380px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .modal-input { width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit; box-sizing: border-box; margin-bottom: 8px; }
+  .modal-input:focus { outline: none; border-color: var(--blue); }
+  .google-btn { width: 100%; padding: 11px; border: 1.5px solid var(--border); border-radius: 8px; background: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px; }
+  .google-btn:hover { background: #f9fafb; }
+
+  .tabs { display: flex; background: white; border-bottom: 2px solid var(--border); padding: 0 24px; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 12px 20px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--gray); border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
+  .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .page { display: none; padding: 20px 24px; }
+  .page.active { display: block; }
+
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .col-span-2 { grid-column: span 2; }
+
+  .card { background: white; border-radius: 10px; box-shadow: var(--card-shadow); overflow: hidden; }
+  .card-header { padding: 12px 16px; font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--border); }
+  .card-header.blue { background: var(--blue-light); color: var(--blue); }
+  .card-header.gold { background: var(--gold-bg); color: var(--gold); }
+  .card-body { padding: 14px 16px; }
+
+  .form-row { display: flex; align-items: center; padding: 7px 0; border-bottom: 1px solid #f3f4f6; gap: 8px; }
+  .form-row:last-child { border-bottom: none; }
+  .form-label { flex: 0 0 140px; color: var(--text-sub); font-size: 12px; }
+  .form-input-wrap { flex: 1; display: flex; align-items: center; gap: 6px; }
+  .form-note { font-size: 11px; color: #9ca3af; flex: 0 0 auto; }
+
+  input[type="text"], select {
+    width: 100%; padding: 5px 8px; border: 1.5px solid var(--border); border-radius: 6px;
+    font-family: inherit; font-size: 13px; color: var(--text); background: var(--blue-light);
+    transition: border 0.15s;
+  }
+  input[type="text"]:focus, select:focus { outline: none; border-color: var(--blue); }
+  input[type="text"].currency { text-align: right; }
+  input[type="text"].pct { background: var(--blue-light); }
+  .input-calc { background: var(--gray-light) !important; color: var(--gray); }
+  .input-unit { font-size: 12px; color: var(--gray); white-space: nowrap; }
+
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .result-item { background: var(--gray-light); border-radius: 8px; padding: 12px 14px; }
+  .result-item.highlight { background: var(--gold-bg); border: 1px solid #fcd34d; }
+  .result-label { font-size: 11px; color: var(--text-sub); margin-bottom: 4px; }
+  .result-value { font-size: 17px; font-weight: 700; color: var(--text); }
+  .result-value.gold { color: var(--gold); font-size: 20px; }
+  .result-value.green { color: var(--green); }
+  .result-value.red { color: var(--red); }
+  .result-sub { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+
+  .sens-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .sens-table th { background: #374151; color: white; padding: 8px 10px; text-align: center; font-weight: 600; }
+  .sens-table td { padding: 7px 10px; text-align: center; border: 1px solid var(--border); }
+  .sens-table td.row-header { background: #f9fafb; font-weight: 600; color: var(--text); text-align: right; }
+  .cell-high { background: #d1fae5; color: #065f46; font-weight: 700; }
+  .cell-mid { background: #fef3c7; color: #92400e; }
+  .cell-low { background: #fee2e2; color: #991b1b; }
+  .cell-zero { background: #f3f4f6; color: #374151; }
+
+  .tax-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .tax-table th { background: #374151; color: white; padding: 8px 12px; text-align: center; }
+  .tax-table td { padding: 8px 12px; border: 1px solid var(--border); text-align: center; }
+  .tax-table tr:nth-child(even) td { background: var(--gray-light); }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .badge-blue { background: var(--blue-light); color: var(--blue); }
+  .badge-gray { background: var(--gray-light); color: var(--gray); }
+  .badge-gold { background: var(--gold-bg); color: var(--gold); }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 11px; padding: 10px 0; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+  .notice { background: var(--yellow-light); border: 1px solid #fcd34d; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #92400e; margin-bottom: 16px; }
+  .divider { height: 1px; background: var(--border); margin: 14px 0; }
+  .chart-wrap { max-width: 420px; margin: 0 auto; }
+
+  /* 저장 목록 */
+  .save-item { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; background: white; transition: border-color 0.15s; }
+  .save-item:hover { border-color: #93c5fd; }
+  .save-item-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+  .save-item-meta { font-size: 11px; color: var(--text-sub); line-height: 1.9; }
+  .save-item-memo { font-size: 11px; color: #374151; background: var(--gray-light); padding: 7px 10px; border-radius: 6px; margin-top: 8px; white-space: pre-wrap; word-break: break-word; border-left: 3px solid #93c5fd; }
+  .save-item-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .btn-load { padding: 6px 16px; background: var(--blue); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .btn-load:hover { background: #1e40af; }
+  .btn-del  { padding: 6px 16px; background: white; color: var(--red); border: 1.5px solid var(--red); border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .btn-del:hover  { background: var(--red-light); }
+  .save-empty { text-align: center; color: var(--text-sub); padding: 48px 0; font-size: 13px; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: 10px 22px; border-radius: 8px; font-size: 13px; font-weight: 600; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+
+  @media (max-width: 900px) {
+    .grid-3 { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .col-span-2 { grid-column: span 1; }
+  }
+
+  /* ═══════ 인쇄 스타일 ═══════ */
+  @media print {
+    @page { size: A4 landscape; margin: 5mm 6mm; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box !important; }
+
+    /* 숨길 요소 */
+    .header-shape, .auth-area, .tabs,
+    #tab-sens, #tab-chart, #tab-tax, #tab-saves,
+    .modal-overlay, #loginModal, button, .notice { display: none !important; }
+
+    /* 전체 */
+    html, body { margin: 0 !important; padding: 0 !important; background: white !important; width: 100% !important; }
+    body { font-size: 9px !important; }
+
+    /* 헤더 */
+    .header { height: 32px !important; padding: 0 8px !important; margin-bottom: 4px !important; }
+    .header-title { font-size: 15px !important; }
+    .header-sub { font-size: 8px !important; letter-spacing: 2px !important; }
+    .header-desc { font-size: 8px !important; margin-top: 1px !important; }
+
+    /* 페이지/레이아웃 */
+    .page { display: none !important; }
+    #tab-calc { display: block !important; padding: 0 !important; }
+    .grid-3 { display: grid !important; grid-template-columns: 1fr 1fr 1fr !important; gap: 4px !important; padding: 0 !important; }
+    .grid-2 { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 4px !important; }
+
+    /* 카드 */
+    .card { box-shadow: none !important; border: 1px solid #ccc !important; margin-bottom: 4px !important; page-break-inside: avoid; border-radius: 4px !important; }
+    .card-header { padding: 3px 7px !important; font-size: 9px !important; }
+    .card-body { padding: 3px 7px !important; }
+
+    /* 폼 행 */
+    .form-row { padding: 1.5px 0 !important; min-height: 0 !important; gap: 4px !important; }
+    .form-label { font-size: 8.5px !important; min-width: 80px !important; max-width: 110px !important; }
+    .form-input-wrap { gap: 2px !important; }
+    .form-input-wrap input, .form-input-wrap select { font-size: 8.5px !important; padding: 1px 3px !important; height: 18px !important; line-height: 18px !important; border-radius: 3px !important; }
+    .form-note { font-size: 7.5px !important; }
+    .input-unit { font-size: 8px !important; white-space: nowrap !important; }
+    .divider { margin: 2px 0 !important; }
+
+    /* 결과 박스 */
+    .result-grid { gap: 3px !important; grid-template-columns: 1fr 1fr !important; }
+    .result-item { padding: 3px 6px !important; border-radius: 4px !important; }
+    .result-label { font-size: 8px !important; }
+    .result-value { font-size: 11px !important; }
+
+    /* 메모 */
+    textarea { font-size: 8px !important; min-height: 28px !important; height: 28px !important; resize: none !important; padding: 2px 4px !important; }
+
+    /* select */
+    select { -webkit-appearance: none !important; appearance: none !important; font-size: 8.5px !important; }
+
+    /* 노란 박스 등 배경 유지 */
+    .input-calc { background: #f0f4f8 !important; }
+    [class*="result-item"] { background: inherit !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-shape s1"></div>
+  <div class="header-shape s2"></div>
+  <div class="header-shape s3"></div>
+  <div class="header-shape s4"></div>
+  <div class="header-shape s5"></div>
+  <div class="header-shape s6"></div>
+  <div class="header-inner">
+    <div class="header-brand">
+      <span class="header-sub">부동산의 모든것</span>
+      <span class="header-title"><span class="bu">부</span>랜드</span>
+      <span class="header-desc">경매 투자 수익률 분석기 &nbsp;|&nbsp; 파란색 셀에 값을 입력하세요</span>
+    </div>
+    <div class="auth-area">
+      <div id="authLoggedOut">
+        <button class="auth-btn auth-btn-login" onclick="openLoginModal()">🔑 로그인</button>
+      </div>
+      <div id="authLoggedIn" style="display:none;align-items:center;gap:10px">
+        <span class="auth-user-name" id="authUserName"></span>
+        <button class="auth-btn auth-btn-logout" onclick="signOutUser()">로그아웃</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 로그인 모달 -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="font-size:18px;font-weight:700">🔐 로그인 / 회원가입</h2>
+      <button onclick="closeLoginModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af;line-height:1">✕</button>
+    </div>
+    <div style="margin-bottom:14px"></div>
+    <input class="modal-input" type="email" id="loginEmail" placeholder="이메일">
+    <input class="modal-input" type="password" id="loginPassword" placeholder="비밀번호 (6자 이상)" onkeydown="if(event.key===&#39;Enter&#39;)signInWithEmail()">
+    <div id="loginError" style="color:var(--red);font-size:12px;margin-bottom:8px;display:none;padding:6px 10px;background:#fde8e8;border-radius:6px"></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button onclick="signInWithEmail()" style="flex:1;padding:10px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">로그인</button>
+      <button onclick="signUpWithEmail()" style="flex:1;padding:10px;background:white;color:var(--blue);border:1.5px solid var(--blue);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">회원가입</button>
+    </div>
+    <p style="font-size:11px;color:#9ca3af;margin-top:14px;text-align:center">저장된 분석이 계정에 안전하게 보관됩니다</p>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab(&#39;calc&#39;)">📋 수익률 분석</div>
+  <div class="tab" onclick="showTab(&#39;saves&#39;)" id="tab-btn-saves">📁 저장된 분석 <span id="savesCount" style="background:#1a56db;color:white;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:3px;display:none">0</span></div>
+  <div class="tab" onclick="showTab(&#39;sens&#39;)">📊 민감도 분석</div>
+  <div class="tab" onclick="showTab(&#39;chart&#39;)">📈 비용 구조 차트</div>
+  <div class="tab" onclick="showTab(&#39;tax&#39;)">📖 세율 참고표</div>
+  <div class="tab" onclick="showTab(&#39;calendar&#39;)">📅 입찰 일정</div>
+</div>
+
+<!-- ═══════════════ TAB 1: 수익률 분석 ═══════════════ -->
+<div id="tab-calc" class="page active">
+  <div class="grid-3">
+
+    <!-- 물건 정보 -->
+    <div class="card">
+      <div class="card-header blue">📋 물건 정보</div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-label">사건번호</div>
+          <div class="form-input-wrap"><input type="text" id="caseNo" placeholder="예) 2024타경12345"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">물건 주소</div>
+          <div class="form-input-wrap"><input type="text" id="addr" placeholder="예) 서울시 강남구 ..."></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">물건 종류</div>
+          <div class="form-input-wrap">
+            <select id="propType" onchange="calc()">
+              <option>아파트</option>
+              <option>빌라/다세대</option>
+              <option>단독주택</option>
+              <option>오피스텔</option>
+              <option>상가</option>
+              <option>토지</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">전용면적</div>
+          <div class="form-input-wrap">
+            <select id="smallArea" onchange="calc()">
+              <option value="N">85㎡ 초과</option>
+              <option value="Y">85㎡ 이하 (농특세 면제)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row" style="flex-direction:column;align-items:flex-start;gap:6px;padding-bottom:8px">
+          <div class="form-label">특이사항 / 메모</div>
+          <textarea id="memo" placeholder="낙찰 조건, 권리관계, 세입자 현황, 기타 특이사항을 메모하세요..." style="width:100%;min-height:216px;resize:vertical;border:1.5px solid var(--border);border-radius:6px;padding:10px;font-size:12px;font-family:inherit;color:var(--text);background:var(--blue-light);line-height:1.6"></textarea>
+          <button onclick="saveCurrent()" style="width:100%;margin-top:8px;padding:10px;background:#1e40af;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
+            💾 이 분석 저장
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 낙찰가 & 대출 -->
+    <div class="card">
+      <div class="card-header blue">💰 낙찰가 &amp; 초기 투자비</div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-label">감정가</div>
+          <div class="form-input-wrap">
+            <input type="text" inputmode="numeric" class="currency" id="appraised" value="200,000,000" oninput="fmtInp(this);applyMinBidRatio()">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">최저 입찰가</div>
+          <div class="form-input-wrap" style="flex-wrap:wrap;gap:4px">
+            <select id="minBidRatio" onchange="applyMinBidRatio()" style="flex:0 0 auto;width:auto;font-size:12px;background:#f0fdf4;border-color:#86efac">
+              <option value="">직접입력</option>
+              <option value="1">100% — 감정가 (최초)</option>
+              <option value="0.8">80% — 1유찰 (20%저감)</option>
+              <option value="0.7">70% — 1유찰 (30%저감)</option>
+              <option value="0.64">64% — 2유찰 (20%저감)</option>
+              <option value="0.512">51.2% — 3유찰 (20%저감)</option>
+              <option value="0.49">49% — 2유찰 (30%저감)</option>
+              <option value="0.4096">41% — 4유찰 (20%저감)</option>
+              <option value="0.343">34.3% — 3유찰 (30%저감)</option>
+            </select>
+            <input type="text" inputmode="numeric" class="currency" id="minBid" value="123,000,000" oninput="fmtInp(this);$(&#39;minBidRatio&#39;).value=&#39;&#39;;calc()" style="flex:1;min-width:100px">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label" style="color:var(--blue);font-weight:700">낙찰가 ★</div>
+          <div class="form-input-wrap">
+            <input type="text" inputmode="numeric" class="currency" id="bidPrice" value="150,000,000" oninput="fmtInp(this);calc()">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">낙찰가 기준 비율</div>
+          <div class="form-input-wrap">
+            <select id="loanRatio" onchange="calc()">
+              <option value="0.5">50%</option>
+              <option value="0.6">60%</option>
+              <option value="0.7">70%</option>
+              <option value="0.8" selected="">80%</option>
+              <option value="0.9">90%</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">감정가 기준 비율</div>
+          <div class="form-input-wrap">
+            <select id="appraisalLoanRatio" onchange="calc()">
+              <option value="0.4">40%</option>
+              <option value="0.5">50%</option>
+              <option value="0.6" selected="">60%</option>
+              <option value="0.7">70%</option>
+              <option value="0.8">80%</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">선순위 보증금 (방빼기)</div>
+          <div class="form-input-wrap">
+            <input type="text" inputmode="numeric" class="currency" id="seniorDeposit" value="0" oninput="fmtInp(this);calc()">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="form-row">
+          <div class="form-label">낙찰가 기준 한도</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="loanByBid" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">감정가 기준 한도</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="loanByAppraisal" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label" style="color:var(--blue);font-weight:700">실제 대출금 ★</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="loan" readonly="" style="font-weight:700;color:var(--blue)">
+            <span class="input-unit">원</span>
+          </div>
+          <div class="form-note" id="loanBasis"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">월 대출이자</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="monthlyLoanIntA" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">입찰 보증금</div>
+          <div class="form-input-wrap">
+            <select id="depositRatio" onchange="calc()" style="flex:0 0 auto;width:auto;font-size:12px">
+              <option value="0.1" selected="">10%</option>
+              <option value="0.2">20%</option>
+            </select>
+            <input type="text" class="currency input-calc" id="deposit" readonly="" style="flex:1">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">잔금</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="balance" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 취득세 & 비용 -->
+    <div class="card">
+      <div class="card-header blue">🏛 취득세 &amp; 기타 비용</div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-label">주택 보유수</div>
+          <div class="form-input-wrap">
+            <select id="houseCount" onchange="calc()">
+              <option value="1">1주택 이하</option>
+              <option value="2">2주택</option>
+              <option value="3">3주택 이상</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label" id="acqTaxLabel">취득세</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="acqTax" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label" id="ruralTaxLabel">농어촌특별세</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="ruralTax" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label" id="eduTaxLabel">지방교육세</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="eduTax" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">법무비 (등기)</div>
+          <div class="form-input-wrap">
+            <input type="text" inputmode="numeric" class="currency" id="legalFee" value="300,000" oninput="fmtInp(this);calc()">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">세금 합계</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="taxTotal" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="form-row">
+          <div class="form-label">수리비용</div>
+          <div class="form-input-wrap">
+            <input type="text" inputmode="numeric" class="currency" id="repairFee" value="1,000,000" oninput="fmtInp(this);calc()">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">명도비용</div>
+          <div class="form-input-wrap">
+            <input type="text" inputmode="numeric" class="currency" id="evictFee" value="1,000,000" oninput="fmtInp(this);calc()">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">기타예비비</div>
+          <div class="form-input-wrap">
+            <input type="text" inputmode="numeric" class="currency" id="extraFee" value="0" placeholder="예비 비용" oninput="fmtInp(this);calc()">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">미납관리비</div>
+          <div class="form-input-wrap">
+            <input type="text" inputmode="numeric" class="currency" id="unpaidMgmtFee" value="0" placeholder="체납 관리비" oninput="fmtInp(this);calc()">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">기타 비용 합계</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="miscTotal" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 임대 수입 -->
+    <div class="card">
+      <div class="card-header blue">🏡 임대 수입 (선택)</div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-label">대출 금리 (연)</div>
+          <div class="form-input-wrap">
+            <input type="text" class="pct input-calc" id="loanRateDisp" readonly="">
+            <span class="input-unit">%</span>
+          </div>
+          <div class="form-note">매도 분석 탭 연동</div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">월 대출이자</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="monthlyLoanIntB" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="form-row">
+          <div class="form-label">전세 / 보증금</div>
+          <div class="form-input-wrap">
+            <input type="text" inputmode="numeric" class="currency" id="jeonse" value="0" oninput="fmtInp(this);calc()">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">월 임대료</div>
+          <div class="form-input-wrap">
+            <input type="text" inputmode="numeric" class="currency" id="monthlyRent" value="0" oninput="fmtInp(this);calc()">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">연 임대 수입</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="annualRent" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">임대 수익률</div>
+          <div class="form-input-wrap">
+            <input type="text" class="pct input-calc" id="rentYield" readonly="">
+            <span class="input-unit">%</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label" style="color:var(--green);font-weight:700">월 순수익 ★</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="monthlyNet" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+          <div class="form-note">월세 − 월 대출이자</div>
+        </div>
+        <div class="form-row">
+          <div class="form-label" style="color:var(--blue);font-weight:700">임대사업용 실투자금 ★</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="realInvest" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+          <div class="form-note">자기자본 − 보증금</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 매도 조건 -->
+    <div class="card">
+      <div class="card-header blue">📈 매도 수익 분석</div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-label" style="color:var(--blue);font-weight:700">예상 매도가 ★</div>
+          <div class="form-input-wrap">
+            <input type="text" inputmode="numeric" class="currency" id="salePrice" value="200,000,000" oninput="fmtInp(this);calc()">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">보유 기간</div>
+          <div class="form-input-wrap">
+            <select id="holdMonth" onchange="calc()">
+              <option value="3">3개월</option>
+              <option value="6">6개월</option>
+              <option value="12" selected="">12개월 (1년)</option>
+              <option value="18">18개월</option>
+              <option value="24">24개월 (2년)</option>
+              <option value="36">36개월 (3년)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">대출 금리 (연)</div>
+          <div class="form-input-wrap">
+            <input type="text" inputmode="decimal" class="pct" id="loanRate" value="5" oninput="calc()">
+            <span class="input-unit">%</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">중도 상환 수수료율</div>
+          <div class="form-input-wrap">
+            <input type="text" inputmode="decimal" class="pct" id="prepayRate" value="1" oninput="calc()">
+            <span class="input-unit">%</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">양도소득세 방식</div>
+          <div class="form-input-wrap">
+            <select id="capGainMethod" onchange="onCapGainMethodChange()">
+              <option value="auto">누진세율 자동 (6~45%)</option>
+              <option value="0.7">70% — 1년 미만 단기</option>
+              <option value="0.6">60% — 2년 미만 단기</option>
+              <option value="0.2">20% — 매매사업자 등</option>
+              <option value="custom">직접 입력</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row" id="customCapGainRow" style="display:none">
+          <div class="form-label" style="color:var(--blue)">직접 입력 세율</div>
+          <div class="form-input-wrap">
+            <input type="text" inputmode="decimal" class="pct" id="customCapGainRate" value="20" oninput="calc()">
+            <span class="input-unit">%</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">기본공제</div>
+          <div class="form-input-wrap">
+            <input type="text" class="pct input-calc" id="capGainBasicDed" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+          <div class="form-note" id="capGainBasicDedNote">단기는 없음</div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">매도 중개보수 방식</div>
+          <div class="form-input-wrap">
+            <select id="agentFeeMode" onchange="onAgentFeeModeChange()">
+              <option value="auto">자동 (요율 적용)</option>
+              <option value="manual">수동 직접 입력</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row" id="agentRateRow">
+          <div class="form-label">매도 중개보수율</div>
+          <div class="form-input-wrap">
+            <input type="text" class="pct input-calc" id="agentRate" readonly="">
+            <span class="input-unit">%</span>
+          </div>
+          <div class="form-note">매도가 기준 자동</div>
+        </div>
+        <div class="divider"></div>
+        <div class="form-row">
+          <div class="form-label">대출 이자 합계</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="loanInterest" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">양도소득세 (추정)</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="capGainTax" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">중도 상환 수수료</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="prepayFee" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label" id="agentFeeLabel">매도 중개보수</div>
+          <div class="form-input-wrap">
+            <input type="text" inputmode="numeric" class="currency input-calc" id="agentFee" readonly="" oninput="fmtInp(this);calc()">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">매도 비용 합계</div>
+          <div class="form-input-wrap">
+            <input type="text" class="currency input-calc" id="saleExpTotal" readonly="">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 핵심 결과 -->
+    <div class="card">
+      <div class="card-header gold">🚀 핵심 결과</div>
+      <div class="card-body">
+        <div class="result-grid">
+          <div class="result-item">
+            <div class="result-label">총 자기자본 투자금</div>
+            <div class="result-value" id="r-equity" style="font-size:14px">-</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">양도 차익</div>
+            <div class="result-value" id="r-capgain" style="font-size:14px">-</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">순 이익 (세후)</div>
+            <div class="result-value" id="r-profit" style="font-size:14px">-</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">임대 수입 (보유기간)</div>
+            <div class="result-value" id="r-rent" style="font-size:14px">-</div>
+          </div>
+          <div class="result-item highlight" style="grid-column:span 2">
+            <div class="result-label">자기자본 수익률 (ROE)</div>
+            <div class="result-value gold" id="r-roe">-</div>
+            <div class="result-sub" id="r-roe-sub"></div>
+          </div>
+          <div class="result-item" style="grid-column:span 2">
+            <div class="result-label">연환산 수익률 (ROE/년)</div>
+            <div class="result-value" id="r-roe-ann" style="font-size:14px">-</div>
+          </div>
+          <div class="result-item" style="grid-column:span 2">
+            <div class="result-label">낙찰가 / 감정가 비율</div>
+            <div class="result-value" id="r-bid-ratio" style="font-size:14px">-</div>
+            <div class="result-sub" id="r-bid-ratio-sub"></div>
+          </div>
+        </div>
+        <div class="notice" style="margin-top:14px;margin-bottom:12px">
+          ⚠ 양도소득세 적용 방식: <strong><span id="capGainMethodNote">누진세율 자동</span></strong>. 실제 세금은 세무사 확인을 권장합니다.
+        </div>
+        <div style="display:flex;gap:8px;margin-top:0">
+          <button onclick="exportExcel()" style="
+            flex:1; padding:10px; background:var(--green); color:white;
+            border:none; border-radius:8px; font-size:14px; font-weight:700;
+            cursor:pointer; font-family:inherit; display:flex; align-items:center;
+            justify-content:center; gap:6px;">
+            📥 엑셀로 저장
+          </button>
+          <button onclick="printAnalysis()" style="
+            flex:1; padding:10px; background:#374151; color:white;
+            border:none; border-radius:8px; font-size:14px; font-weight:700;
+            cursor:pointer; font-family:inherit; display:flex; align-items:center;
+            justify-content:center; gap:6px;">
+            🖨️ A4 인쇄
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="margin-top:10px; font-size:11px; color:var(--text-sub); text-align:center;">
+    <span class="badge badge-blue">파란색 셀</span> 직접 입력 &nbsp;
+    <span class="badge badge-gray">회색 셀</span> 자동 계산 &nbsp;
+    <span class="badge badge-gold">금색 카드</span> 핵심 결과
+  </div>
+</div>
+
+<!-- ═══════════════ TAB 5: 저장된 분석 ═══════════════ -->
+<div id="tab-saves" class="page">
+  <div class="card">
+    <div class="card-header blue" style="justify-content:space-between">
+      <span>📁 저장된 분석 목록</span>
+      <button onclick="clearAllSaves()" style="font-size:11px;padding:3px 10px;background:white;color:var(--red);border:1px solid var(--red);border-radius:5px;cursor:pointer;font-family:inherit">전체 삭제</button>
+    </div>
+    <div class="card-body">
+      <div id="savesEmpty" class="save-empty">💾 저장된 분석이 없습니다.<br><span style="font-size:12px">수익률 분석 탭에서 <strong>분석 저장</strong> 버튼을 눌러 저장해보세요.</span></div>
+      <div id="savesList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ TAB 2: 민감도 분석 ═══════════════ -->
+<div id="tab-sens" class="page">
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header blue">📊 민감도 분석 — 매도가 × 보유기간별 자기자본 수익률(ROE)</div>
+    <div class="card-body">
+      <p style="font-size:12px;color:var(--text-sub);margin-bottom:12px">
+        현재 입력된 낙찰가·대출조건 기준으로, 매도 가격과 보유 기간을 바꿔가며 <strong>ROE(연환산)</strong>를 자동 계산합니다.
+      </p>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#d1fae5;border:1px solid #6ee7b7"></div> ROE 20% 초과 (수익 높음)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fef3c7;border:1px solid #fcd34d"></div> ROE 0~20% (보통)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fee2e2;border:1px solid #fca5a5"></div> ROE 0% 미만 (손실)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f3f4f6;border:1px solid #d1d5db"></div> 손익분기</div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="sens-table" id="sensTable">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ TAB 3: 차트 ═══════════════ -->
+<div id="tab-chart" class="page">
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header blue">📊 투자 비용 구조 (도넛 차트)</div>
+      <div class="card-body">
+        <div class="chart-wrap">
+          <canvas id="costChart" height="300"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header blue">📊 수익 vs 비용 비교</div>
+      <div class="card-body">
+        <canvas id="profitChart" height="300"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ TAB 4: 세율 참고표 ═══════════════ -->
+<div id="tab-tax" class="page">
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header blue">🏛 취득세 세율표 (취득세 + 농특세 + 지교세)</div>
+      <div class="card-body">
+        <table class="tax-table">
+          <thead>
+            <tr><th>구분</th><th>취득세</th><th>농어촌특별세</th><th>지방교육세</th><th>합계</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1주택 · 6억 이하</td><td>1.0%</td><td>0.2% / 0%*</td><td>0.1%</td><td style="color:var(--green);font-weight:700">1.3% / 1.1%*</td></tr>
+            <tr><td>1주택 · 6~9억</td><td>1~3%</td><td>0.2% / 0%*</td><td>0.1~0.3%</td><td style="color:var(--yellow);font-weight:700">1.3~3.5%</td></tr>
+            <tr><td>1주택 · 9억 초과</td><td>3.0%</td><td>0.2% / 0%*</td><td>0.3%</td><td style="color:var(--yellow);font-weight:700">3.5% / 3.3%*</td></tr>
+            <tr><td>2주택 (중과)</td><td>8.0%</td><td>0.6%</td><td>0.4%</td><td style="color:var(--red);font-weight:700">9.0%</td></tr>
+            <tr><td>3주택+ (중과)</td><td>12.0%</td><td>1.0%</td><td>0.4%</td><td style="color:var(--red);font-weight:700">13.4%</td></tr>
+            <tr><td>오피스텔 / 상가 / 토지</td><td>4.0%</td><td>0.2%</td><td>0.4%</td><td style="font-weight:700">4.6%</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:11px;color:var(--text-sub);margin-top:10px">
+          * 전용면적 85㎡ 이하 주택은 농어촌특별세 면제<br>
+          ※ 6~9억 취득세율 공식: (취득가액 × 2 ÷ 3억 − 3)%
+        </p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header blue">💸 양도소득세 — 단기세율 &amp; 누진세율표</div>
+      <div class="card-body">
+        <p style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:6px">▶ 단기 양도 (기본공제 없음)</p>
+        <table class="tax-table" style="margin-bottom:12px">
+          <thead><tr><th>보유기간</th><th>세율</th><th>기본공제</th></tr></thead>
+          <tbody>
+            <tr><td>1년 미만</td><td style="color:var(--red);font-weight:700">70%</td><td>없음</td></tr>
+            <tr><td>1년 이상 ~ 2년 미만</td><td style="color:var(--red);font-weight:700">60%</td><td>없음</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:6px">▶ 일반 누진세율 (2년 이상 보유, 기본공제 250만원 적용)</p>
+        <table class="tax-table">
+          <thead><tr><th>과세표준</th><th>세율</th><th>누진공제</th></tr></thead>
+          <tbody>
+            <tr><td>1,400만원 이하</td><td style="font-weight:700">6%</td><td>—</td></tr>
+            <tr><td>1,400만 ~ 5,000만원</td><td style="font-weight:700">15%</td><td>126만원</td></tr>
+            <tr><td>5,000만 ~ 8,800만원</td><td style="font-weight:700">24%</td><td>576만원</td></tr>
+            <tr><td>8,800만 ~ 1.5억원</td><td style="color:var(--yellow);font-weight:700">35%</td><td>1,544만원</td></tr>
+            <tr><td>1.5억 ~ 3억원</td><td style="color:var(--yellow);font-weight:700">38%</td><td>1,994만원</td></tr>
+            <tr><td>3억 ~ 5억원</td><td style="color:var(--red);font-weight:700">40%</td><td>2,594만원</td></tr>
+            <tr><td>5억 ~ 10억원</td><td style="color:var(--red);font-weight:700">42%</td><td>3,594만원</td></tr>
+            <tr><td>10억원 초과</td><td style="color:var(--red);font-weight:700">45%</td><td>6,594만원</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:11px;color:var(--text-sub);margin-top:8px">
+          ※ 세액 = 과세표준 × 세율 − 누진공제 &nbsp;|&nbsp; 과세표준 = 양도차익 − 기본공제(250만)<br>
+          ※ 다주택·조정대상지역 중과세, 장기보유특별공제 등 별도 적용 가능. 세무사 상담 권장.
+        </p>
+      </div>
+    </div>
+    <div class="card col-span-2">
+      <div class="card-header blue">📌 매도 중개보수율 기준 (주거용 기준)</div>
+      <div class="card-body">
+        <table class="tax-table">
+          <thead>
+            <tr><th>거래금액</th><th>상한요율</th><th>한도액</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>5천만원 미만</td><td>0.6%</td><td>25만원</td></tr>
+            <tr><td>5천만~2억 미만</td><td>0.5%</td><td>80만원</td></tr>
+            <tr><td>2억~9억 미만</td><td>0.4%</td><td>없음</td></tr>
+            <tr><td>9억~12억 미만</td><td>0.5%</td><td>없음</td></tr>
+            <tr><td>12억~15억 미만</td><td>0.6%</td><td>없음</td></tr>
+            <tr><td>15억 이상</td><td>0.7%</td><td>없음</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ TAB 5: 입찰 일정 ═══════════════ -->
+<div id="tab-calendar" class="page">
+  <div style="padding:20px;">
+    <div class="card">
+      <div class="card-header blue">📅 입찰 일정 — Google 캘린더 연동</div>
+      <div class="card-body">
+
+        <!-- Google 캘린더 임베드 URL 입력 -->
+        <div id="cal-setup" style="padding:16px 0;">
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:13px;line-height:1.9;color:#1e40af;">
+            <b>📌 연결 방법</b><br>
+            1. <a href="https://calendar.google.com/calendar/r/settings" target="_blank" style="color:var(--blue);font-weight:600;">Google 캘린더 설정</a> 접속<br>
+            2. 연결할 캘린더 클릭 (예: 경공매)<br>
+            3. <b>캘린더 통합</b> 섹션 → <b>공개 URL로 삽입</b> 복사<br>
+            4. 아래에 붙여넣기 → 저장
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input type="text" id="cal-url-input" placeholder="https://calendar.google.com/calendar/embed?src=..." style="flex:1;min-width:260px;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+            <button onclick="saveCalUrl()" style="padding:9px 18px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">저장</button>
+            <button onclick="clearCalUrl()" style="padding:9px 14px;background:white;color:var(--red);border:1.5px solid var(--red);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">초기화</button>
+          </div>
+        </div>
+
+        <!-- 캘린더 iframe -->
+        <div id="cal-frame-wrap" style="display:none;border-radius:10px;overflow:hidden;border:1px solid var(--border);">
+          <iframe id="cal-iframe" src="./index_files/saved_resource.html" style="width:100%;height:700px;border:none;" frameborder="0" scrolling="no"></iframe>
+        </div>
+        <div id="cal-empty" style="text-align:center;padding:60px 20px;color:var(--gray);">
+          <div style="font-size:48px;margin-bottom:12px;">📅</div>
+          <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Google 캘린더를 연결하세요</div>
+          <div style="font-size:13px;">위 안내에 따라 임베드 URL을 입력하면<br>이 화면에 캘린더가 표시됩니다</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Google 캘린더 연동 ─────────────────────────────
+(function initCalendar() {
+  const saved = localStorage.getItem('booland_cal_url') || '';
+  if (saved) {
+    document.getElementById('cal-url-input').value = saved;
+    renderCalendar(saved);
+  }
+})();
+
+function saveCalUrl() {
+  const url = document.getElementById('cal-url-input').value.trim();
+  if (!url) { alert('URL을 입력해주세요'); return; }
+  if (!url.includes('calendar.google.com')) { alert('Google 캘린더 URL이 아닙니다'); return; }
+  localStorage.setItem('booland_cal_url', url);
+  renderCalendar(url);
+}
+
+function clearCalUrl() {
+  localStorage.removeItem('booland_cal_url');
+  document.getElementById('cal-url-input').value = '';
+  document.getElementById('cal-frame-wrap').style.display = 'none';
+  document.getElementById('cal-empty').style.display = '';
+}
+
+function renderCalendar(url) {
+  // 임베드 URL로 변환 (공유 URL이면 embed URL로 자동 변환)
+  let embedUrl = url;
+  if (url.includes('/calendar/r/')) {
+    // 일반 캘린더 URL이면 그냥 사용
+    embedUrl = url.replace('/calendar/r/', '/calendar/embed?');
+  }
+  // 언어 및 스타일 파라미터 추가
+  if (!embedUrl.includes('hl=')) {
+    embedUrl += (embedUrl.includes('?') ? '&' : '?') + 'hl=ko';
+  }
+  embedUrl += '&wkst=2&bgcolor=%23ffffff&ctz=Asia%2FSeoul&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=1&showTz=0&mode=MONTH';
+
+  document.getElementById('cal-iframe').src = embedUrl;
+  document.getElementById('cal-frame-wrap').style.display = '';
+  document.getElementById('cal-empty').style.display = 'none';
+}
+</script>
+const fmtP = n =&gt; isNaN(n) ? '-' : n.toFixed(1) + '%';
+
+function applyMinBidRatio() {
+  const ratio = parseFloat($('minBidRatio').value);
+  if (ratio) {
+    const app = parseVal('appraised');
+    if (app &gt; 0) $('minBid').value = Math.round(app * ratio).toLocaleString('ko-KR');
+  }
+  calc();
+}
+
+let costChartInst = null;
+let profitChartInst = null;
+
+// 천단위 콤마 포매팅 (입력 중)
+function fmtInp(el) {
+  const pos = el.selectionStart;
+  const before = el.value.length;
+  const raw = el.value.replace(/[^0-9]/g, '');
+  const num = parseInt(raw, 10);
+  el.value = isNaN(num) ? '' : num.toLocaleString('ko-KR');
+  // 커서 위치 보정 (추가된 콤마 수 반영)
+  const diff = el.value.length - before;
+  el.setSelectionRange(pos + diff, pos + diff);
+}
+
+// 콤마 제거 후 숫자 파싱
+function parseVal(id) {
+  const v = $(id).value.replace(/[^0-9]/g, '');
+  return parseInt(v || '0', 10);
+}
+
+// 계산 결과를 콤마 포맷으로 설정
+function setFmt(id, n) {
+  $(id).value = isNaN(n) ? '' : Math.round(n).toLocaleString('ko-KR');
+}
+
+function getAcqTaxBreakdown(price, houseCount, propType, smallArea) {
+  // 비주거용 (오피스텔·상가·토지): 취득세 4%, 농특 0.2%, 지교 0.4%
+  if (propType === '오피스텔' || propType === '상가' || propType === '토지') {
+    return { acqRate: 0.04, ruralRate: 0.002, eduRate: 0.004 };
+  }
+  const hc = parseInt(houseCount);
+  let acqRate, ruralRate, eduRate;
+  if (hc &gt;= 3) {
+    // 3주택+: 취득세 12%, 농특 1.0%, 지교 0.4%
+    acqRate = 0.12; ruralRate = smallArea ? 0 : 0.010; eduRate = 0.004;
+  } else if (hc === 2) {
+    // 2주택: 취득세 8%, 농특 0.6%, 지교 0.4%
+    acqRate = 0.08; ruralRate = smallArea ? 0 : 0.006; eduRate = 0.004;
+  } else {
+    // 1주택: 취득가 구간별 세율 (6~9억은 슬라이딩)
+    if (price &lt;= 600000000) {
+      acqRate = 0.01;
+    } else if (price &lt; 900000000) {
+      acqRate = (price * 2 / 300000000 - 3) / 100;
+    } else {
+      acqRate = 0.03;
+    }
+    // 농특: 85㎡ 이하 면제, 초과는 0.2%
+    ruralRate = smallArea ? 0 : 0.002;
+    // 지교: 취득세율의 10%
+    eduRate = acqRate * 0.1;
+  }
+  return { acqRate, ruralRate, eduRate };
+}
+
+function getAgentRate(salePrice) {
+  if (salePrice &lt; 50000000) return Math.min(0.006, 250000 / salePrice);
+  if (salePrice &lt; 200000000) return Math.min(0.005, 800000 / salePrice);
+  if (salePrice &lt; 900000000) return 0.004;
+  if (salePrice &lt; 1200000000) return 0.005;
+  if (salePrice &lt; 1500000000) return 0.006;
+  return 0.007;
+}
+
+// 누진세율 계산 (2024 기준 과세표준 기준)
+function progressiveTax(taxable) {
+  if (taxable &lt;= 0) return 0;
+  const brackets = [
+    { limit: 14000000,   rate: 0.06, ded: 0 },
+    { limit: 50000000,   rate: 0.15, ded: 1260000 },
+    { limit: 88000000,   rate: 0.24, ded: 5760000 },
+    { limit: 150000000,  rate: 0.35, ded: 15440000 },
+    { limit: 300000000,  rate: 0.38, ded: 19940000 },
+    { limit: 500000000,  rate: 0.40, ded: 25940000 },
+    { limit: 1000000000, rate: 0.42, ded: 35940000 },
+    { limit: Infinity,   rate: 0.45, ded: 65940000 },
+  ];
+  let b = brackets[brackets.length - 1];
+  for (const br of brackets) { if (taxable &lt;= br.limit) { b = br; break; } }
+  return Math.max(0, taxable * b.rate - b.ded);
+}
+
+function calcCapGainTax(capGain) {
+  const method = $('capGainMethod').value;
+  if (capGain &lt;= 0) return { tax: 0, basicDed: 0 };
+  if (method === '0.7') {
+    return { tax: capGain * 0.7, basicDed: 0 };
+  } else if (method === '0.6') {
+    return { tax: capGain * 0.6, basicDed: 0 };
+  } else if (method === 'custom') {
+    const rate = parseFloat($('customCapGainRate').value) / 100 || 0.20;
+    const basicDed = 2500000;
+    return { tax: Math.max(0, capGain - basicDed) * rate, basicDed };
+  } else { // auto — 누진세율
+    const basicDed = 2500000;
+    return { tax: progressiveTax(Math.max(0, capGain - basicDed)), basicDed };
+  }
+}
+
+function onCapGainMethodChange() {
+  $('customCapGainRow').style.display = $('capGainMethod').value === 'custom' ? '' : 'none';
+  calc();
+}
+
+function computeAll() {
+  const bid      = parseVal('bidPrice');
+  const app      = parseVal('appraised');
+  const lr       = +$('loanRatio').value || 0.8;
+  const alr      = +$('appraisalLoanRatio').value || 0.6;
+  const seniorDep= parseVal('seniorDeposit');
+  const legalFee = parseVal('legalFee');
+  const repair   = parseVal('repairFee');
+  const evict    = parseVal('evictFee');
+  const extraFee      = parseVal('extraFee');
+  const unpaidMgmtFee = parseVal('unpaidMgmtFee');
+  const jeonse   = parseVal('jeonse');
+  const monthly  = parseVal('monthlyRent');
+  const saleP    = parseVal('salePrice');
+  const holdM    = +$('holdMonth').value || 12;
+  const loanRateP= parseFloat($('loanRate').value) || 5;
+  const prepayRp = parseFloat($('prepayRate').value) || 1;
+  const agentFeeManual = $('agentFeeMode') &amp;&amp; $('agentFeeMode').value === 'manual';
+  const houseCount = $('houseCount').value;
+
+  const loanByBid        = bid * lr;
+  const loanByAppraisal  = Math.max(0, app * alr - seniorDep);
+  const loan             = Math.min(loanByBid, loanByAppraisal);
+  const depositRatio = parseFloat($('depositRatio').value) || 0.1;
+  const minBidForDep = parseVal('minBid') || bid;
+  const dep  = minBidForDep * depositRatio;
+  const bal  = bid - loan - dep;
+
+  const smallArea = $('smallArea').value === 'Y';
+  const { acqRate, ruralRate, eduRate } = getAcqTaxBreakdown(bid, houseCount, $('propType').value, smallArea);
+  const acqTax    = bid * acqRate;
+  const ruralTax  = bid * ruralRate;
+  const eduTax    = bid * eduRate;
+  const taxTotal  = acqTax + ruralTax + eduTax + legalFee;
+  const miscTotal = repair + evict + extraFee + unpaidMgmtFee;
+  const equity    = (bid - loan) + taxTotal + miscTotal;
+
+  const annualRent = monthly * 12 + jeonse * 0.03;
+  const rentYield  = equity &gt; 0 ? annualRent / equity * 100 : 0;
+
+  const holdYear     = holdM / 12;
+  const agentR       = getAgentRate(saleP);
+  const loanInterest = loan * (loanRateP / 100) * holdYear;
+  const agentFee     = agentFeeManual ? parseVal('agentFee') : saleP * agentR;
+  const capGain      = saleP - bid - taxTotal - miscTotal;
+  const { tax: capGainTax, basicDed: capGainBasicDed } = calcCapGainTax(capGain);
+  const prepayFee    = loan * (prepayRp / 100);
+  const saleExpTotal = loanInterest + capGainTax + prepayFee + agentFee;
+
+  const monthlyLoanInterest = loan * (loanRateP / 100) / 12;
+  const monthlyNet  = monthly - monthlyLoanInterest;
+  const realInvest  = equity - jeonse;
+  const netProfit  = capGain - saleExpTotal;
+  const holdRent   = annualRent * holdYear;
+  const totalReturn= netProfit + holdRent;
+  const roe        = equity &gt; 0 ? totalReturn / equity * 100 : 0;
+  const roeAnn     = holdYear &gt; 0 ? roe / holdYear : 0;
+
+  return {
+    loan, loanByBid, loanByAppraisal, dep, bal, acqRate, ruralRate, eduRate, acqTax, ruralTax, eduTax, taxTotal, miscTotal, equity,
+    annualRent, rentYield, monthlyNet, monthlyLoanInterest, realInvest, agentR, loanInterest, capGain, capGainTax, capGainBasicDed,
+    prepayFee, agentFee, saleExpTotal, netProfit, holdRent, totalReturn,
+    roe, roeAnn, holdYear, bid, saleP
+  };
+}
+
+function calc() {
+  const v = computeAll();
+  const bid = parseVal('bidPrice');
+  const app = parseVal('appraised');
+
+  // 자동 계산 필드 (콤마 포맷)
+  setFmt('loanByBid',        v.loanByBid);
+  setFmt('loanByAppraisal',  v.loanByAppraisal);
+  setFmt('loan',             v.loan);
+  $('loanBasis').textContent = v.loan === v.loanByBid ? '낙찰가 기준 적용' : '감정가 기준 적용';
+  setFmt('deposit',      v.dep);
+  setFmt('balance',      v.bal);
+  $('acqTaxLabel').textContent  = `취득세 (${(v.acqRate * 100).toFixed(2)}%)`;
+  setFmt('acqTax',         v.acqTax);
+  $('ruralTaxLabel').textContent= `농어촌특별세 (${(v.ruralRate * 100).toFixed(1)}%)`;
+  setFmt('ruralTax',       v.ruralTax);
+  $('eduTaxLabel').textContent  = `지방교육세 (${(v.eduRate * 100).toFixed(2)}%)`;
+  setFmt('eduTax',         v.eduTax);
+  setFmt('taxTotal',     v.taxTotal);
+  setFmt('miscTotal',    v.miscTotal);
+  setFmt('annualRent',   v.annualRent);
+  $('rentYield').value  = v.rentYield.toFixed(2);
+  setFmt('monthlyNet',      v.monthlyNet);
+  setFmt('monthlyLoanIntA', v.monthlyLoanInterest);
+  setFmt('monthlyLoanIntB', v.monthlyLoanInterest);
+  $('loanRateDisp').value = $('loanRate').value;
+  setFmt('realInvest',      v.realInvest);
+  $('agentRate').value  = (v.agentR * 100).toFixed(2);
+  setFmt('loanInterest', v.loanInterest);
+  setFmt('capGainTax',   v.capGainTax);
+  // 양도소득세 기본공제·방식 표시
+  $('capGainBasicDed').value = v.capGainBasicDed &gt; 0 ? v.capGainBasicDed.toLocaleString('ko-KR') : '없음 (단기)';
+  $('capGainBasicDedNote').textContent = v.capGainBasicDed &gt; 0 ? '자동 적용' : '단기양도 미적용';
+  const methodMap = { auto: '누진세율 자동 (6~45%, 기본공제 250만)', '0.7': '70% 단기 (1년 미만)', '0.6': '60% 단기 (2년 미만)', '0.2': '20% (매매사업자 등)', custom: '직접입력 ' + ($('customCapGainRate').value || '20') + '%' };
+  $('capGainMethodNote').textContent = methodMap[$('capGainMethod').value] || '누진세율 자동';
+  setFmt('prepayFee', v.prepayFee);
+  if (!($('agentFeeMode') &amp;&amp; $('agentFeeMode').value === 'manual')) setFmt('agentFee', v.agentFee);
+  setFmt('saleExpTotal', v.saleExpTotal);
+
+  // 핵심 결과
+  const fmtW = n =&gt; Math.round(n).toLocaleString('ko-KR') + '원';
+  $('r-equity').textContent  = fmtW(v.equity);
+  $('r-capgain').textContent = fmtW(v.capGain);
+
+  const profitEl = $('r-profit');
+  profitEl.textContent = fmtW(v.netProfit);
+  profitEl.className = 'result-value ' + (v.netProfit &gt;= 0 ? 'green' : 'red');
+
+  $('r-rent').textContent = fmtW(v.holdRent);
+
+  const roeEl = $('r-roe');
+  roeEl.textContent = fmtP(v.roe);
+  roeEl.className = 'result-value gold ' + (v.roe &gt;= 0 ? '' : 'red');
+  $('r-roe-sub').textContent = '연환산: ' + fmtP(v.roeAnn) + '/년  |  총 수익: ' + fmtW(v.totalReturn);
+
+  const roeAnnEl = $('r-roe-ann');
+  roeAnnEl.textContent = fmtP(v.roeAnn) + '/년';
+  roeAnnEl.className = 'result-value ' + (v.roeAnn &gt;= 20 ? 'green' : v.roeAnn &gt;= 0 ? '' : 'red');
+
+  const ratio = app &gt; 0 ? bid / app * 100 : 0;
+  $('r-bid-ratio').textContent = ratio.toFixed(1) + '%';
+  $('r-bid-ratio-sub').textContent = '감정가 ' + app.toLocaleString('ko-KR') + '원 대비';
+
+  updateCharts(v);
+  updateSensTable();
+}
+
+function updateCharts(v) {
+  const bid = parseVal('bidPrice');
+  const costLabels = ['낙찰가', '취득세 합계', '기타 비용', '대출 이자', '양도소득세', '중도상환 수수료', '매도 중개보수'];
+  const costData   = [bid, v.taxTotal, v.miscTotal, v.loanInterest, v.capGainTax, v.prepayFee, v.agentFee];
+  const colors     = ['#1a56db','#6875f5','#f05252','#ff8a4c','#e3a008','#0e9f6e','#3f83f8'];
+
+  if (costChartInst) costChartInst.destroy();
+  costChartInst = new Chart($('costChart'), {
+    type: 'doughnut',
+    data: { labels: costLabels, datasets: [{ data: costData, backgroundColor: colors, borderWidth: 1 }] },
+    options: {
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11, family: 'Malgun Gothic' }, boxWidth: 12 } },
+        tooltip: {
+          callbacks: {
+            label: ctx =&gt; ' ' + ctx.label + ': ' + Math.round(ctx.raw).toLocaleString('ko-KR') + '원'
+          }
+        }
+      }
+    }
+  });
+
+  if (profitChartInst) profitChartInst.destroy();
+  profitChartInst = new Chart($('profitChart'), {
+    type: 'bar',
+    data: {
+      labels: ['자기자본 투자금', '매도 비용 합계', '양도 차익', '순 이익(세후)'],
+      datasets: [{
+        data: [v.equity, v.saleExpTotal, v.capGain, v.netProfit],
+        backgroundColor: ['#1a56db', '#f05252', '#0e9f6e', v.netProfit &gt;= 0 ? '#059669' : '#dc2626'],
+        borderRadius: 4
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          ticks: {
+            callback: val =&gt; (val / 10000000).toFixed(0) + '천만',
+            font: { size: 11, family: 'Malgun Gothic' }
+          }
+        },
+        x: { ticks: { font: { size: 11, family: 'Malgun Gothic' } } }
+      }
+    }
+  });
+}
+
+function updateSensTable() {
+  const bid       = parseVal('bidPrice');
+  const lr        = +$('loanRatio').value || 0.8;
+  const legalFee  = parseVal('legalFee');
+  const repair    = parseVal('repairFee');
+  const evict     = parseVal('evictFee');
+  const extraFee      = parseVal('extraFee');
+  const unpaidMgmtFee = parseVal('unpaidMgmtFee');
+  const loanRateP = parseFloat($('loanRate').value) || 5;
+  const prepayRp  = parseFloat($('prepayRate').value) || 1;
+  const houseCount= $('houseCount').value;
+  const jeonse    = parseVal('jeonse');
+  const monthly   = parseVal('monthlyRent');
+
+  const alr       = +$('appraisalLoanRatio').value || 0.6;
+  const seniorDep = parseVal('seniorDeposit');
+  const app       = parseVal('appraised');
+  const loan      = Math.min(bid * lr, Math.max(0, app * alr - seniorDep));
+  const smallArea = $('smallArea').value === 'Y';
+  const { acqRate, ruralRate, eduRate } = getAcqTaxBreakdown(bid, houseCount, $('propType').value, smallArea);
+  const acqTax    = bid * acqRate;
+  const ruralTax  = bid * ruralRate;
+  const eduTax    = bid * eduRate;
+  const taxTotal  = acqTax + ruralTax + eduTax + legalFee;
+  const miscTotal = repair + evict + extraFee + unpaidMgmtFee;
+  const equity    = (bid - loan) + taxTotal + miscTotal;
+  const annualRent= monthly * 12 + jeonse * 0.03;
+
+  const holdOptions = [3, 6, 12, 18, 24, 36];
+  const holdLabels  = ['3개월', '6개월', '1년', '1.5년', '2년', '3년'];
+
+  const step = bid * 0.1 || 10000000;
+  const rows = [];
+  for (let i = -2; i &lt;= 7; i++) rows.push(bid + step * i);
+
+  const thead = document.querySelector('#sensTable thead');
+  const tbody = document.querySelector('#sensTable tbody');
+  thead.innerHTML = '';
+  tbody.innerHTML = '';
+
+  const headerRow = document.createElement('tr');
+  headerRow.innerHTML = '매도가 ↓ / 보유기간 →' + holdLabels.map(l =&gt; `${l}`).join('');
+  thead.appendChild(headerRow);
+
+  const currentSale = parseVal('salePrice');
+  const currentHold = +$('holdMonth').value || 12;
+
+  rows.forEach(saleP =&gt; {
+    const tr = document.createElement('tr');
+    let html = `${Math.round(saleP / 10000).toLocaleString('ko-KR')}만원`;
+    holdOptions.forEach(hm =&gt; {
+      const hy     = hm / 12;
+      const agentR = getAgentRate(saleP);
+      const loanInt= loan * (loanRateP / 100) * hy;
+      const aFee   = saleP * agentR;
+      const cg     = saleP - bid - taxTotal - miscTotal;
+      const cgTax  = calcCapGainTax(cg).tax;
+      const pFee   = loan * (prepayRp / 100);
+      const saleExp= loanInt + cgTax + pFee + aFee;
+      const netP   = cg - saleExp;
+      const holdR  = annualRent * hy;
+      const totalR = netP + holdR;
+      const roe    = equity &gt; 0 ? totalR / equity * 100 : 0;
+      const roeAnn = hy &gt; 0 ? roe / hy : 0;
+
+      const isCurrent = Math.abs(saleP - currentSale) &lt; step / 2 &amp;&amp; hm === currentHold;
+      let cls = 'cell-zero';
+      if (roeAnn &gt; 20) cls = 'cell-high';
+      else if (roeAnn &gt; 0) cls = 'cell-mid';
+      else if (roeAnn &lt; 0) cls = 'cell-low';
+
+      const border = isCurrent ? ' style="outline:3px solid #1a56db;outline-offset:-3px;font-weight:900"' : '';
+      html += `${roeAnn.toFixed(1)}%`;
+    });
+    tr.innerHTML = html;
+    tbody.appendChild(tr);
+  });
+}
+
+function printAnalysis() {
+  // 수익률 분석 탭으로 전환 후 인쇄
+  showTab('calc');
+  setTimeout(() =&gt; window.print(), 150);
+}
+
+function onAgentFeeModeChange() {
+  const manual = $('agentFeeMode').value === 'manual';
+  $('agentRateRow').style.display = manual ? 'none' : '';
+  const inp = $('agentFee');
+  if (manual) {
+    inp.removeAttribute('readonly');
+    inp.classList.remove('input-calc');
+    $('agentFeeLabel').style.color = 'var(--blue)';
+  } else {
+    inp.setAttribute('readonly', '');
+    inp.classList.add('input-calc');
+    $('agentFeeLabel').style.color = '';
+    calc();
+  }
+}
+
+function exportExcel() {
+  const v = computeAll();
+  const caseNo = $('caseNo').value.trim() || '';
+  const addr   = $('addr').value.trim() || '미입력';
+  const fname  = (caseNo ? caseNo + '_' : '') + addr;
+  const today  = new Date().toLocaleDateString('ko-KR');
+
+  // ── 스타일 정의 ──────────────────────────────
+  const BLUE   = '1A56DB', BLUE_L = 'DBEAFE', BLUE_BG = 'EFF6FF';
+  const GOLD   = 'D97706', GOLD_BG = 'FFFBEB', GOLD_BD = 'FCD34D';
+  const GRAY   = '6B7280', GRAY_L  = 'F3F4F6', GRAY_BD = 'E5E7EB';
+  const WHITE  = 'FFFFFF', TEXT = '111827', GREEN = '065F46', RED = '991B1B';
+  const NAVY   = '1E3A5F';
+
+  const bd = (rgb) =&gt; ({ style: 'thin', color: { rgb } });
+  const border = (c = GRAY_BD) =&gt; ({ top: bd(c), bottom: bd(c), left: bd(c), right: bd(c) });
+
+  const S = {
+    title: {
+      font: { bold: true, sz: 15, color: { rgb: WHITE }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: BLUE } },
+      alignment: { horizontal: 'left', vertical: 'center' }
+    },
+    subtitle: {
+      font: { sz: 10, color: { rgb: 'BFDBFE' }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: BLUE } },
+      alignment: { horizontal: 'right', vertical: 'center' }
+    },
+    section: {
+      font: { bold: true, sz: 11, color: { rgb: WHITE }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: NAVY } },
+      alignment: { horizontal: 'left', vertical: 'center' }
+    },
+    label: {
+      font: { sz: 10, color: { rgb: GRAY }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: GRAY_L } },
+      alignment: { horizontal: 'left', vertical: 'center', indent: 1 },
+      border: border()
+    },
+    valIn: {
+      font: { sz: 10, color: { rgb: '1D4ED8' }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: BLUE_BG } },
+      alignment: { horizontal: 'right', vertical: 'center' },
+      border: border()
+    },
+    valCalc: {
+      font: { sz: 10, color: { rgb: GRAY }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: GRAY_L } },
+      alignment: { horizontal: 'right', vertical: 'center' },
+      border: border()
+    },
+    note: {
+      font: { sz: 9, italic: true, color: { rgb: '9CA3AF' }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: WHITE } },
+      alignment: { horizontal: 'left', vertical: 'center' },
+      border: border()
+    },
+    keyLabel: {
+      font: { bold: true, sz: 11, color: { rgb: '92400E' }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: GOLD_BG } },
+      alignment: { horizontal: 'left', vertical: 'center', indent: 1 },
+      border: border(GOLD_BD)
+    },
+    keyVal: {
+      font: { bold: true, sz: 12, color: { rgb: GOLD }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: GOLD_BG } },
+      alignment: { horizontal: 'right', vertical: 'center' },
+      border: border(GOLD_BD)
+    },
+    roeLabel: {
+      font: { bold: true, sz: 13, color: { rgb: '92400E' }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: GOLD_BG } },
+      alignment: { horizontal: 'left', vertical: 'center', indent: 1 },
+      border: border(GOLD_BD)
+    },
+    roeVal: {
+      font: { bold: true, sz: 16, color: { rgb: GOLD }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: GOLD_BG } },
+      alignment: { horizontal: 'right', vertical: 'center' },
+      border: border(GOLD_BD)
+    },
+    profitVal: {
+      font: { bold: true, sz: 12, color: { rgb: GREEN }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: 'ECFDF5' } },
+      alignment: { horizontal: 'right', vertical: 'center' },
+      border: border('6EE7B7')
+    },
+    lossVal: {
+      font: { bold: true, sz: 12, color: { rgb: RED }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: 'FEF2F2' } },
+      alignment: { horizontal: 'right', vertical: 'center' },
+      border: border('FCA5A5')
+    },
+    warn: {
+      font: { sz: 9, italic: true, color: { rgb: '92400E' }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } },
+      alignment: { horizontal: 'left', vertical: 'center', wrapText: true }
+    },
+    empty: {
+      fill: { patternType: 'solid', fgColor: { rgb: WHITE } }
+    }
+  };
+
+  // ── 셀 생성 헬퍼 ─────────────────────────────
+  const nc = (v, s, z) =&gt; {           // number cell
+    const c = { v: Math.round(v), t: 'n', s };
+    if (z) c.z = z;
+    return c;
+  };
+  const sc = (v, s) =&gt; ({ v: String(v ?? ''), t: 's', s });  // string cell
+  const ec = ()     =&gt; ({ v: '', t: 's', s: S.empty });      // empty cell
+
+  // ── 워크시트 빌더 ─────────────────────────────
+  const ws   = {};
+  const merges = [];
+  let   ri   = 0; // 현재 행 (0-based)
+  const COLS = ['A','B','C','D','E','F','G'];
+
+  function setCell(col, row, cell) { ws[COLS[col] + (row + 1)] = cell; }
+
+  function fillRow(cells) {
+    cells.forEach((cell, ci) =&gt; setCell(ci, ri, cell || ec()));
+    ri++;
+  }
+
+  function merge(c1, c2) { merges.push({ s: { r: ri, c: c1 }, e: { r: ri, c: c2 } }); }
+
+  // 섹션 헤더 (B~F 병합)
+  function sectionRow(text) {
+    merge(1, 6);
+    fillRow([ec(), sc(text, S.section), ec(), ec(), ec(), ec(), ec()]);
+  }
+
+  // 일반 데이터 행: [라벨(C), 값(D), 비고(F)]
+  function dataRow(label, val, note = '', isCalc = false, isNum = true) {
+    const vs = isCalc ? S.valCalc : S.valIn;
+    const valCell = isNum
+      ? nc(val, vs, '#,##0')
+      : sc(val, { ...vs, alignment: { ...vs.alignment, horizontal: 'left' } });
+    fillRow([ec(), ec(), sc('  ' + label, S.label), valCell, ec(), sc(note, S.note), ec()]);
+  }
+
+  // 핵심 결과 행 (B~C 병합)
+  function keyRow(label, val, note = '', isROE = false, isProfit = false) {
+    merge(1, 2);
+    const ls = isROE ? S.roeLabel : S.keyLabel;
+    const vs = isROE ? S.roeVal : isProfit ? (val &gt;= 0 ? S.profitVal : S.lossVal) : S.keyVal;
+    fillRow([ec(), sc(label, ls), ec(), nc(val, vs, '#,##0'), ec(), sc(note, S.note), ec()]);
+  }
+
+  function keyPctRow(label, val) {
+    merge(1, 2);
+    const pctCell = { v: val / 100, t: 'n', z: '0.00%', s: S.roeVal };
+    fillRow([ec(), sc(label, S.roeLabel), ec(), pctCell, ec(), ec(), ec()]);
+  }
+
+  function emptyRow() { fillRow([ec(),ec(),ec(),ec(),ec(),ec(),ec()]); }
+
+  // ── 데이터 작성 ──────────────────────────────
+
+  // 제목
+  emptyRow();
+  merge(1, 6);
+  fillRow([ec(), sc('🏠  Booland Calculator — 경매 투자 수익률 분석 결과', S.title), ec(), ec(), ec(), ec(), ec()]);
+  merge(1, 6);
+  fillRow([ec(), sc('분석일: ' + today + '   |   ' + (caseNo || '') + (addr !== '미입력' ? '  ' + addr : ''), S.subtitle), ec(), ec(), ec(), ec(), ec()]);
+  emptyRow();
+
+  // 물건 정보
+  sectionRow('📋  물건 정보');
+  dataRow('사건번호', caseNo || '-', '', false, false);
+  dataRow('물건 주소', addr, '', false, false);
+  dataRow('물건 종류', $('propType').value, '', false, false);
+  const memoText = $('memo').value.trim();
+  if (memoText) dataRow('특이사항 / 메모', memoText, '', false, false);
+  emptyRow();
+
+  // 낙찰가 &amp; 초기 투자비
+  sectionRow('💰  낙찰가 &amp; 초기 투자비');
+  dataRow('감정가',           parseVal('appraised'), '감정평가 금액');
+  dataRow('최저 입찰가',      parseVal('minBid'),    '법원 공고 최저가');
+  dataRow('낙찰가',           parseVal('bidPrice'),  '← 직접 입력');
+  dataRow('대출 비율',        (parseFloat($('loanRatio').value) * 100).toFixed(0) + '%', '선택', false, false);
+  dataRow('대출금',           v.loan,   '자동계산', true);
+  dataRow('입찰 보증금 (' + (parseFloat($('depositRatio').value) * 100).toFixed(0) + '%)', v.dep, '자동계산', true);
+  dataRow('잔금',             v.bal,    '자동계산', true);
+  emptyRow();
+
+  // 취득세 &amp; 기타 비용
+  sectionRow('🏛  취득세 &amp; 기타 비용');
+  dataRow('주택 보유수',      $('houseCount').options[$('houseCount').selectedIndex].text, '', false, false);
+  dataRow('취득세율',          (v.acqRate * 100).toFixed(2) + '%', '낙찰가 기준 자동계산', true, false);
+  dataRow('취득세',            v.acqTax,              '낙찰가 × 취득세율', true);
+  dataRow('농어촌특별세율',    (v.ruralRate * 100).toFixed(1) + '%', '85㎡ 이하 면제', true, false);
+  dataRow('농어촌특별세',      v.ruralTax,            '낙찰가 × 농특세율', true);
+  dataRow('지방교육세율',      (v.eduRate * 100).toFixed(2) + '%', '취득세율의 10%', true, false);
+  dataRow('지방교육세',        v.eduTax,              '낙찰가 × 지교세율', true);
+  dataRow('법무비 (등기)',     parseVal('legalFee'), '평균 30만원');
+  dataRow('세금 합계',        v.taxTotal,            '자동합산', true);
+  dataRow('수리비용',         parseVal('repairFee'), '리모델링 등');
+  dataRow('명도비용',         parseVal('evictFee'),  '평당 15~20만원 기준');
+  dataRow('기타예비비',       parseVal('extraFee'),      '예비 비용');
+  dataRow('미납관리비',       parseVal('unpaidMgmtFee'), '체납 관리비');
+  dataRow('기타 비용 합계',   v.miscTotal,               '자동합산', true);
+  emptyRow();
+
+  // 총 자기자본 (중간 강조)
+  keyRow('📌  총 자기자본 투자금', v.equity, '자동합산');
+  emptyRow();
+
+  // 임대 수입
+  sectionRow('🏡  임대 수입 (선택)');
+  dataRow('전세 / 보증금',   parseVal('jeonse'),      '전세/보증금');
+  dataRow('월 임대료',       parseVal('monthlyRent'), '월세');
+  dataRow('연 임대 수입',    v.annualRent,             '자동계산', true);
+  dataRow('임대 수익률',     v.rentYield.toFixed(2) + '%', '연 임대 / 총투자금', true, false);
+  dataRow('월 순수익',           v.monthlyNet,  '월세 − 월 대출이자', true);
+  dataRow('임대사업용 실투자금', v.realInvest,  '자기자본 − 보증금', true);
+  emptyRow();
+
+  // 매도 수익 분석
+  sectionRow('📈  매도 수익 분석');
+  dataRow('예상 매도가',        parseVal('salePrice'), '목표 매도 가격');
+  dataRow('보유 기간',          $('holdMonth').options[$('holdMonth').selectedIndex].text, '선택', false, false);
+  dataRow('대출 금리 (연)',     $('loanRate').value + '%', '현재 금리 기준', false, false);
+  dataRow('중도 상환 수수료율', $('prepayRate').value + '%', '통상 0.5~1.5%', false, false);
+  dataRow('매도 중개보수율', (v.agentR * 100).toFixed(2) + '%', '매도가 기준 자동 적용', true, false);
+  emptyRow();
+  dataRow('대출 이자 합계',    v.loanInterest, '대출금 × 금리 × 보유기간', true);
+  const methodMap2 = { auto: '누진세율 자동(6~45%)', '0.7': '70% 단기', '0.6': '60% 단기', '0.2': '20% 매매사업자', custom: '직접입력 ' + ($('customCapGainRate').value || '20') + '%' };
+  dataRow('양도소득세 (추정)', v.capGainTax, '기본공제 ' + (v.capGainBasicDed &gt; 0 ? '250만 · ' : '없음 · ') + methodMap2[$('capGainMethod').value], true);
+  dataRow('중도 상환 수수료',  v.prepayFee,    '대출금 × 수수료율', true);
+  dataRow('매도 중개보수',     v.agentFee,     '매도가 × 수수료율', true);
+  dataRow('매도 비용 합계',    v.saleExpTotal, '자동합산', true);
+  emptyRow();
+
+  // 핵심 결과
+  sectionRow('🚀  핵심 결과');
+  keyRow('양도 차익',              v.capGain,    '');
+  keyRow('순 이익 (세후)',         v.netProfit,  '', false, true);
+  keyRow('임대 수입 (보유기간)',   v.holdRent,   '');
+  keyRow('총 자기자본 투자금',     v.equity,     '');
+  keyPctRow('🚀  자기자본 수익률 (ROE)',  v.roe);
+  keyPctRow('연환산 수익률 (ROE/년)',     v.roeAnn);
+  emptyRow();
+
+  // 주석
+  merge(1, 6);
+  const cgNote = { auto: '누진세율 자동(6~45%, 기본공제 250만원)', '0.7': '70% 단기(1년 미만)', '0.6': '60% 단기(2년 미만)', '0.2': '20% 매매사업자', custom: '직접입력 ' + ($('customCapGainRate').value || '20') + '%' };
+  fillRow([ec(), sc('※ 양도소득세 적용방식: ' + cgNote[$('capGainMethod').value] + '. 실제 세금은 세무사 확인이 필요합니다.', S.warn), ec(), ec(), ec(), ec(), ec()]);
+
+  // ── 워크시트 마무리 ──────────────────────────
+  ws['!ref'] = 'A1:G' + ri;
+  ws['!merges'] = merges;
+  ws['!cols'] = [
+    { wch: 2 },   // A
+    { wch: 26 },  // B 섹션/키라벨
+    { wch: 22 },  // C 라벨
+    { wch: 18 },  // D 값
+    { wch: 2 },   // E
+    { wch: 28 },  // F 비고
+    { wch: 2 },   // G
+  ];
+  // 제목행 높이
+  ws['!rows'] = Array.from({ length: ri }, (_, i) =&gt;
+    i === 1 ? { hpt: 26 } : { hpt: 18 }
+  );
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '수익률분석');
+  XLSX.writeFile(wb, fname + '.xlsx');
+}
+
+function showTab(name, tabEl) {
+  document.querySelectorAll('.page').forEach(p =&gt; p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t =&gt; t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  const target = tabEl || (typeof event !== 'undefined' &amp;&amp; event.target ? event.target : null);
+  if (target) target.classList.add('active');
+  if (name === 'chart' || name === 'sens') calc();
+  if (name === 'saves') renderSavesList();
+  // 캘린더 탭 진입 시 저장된 URL 있으면 자동 렌더
+  if (name === 'calendar') {
+    const saved = localStorage.getItem('booland_cal_url') || '';
+    if (saved &amp;&amp; !document.getElementById('cal-iframe').src.includes('calendar')) {
+      renderCalendar(saved);
+    }
+  }
+}
+
+// ─── Firebase 설정 ────────────────────────────────────────────────────────────
+// ① console.firebase.google.com → 프로젝트 생성 → 웹 앱 추가 후 아래 값 교체
+// ② Authentication → 로그인 제공업체: 이메일/비밀번호, Google 활성화
+// ③ Firestore Database 생성 (프로덕션 모드), 규칙을 아래로 교체:
+//    rules_version = '2';
+//    service cloud.firestore {
+//      match /databases/{database}/documents {
+//        match /users/{uid}/saves/{doc} {
+//          allow read, write: if request.auth != null &amp;&amp; request.auth.uid == uid;
+//        }
+//      }
+//    }
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyAefXqQYPEciDDU7qrsJslaqqTCrzi7PCM",
+  authDomain:        "booland-calculator.firebaseapp.com",
+  projectId:         "booland-calculator",
+  storageBucket:     "booland-calculator.firebasestorage.app",
+  messagingSenderId: "910348218969",
+  appId:             "1:910348218969:web:fd4abf93cdbaf1903c7748"
+};
+
+const FB_READY = FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY";
+let auth, db, currentUser = null;
+
+if (FB_READY) {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  auth = firebase.auth();
+  db   = firebase.firestore();
+  auth.onAuthStateChanged(user =&gt; {
+    currentUser = user;
+    updateAuthUI();
+    updateSavesCount();
+    if (user &amp;&amp; document.getElementById('tab-saves').classList.contains('active')) renderSavesList();
+  });
+}
+
+// ─── Auth UI ──────────────────────────────────────────────────────────────────
+function updateAuthUI() {
+  const out = $('authLoggedOut'), inn = $('authLoggedIn');
+  if (currentUser) {
+    out.style.display = 'none';
+    inn.style.display = 'flex';
+    $('authUserName').textContent = currentUser.displayName || currentUser.email || '사용자';
+    closeLoginModal();
+  } else {
+    out.style.display = '';
+    inn.style.display = 'none';
+  }
+}
+
+function openLoginModal() {
+  if (!FB_READY) return; // Firebase 미설정 시 조용히 무시
+  $('loginError').style.display = 'none';
+  $('loginModal').style.display = 'flex';
+}
+function closeLoginModal() { $('loginModal').style.display = 'none'; }
+
+async function signInWithGoogle() {
+  try {
+    await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+  } catch(e) { showLoginError(e.message); }
+}
+async function signInWithEmail() {
+  try {
+    await auth.signInWithEmailAndPassword($('loginEmail').value, $('loginPassword').value);
+  } catch(e) {
+    const msg = { 'auth/user-not-found':'등록되지 않은 이메일입니다.', 'auth/wrong-password':'비밀번호가 틀렸습니다.', 'auth/invalid-email':'이메일 형식이 올바르지 않습니다.' };
+    showLoginError(msg[e.code] || e.message);
+  }
+}
+async function signUpWithEmail() {
+  if ($('loginPassword').value.length &lt; 6) { showLoginError('비밀번호는 6자 이상이어야 합니다.'); return; }
+  try {
+    await auth.createUserWithEmailAndPassword($('loginEmail').value, $('loginPassword').value);
+    showToast('✅ 회원가입 완료!');
+  } catch(e) {
+    const msg = { 'auth/email-already-in-use':'이미 사용 중인 이메일입니다.', 'auth/invalid-email':'이메일 형식이 올바르지 않습니다.' };
+    showLoginError(msg[e.code] || e.message);
+  }
+}
+async function signOutUser() {
+  if (!confirm('로그아웃 하시겠습니까?')) return;
+  await auth.signOut();
+  renderSavesList();
+}
+function showLoginError(msg) { const e = $('loginError'); e.textContent = msg; e.style.display = ''; }
+
+// ─── 저장 기능 ─────────────────────────────────────────
+
+const STORAGE_KEY = 'booland_saves';
+function getSaves() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch { return []; } }
+
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() =&gt; t.classList.remove('show'), 2000);
+}
+
+function _buildEntry(v) {
+  return {
+    savedAtMs: Date.now(),
+    savedAt: new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),
+    caseNo: $('caseNo').value.trim(), addr: $('addr').value.trim(),
+    propType:$('propType').value, smallArea:$('smallArea').value, memo:$('memo').value,
+    appraised:$('appraised').value, minBid:$('minBid').value, minBidRatio:$('minBidRatio').value,
+    bidPrice:$('bidPrice').value, loanRatio:$('loanRatio').value,
+    appraisalLoanRatio:$('appraisalLoanRatio').value, seniorDeposit:$('seniorDeposit').value,
+    depositRatio:$('depositRatio').value, houseCount:$('houseCount').value,
+    legalFee:$('legalFee').value, repairFee:$('repairFee').value, evictFee:$('evictFee').value,
+    extraFee:$('extraFee').value, unpaidMgmtFee:$('unpaidMgmtFee').value,
+    jeonse:$('jeonse').value, monthlyRent:$('monthlyRent').value, salePrice:$('salePrice').value,
+    holdMonth:$('holdMonth').value, loanRate:$('loanRate').value, prepayRate:$('prepayRate').value,
+    agentFeeMode:$('agentFeeMode').value, agentFeeManual:$('agentFee').value,
+    capGainMethod:$('capGainMethod').value, customCapGainRate:$('customCapGainRate').value,
+    bid:v.bid, roe:v.roe, roeAnn:v.roeAnn, netProfit:v.netProfit, equity:v.equity
+  };
+}
+
+async function saveCurrent() {
+  const caseNo = $('caseNo').value.trim(), addr = $('addr').value.trim();
+  if (!caseNo &amp;&amp; !addr) { alert('사건번호 또는 물건 주소를 먼저 입력해주세요.'); return; }
+  if (FB_READY &amp;&amp; !currentUser) { openLoginModal(); return; }
+  try {
+    const entry = _buildEntry(computeAll());
+    if (FB_READY &amp;&amp; currentUser) {
+      await db.collection('users').doc(currentUser.uid).collection('saves').add(entry);
+    } else {
+      entry.id = Date.now().toString();
+      const saves = getSaves(); saves.unshift(entry);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saves));
+    }
+    showToast('✅ 저장되었습니다!');
+    updateSavesCount();
+  } catch(e) { alert('저장 실패: ' + e.message); }
+}
+
+function _applyEntry(entry) {
+  const txt = ['caseNo','addr','memo','appraised','minBid','bidPrice','seniorDeposit',
+    'legalFee','repairFee','evictFee','extraFee','unpaidMgmtFee','jeonse','monthlyRent','salePrice','loanRate','prepayRate','customCapGainRate'];
+  const sel = ['propType','smallArea','loanRatio','appraisalLoanRatio','depositRatio','houseCount','holdMonth','capGainMethod','minBidRatio','agentFeeMode'];
+  txt.forEach(f =&gt; { if ($(f) &amp;&amp; entry[f] !== undefined) $(f).value = entry[f]; });
+  sel.forEach(f =&gt; { if ($(f) &amp;&amp; entry[f] !== undefined) $(f).value = entry[f]; });
+  if (entry.agentFeeMode === 'manual' &amp;&amp; entry.agentFeeManual !== undefined) {
+    if ($('agentFee')) $('agentFee').value = entry.agentFeeManual;
+  }
+  onAgentFeeModeChange(); onCapGainMethodChange(); calc();
+  showTab('calc', document.querySelectorAll('.tab')[0]);
+  showToast('📂 불러왔습니다!');
+}
+
+async function loadSave(id) {
+  try {
+    let entry;
+    if (FB_READY &amp;&amp; currentUser) {
+      const doc = await db.collection('users').doc(currentUser.uid).collection('saves').doc(id).get();
+      if (!doc.exists) { alert('분석을 찾을 수 없습니다.'); return; }
+      entry = { id: doc.id, ...doc.data() };
+    } else {
+      entry = getSaves().find(s =&gt; s.id === id);
+    }
+    if (entry) _applyEntry(entry);
+  } catch(e) { alert('불러오기 실패: ' + e.message); }
+}
+
+async function deleteSave(id) {
+  if (!confirm('이 분석을 삭제하시겠습니까?')) return;
+  try {
+    if (FB_READY &amp;&amp; currentUser) {
+      await db.collection('users').doc(currentUser.uid).collection('saves').doc(id).delete();
+    } else {
+      const saves = getSaves().filter(s =&gt; s.id !== id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saves));
+    }
+    renderSavesList(); showToast('🗑 삭제되었습니다.');
+  } catch(e) { alert('삭제 실패: ' + e.message); }
+}
+
+async function clearAllSaves() {
+  if (!confirm('저장된 분석을 모두 삭제하시겠습니까?')) return;
+  try {
+    if (FB_READY &amp;&amp; currentUser) {
+      const snap = await db.collection('users').doc(currentUser.uid).collection('saves').get();
+      const batch = db.batch(); snap.docs.forEach(d =&gt; batch.delete(d.ref)); await batch.commit();
+    } else { localStorage.removeItem(STORAGE_KEY); }
+    renderSavesList(); showToast('전체 삭제 완료');
+  } catch(e) { alert('삭제 실패: ' + e.message); }
+}
+
+function updateSavesCount(n) {
+  const el = $('savesCount');
+  if (n !== undefined) { el.textContent = n; el.style.display = n &gt; 0 ? '' : 'none'; return; }
+  if (FB_READY &amp;&amp; currentUser) {
+    db.collection('users').doc(currentUser.uid).collection('saves').get()
+      .then(s =&gt; { el.textContent = s.size; el.style.display = s.size &gt; 0 ? '' : 'none'; }).catch(()=&gt;{});
+  } else {
+    const saves = getSaves(); el.textContent = saves.length; el.style.display = saves.length &gt; 0 ? '' : 'none';
+  }
+}
+
+async function renderSavesList() {
+  const empty = $('savesEmpty'), list = $('savesList');
+  // Firebase 설정됐지만 로그인 안 된 경우에만 로그인 요구
+  if (FB_READY &amp;&amp; !currentUser) {
+    list.innerHTML = '';
+    empty.style.display = '';
+    empty.innerHTML = `<div style="padding:40px 20px;text-align:center">
+      <div style="font-size:44px;margin-bottom:12px">🔐</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">로그인이 필요합니다</div>
+      <div style="font-size:13px;color:#6b7280;margin-bottom:20px">계정별로 저장된 분석을 확인하려면 로그인하세요.</div>
+      <button onclick="openLoginModal()" style="padding:10px 28px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">🔑 로그인 / 회원가입</button>
+    </div>`;
+    return;
+  }
+  // Firebase 미설정 시 → localStorage 모드로 조용히 동작 (아래 else 블록에서 처리)
+  list.innerHTML = '<div style="text-align:center;padding:24px;color:#9ca3af;font-size:13px">불러오는 중...</div>';
+  empty.style.display = 'none';
+  let saves = [];
+  try {
+    if (FB_READY &amp;&amp; currentUser) {
+      const snap = await db.collection('users').doc(currentUser.uid).collection('saves').orderBy('savedAtMs','desc').get();
+      saves = snap.docs.map(d =&gt; ({ id: d.id, ...d.data() }));
+    } else { saves = getSaves(); }
+  } catch(e) { list.innerHTML = `<div style="color:red;padding:20px">오류: ${e.message}</div>`; return; }
+
+  updateSavesCount(saves.length);
+  if (saves.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = '';
+    empty.innerHTML = '💾 저장된 분석이 없습니다.<br><span style="font-size:12px">물건 정보 탭의 <strong>이 분석 저장</strong> 버튼을 눌러 저장해보세요.</span>';
+    return;
+  }
+  const fmt  = n =&gt; isNaN(n) ? '-' : Math.round(n).toLocaleString('ko-KR') + '원';
+  const fmtP = n =&gt; isNaN(n) ? '-' : n.toFixed(1) + '%';
+  list.innerHTML = saves.map(s =&gt; {
+    const title = [s.caseNo, s.addr].filter(Boolean).join(' · ') || '(제목 없음)';
+    const memoHtml = s.memo ? `<div class="save-item-memo">${s.memo.replace(/&amp;/g,'&amp;').replace(//g,'&gt;')}</div>` : '';
+    return `<div class="save-item">
+      <div class="save-item-title">📌 ${title}</div>
+      <div class="save-item-meta">📅 ${s.savedAt}&nbsp;&nbsp;|&nbsp;&nbsp;낙찰가: ${fmt(s.bid)}&nbsp;&nbsp;|&nbsp;&nbsp;연환산 ROE: <strong>${fmtP(s.roeAnn)}/년</strong>&nbsp;&nbsp;|&nbsp;&nbsp;순이익: ${fmt(s.netProfit)}</div>
+      ${memoHtml}
+      <div class="save-item-actions">
+        <button class="btn-load" onclick="loadSave(&#39;${s.id}&#39;)">📂 불러오기</button>
+        <button class="btn-del" onclick="deleteSave(&#39;${s.id}&#39;)">🗑 삭제</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+calc();
+updateSavesCount();
+// Firebase 미설정 시 헤더 로그인 버튼 숨김 — localStorage 모드로 조용히 동작
+if (!FB_READY) $('authLoggedOut').style.display = 'none';
+
+
+
+</body></html>
