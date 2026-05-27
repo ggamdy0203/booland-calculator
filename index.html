@@ -182,7 +182,7 @@
 
     /* 숨길 요소 */
     .header-shape, .auth-area, .tabs,
-    #tab-sens, #tab-chart, #tab-tax, #tab-saves,
+    #tab-calendar, #tab-tax, #tab-saves,
     .modal-overlay, #loginModal, button, .notice { display: none !important; }
 
     /* 전체 */
@@ -280,16 +280,14 @@
 </div>
 
 <div class="tabs">
-  <div class="tab active" onclick="showTab('calc')">📋 수익률 분석</div>
+  <div class="tab active" onclick="showTab('calendar')">📅 입찰 일정</div>
+  <div class="tab" onclick="showTab('calc')">📋 수익률 분석</div>
   <div class="tab" onclick="showTab('saves')" id="tab-btn-saves">📁 저장된 분석 <span id="savesCount" style="background:#1a56db;color:white;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:3px;display:none">0</span></div>
-  <div class="tab" onclick="showTab('sens')">📊 민감도 분석</div>
-  <div class="tab" onclick="showTab('chart')">📈 비용 구조 차트</div>
   <div class="tab" onclick="showTab('tax')">📖 세율 참고표</div>
-  <div class="tab" onclick="showTab('calendar')">📅 입찰 일정</div>
 </div>
 
 <!-- ═══════════════ TAB 1: 수익률 분석 ═══════════════ -->
-<div id="tab-calc" class="page active">
+<div id="tab-calc" class="page">
   <div class="grid-3">
 
     <!-- 물건 정보 -->
@@ -811,50 +809,6 @@
   </div>
 </div>
 
-<!-- ═══════════════ TAB 2: 민감도 분석 ═══════════════ -->
-<div id="tab-sens" class="page">
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-header blue">📊 민감도 분석 — 매도가 × 보유기간별 자기자본 수익률(ROE)</div>
-    <div class="card-body">
-      <p style="font-size:12px;color:var(--text-sub);margin-bottom:12px">
-        현재 입력된 낙찰가·대출조건 기준으로, 매도 가격과 보유 기간을 바꿔가며 <strong>ROE(연환산)</strong>를 자동 계산합니다.
-      </p>
-      <div class="legend">
-        <div class="legend-item"><div class="legend-dot" style="background:#d1fae5;border:1px solid #6ee7b7"></div> ROE 20% 초과 (수익 높음)</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#fef3c7;border:1px solid #fcd34d"></div> ROE 0~20% (보통)</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#fee2e2;border:1px solid #fca5a5"></div> ROE 0% 미만 (손실)</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#f3f4f6;border:1px solid #d1d5db"></div> 손익분기</div>
-      </div>
-      <div style="overflow-x:auto">
-        <table class="sens-table" id="sensTable">
-          <thead></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════ TAB 3: 차트 ═══════════════ -->
-<div id="tab-chart" class="page">
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-header blue">📊 투자 비용 구조 (도넛 차트)</div>
-      <div class="card-body">
-        <div class="chart-wrap">
-          <canvas id="costChart" height="300"></canvas>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-header blue">📊 수익 vs 비용 비교</div>
-      <div class="card-body">
-        <canvas id="profitChart" height="300"></canvas>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- ═══════════════ TAB 4: 세율 참고표 ═══════════════ -->
 <div id="tab-tax" class="page">
   <div class="grid-2">
@@ -933,36 +887,40 @@
 </div>
 
 <!-- ═══════════════ TAB 5: 입찰 일정 ═══════════════ -->
-<div id="tab-calendar" class="page">
+<div id="tab-calendar" class="page active">
   <div style="padding:20px;">
     <div class="card">
       <div class="card-header blue">📅 입찰 일정 — Google 캘린더 연동</div>
       <div class="card-body">
 
-        <!-- Google 캘린더 임베드 URL 입력 -->
-        <div id="cal-setup" style="padding:16px 0;">
-          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:13px;line-height:1.9;color:#1e40af;">
-            <b>📌 연결 방법</b><br>
-            1. <a href="https://calendar.google.com/calendar/r/settings" target="_blank" style="color:var(--blue);font-weight:600;">Google 캘린더 설정</a> 접속<br>
-            2. 연결할 캘린더 클릭 (예: 경공매)<br>
-            3. <b>캘린더 통합</b> 섹션 → <b>공개 URL로 삽입</b> 복사<br>
-            4. 아래에 붙여넣기 → 저장
-          </div>
+        <!-- 안내 -->
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;margin-bottom:14px;font-size:13px;line-height:1.9;color:#1e40af;">
+          <b>📌 연결 방법</b><br>
+          1. <a href="https://calendar.google.com/calendar/r/settings" target="_blank" style="color:var(--blue);font-weight:600;">Google 캘린더 설정</a> 접속<br>
+          2. 연결할 캘린더 클릭 → <b>캘린더 통합</b> 섹션 → <b>공개 URL로 삽입</b> 복사<br>
+          3. 아래에 이름 입력 + URL 붙여넣기 → <b>+ 추가</b> (여러 개 추가 가능)
+        </div>
+
+        <!-- 캘린더 추가 폼 -->
+        <div style="background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;">
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <input type="text" id="cal-url-input" placeholder="https://calendar.google.com/calendar/embed?src=..." style="flex:1;min-width:260px;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
-            <button onclick="saveCalUrl()" style="padding:9px 18px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">저장</button>
-            <button onclick="clearCalUrl()" style="padding:9px 14px;background:white;color:var(--red);border:1.5px solid var(--red);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">초기화</button>
+            <input type="text" id="cal-name-input" placeholder="이름 (예: 경공매)" style="flex:0 0 120px;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:white;">
+            <input type="text" id="cal-url-input" placeholder="https://calendar.google.com/calendar/embed?src=..." style="flex:1;min-width:220px;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:white;">
+            <button onclick="addCalendar()" style="padding:9px 20px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;">+ 추가</button>
           </div>
         </div>
 
+        <!-- 추가된 캘린더 목록 -->
+        <div id="cal-list" style="margin-bottom:12px;"></div>
+
         <!-- 캘린더 iframe -->
         <div id="cal-frame-wrap" style="display:none;border-radius:10px;overflow:hidden;border:1px solid var(--border);">
-          <iframe id="cal-iframe" src="./index_files/saved_resource.html" style="width:100%;height:700px;border:none;" frameborder="0" scrolling="no"></iframe>
+          <iframe id="cal-iframe" src="" style="width:100%;height:680px;border:none;" frameborder="0" scrolling="no"></iframe>
         </div>
         <div id="cal-empty" style="text-align:center;padding:60px 20px;color:var(--gray);">
           <div style="font-size:48px;margin-bottom:12px;">📅</div>
           <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Google 캘린더를 연결하세요</div>
-          <div style="font-size:13px;">위 안내에 따라 임베드 URL을 입력하면<br>이 화면에 캘린더가 표시됩니다</div>
+          <div style="font-size:13px;">위 안내에 따라 캘린더를 추가하면 여기에 표시됩니다</div>
         </div>
 
       </div>
@@ -971,43 +929,80 @@
 </div>
 
 <script>
-// ── Google 캘린더 연동 ─────────────────────────────
+// ── Google 캘린더 다중 연동 ────────────────────────
+const CAL_KEY = 'booland_calendars';
+
+function getCalendars() {
+  try { return JSON.parse(localStorage.getItem(CAL_KEY) || '[]'); } catch { return []; }
+}
+
 (function initCalendar() {
-  const saved = localStorage.getItem('booland_cal_url') || '';
-  if (saved) {
-    document.getElementById('cal-url-input').value = saved;
-    renderCalendar(saved);
+  // 구버전 단일 URL → 다중 포맷 마이그레이션
+  const oldUrl = localStorage.getItem('booland_cal_url');
+  if (oldUrl && getCalendars().length === 0) {
+    localStorage.setItem(CAL_KEY, JSON.stringify([{ name: '캘린더', url: oldUrl, id: Date.now() }]));
+    localStorage.removeItem('booland_cal_url');
   }
+  renderCalendarList();
 })();
 
-function saveCalUrl() {
-  const url = document.getElementById('cal-url-input').value.trim();
+function addCalendar() {
+  const name = document.getElementById('cal-name-input').value.trim();
+  const url  = document.getElementById('cal-url-input').value.trim();
   if (!url) { alert('URL을 입력해주세요'); return; }
   if (!url.includes('calendar.google.com')) { alert('Google 캘린더 URL이 아닙니다'); return; }
-  localStorage.setItem('booland_cal_url', url);
-  renderCalendar(url);
-}
-
-function clearCalUrl() {
-  localStorage.removeItem('booland_cal_url');
+  const cals = getCalendars();
+  cals.push({ name: name || ('캘린더 ' + (cals.length + 1)), url, id: Date.now() });
+  localStorage.setItem(CAL_KEY, JSON.stringify(cals));
+  document.getElementById('cal-name-input').value = '';
   document.getElementById('cal-url-input').value = '';
-  document.getElementById('cal-frame-wrap').style.display = 'none';
-  document.getElementById('cal-empty').style.display = '';
+  renderCalendarList();
 }
 
-function renderCalendar(url) {
-  // 임베드 URL로 변환 (공유 URL이면 embed URL로 자동 변환)
-  let embedUrl = url;
-  if (url.includes('/calendar/r/')) {
-    // 일반 캘린더 URL이면 그냥 사용
-    embedUrl = url.replace('/calendar/r/', '/calendar/embed?');
-  }
-  // 언어 및 스타일 파라미터 추가
-  if (!embedUrl.includes('hl=')) {
-    embedUrl += (embedUrl.includes('?') ? '&' : '?') + 'hl=ko';
-  }
-  embedUrl += '&wkst=2&bgcolor=%23ffffff&ctz=Asia%2FSeoul&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=1&showTz=0&mode=MONTH';
+function removeCalendar(id) {
+  const cals = getCalendars().filter(c => c.id !== id);
+  localStorage.setItem(CAL_KEY, JSON.stringify(cals));
+  renderCalendarList();
+}
 
+function renderCalendarList() {
+  const cals = getCalendars();
+  const listEl = document.getElementById('cal-list');
+  if (!listEl) return;
+
+  if (cals.length === 0) {
+    listEl.innerHTML = '';
+    document.getElementById('cal-frame-wrap').style.display = 'none';
+    document.getElementById('cal-empty').style.display = '';
+    return;
+  }
+
+  listEl.innerHTML = cals.map(c => `
+    <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:white;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;">
+      <span style="font-size:15px;">📅</span>
+      <span style="flex:0 0 110px;font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.name}</span>
+      <span style="flex:1;font-size:11px;color:var(--gray);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.url}</span>
+      <button onclick="removeCalendar(${c.id})" style="flex:0 0 auto;padding:4px 12px;background:white;color:var(--red);border:1px solid var(--red);border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;">삭제</button>
+    </div>`).join('');
+
+  renderCombinedCalendar(cals);
+}
+
+function extractSrcs(url) {
+  try { return new URL(url).searchParams.getAll('src'); } catch { return []; }
+}
+
+function renderCombinedCalendar(cals) {
+  const srcs = [...new Set(cals.flatMap(c => extractSrcs(c.url)))];
+  let embedUrl;
+  if (srcs.length > 0) {
+    embedUrl = 'https://calendar.google.com/calendar/embed?' +
+      srcs.map(s => 'src=' + encodeURIComponent(s)).join('&') +
+      '&hl=ko&wkst=2&bgcolor=%23ffffff&ctz=Asia%2FSeoul&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=1&showTz=0&mode=MONTH';
+  } else {
+    // src 추출 불가 시 첫 번째 URL 그대로 사용
+    embedUrl = cals[0].url;
+  }
   document.getElementById('cal-iframe').src = embedUrl;
   document.getElementById('cal-frame-wrap').style.display = '';
   document.getElementById('cal-empty').style.display = 'none';
@@ -1260,8 +1255,6 @@ function calc() {
   $('r-bid-ratio').textContent = ratio.toFixed(1) + '%';
   $('r-bid-ratio-sub').textContent = '감정가 ' + app.toLocaleString('ko-KR') + '원 대비';
 
-  updateCharts(v);
-  updateSensTable();
 }
 
 function updateCharts(v) {
@@ -1692,15 +1685,8 @@ function showTab(name, tabEl) {
   document.getElementById('tab-' + name).classList.add('active');
   const target = tabEl || (typeof event !== 'undefined' && event.target ? event.target : null);
   if (target) target.classList.add('active');
-  if (name === 'chart' || name === 'sens') calc();
   if (name === 'saves') renderSavesList();
-  // 캘린더 탭 진입 시 저장된 URL 있으면 자동 렌더
-  if (name === 'calendar') {
-    const saved = localStorage.getItem('booland_cal_url') || '';
-    if (saved && !document.getElementById('cal-iframe').src.includes('calendar')) {
-      renderCalendar(saved);
-    }
-  }
+  if (name === 'calendar') renderCalendarList();
 }
 
 // ─── Firebase 설정 ────────────────────────────────────────────────────────────
