@@ -955,6 +955,8 @@
 <script>
 // ── Google 캘린더 다중 연동 ────────────────────────
 const CAL_KEY = 'booland_calendars';
+// 기본 색상 팔레트 (색상 미지정 캘린더에 순서대로 배정)
+const CAL_COLORS = ['#039BE5','#E67C73','#33B679','#F09300','#3F51B5','#8D24B2','#0B8043','#F6BF26','#D81B60','#7986CB'];
 
 function getCalendars() {
   try { return JSON.parse(localStorage.getItem(CAL_KEY) || '[]'); } catch { return []; }
@@ -969,9 +971,6 @@ function getCalendars() {
   }
   renderCalendarList();
 })();
-
-// 기본 색상 팔레트 (색상 미지정 캘린더에 순서대로 배정)
-const CAL_COLORS = ['#039BE5','#E67C73','#33B679','#F09300','#3F51B5','#8D24B2','#0B8043','#F6BF26','#D81B60','#7986CB'];
 
 function toggleCalForm() {
   const form = document.getElementById('cal-add-form');
