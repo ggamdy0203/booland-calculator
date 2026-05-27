@@ -888,44 +888,68 @@
 
 <!-- ═══════════════ TAB 5: 입찰 일정 ═══════════════ -->
 <div id="tab-calendar" class="page active">
-  <div style="padding:20px;">
-    <div class="card">
-      <div class="card-header blue">📅 입찰 일정 — Google 캘린더 연동</div>
-      <div class="card-body">
 
-        <!-- 안내 -->
-        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;margin-bottom:14px;font-size:13px;line-height:1.9;color:#1e40af;">
-          <b>📌 연결 방법</b><br>
-          1. <a href="https://calendar.google.com/calendar/r/settings" target="_blank" style="color:var(--blue);font-weight:600;">Google 캘린더 설정</a> 접속<br>
-          2. 연결할 캘린더 클릭 → <b>캘린더 통합</b> 섹션 → <b>공개 URL로 삽입</b> 복사<br>
-          3. 아래에 이름 입력 + URL 붙여넣기 → <b>+ 추가</b> (여러 개 추가 가능)
+  <!-- ① 관리 바 (항상 보임) -->
+  <div style="padding:10px 20px 6px;">
+    <div style="background:white;border:1px solid var(--border);border-radius:10px;padding:9px 14px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:12px;font-weight:700;color:var(--gray);flex-shrink:0;">📅 캘린더</span>
+        <div id="cal-chips" style="display:flex;gap:5px;flex-wrap:wrap;flex:1;min-width:0;"></div>
+        <button onclick="toggleCalForm()" id="cal-toggle-btn"
+          style="flex-shrink:0;padding:5px 14px;background:var(--blue);color:white;border:none;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">
+          + 추가
+        </button>
+      </div>
+
+      <!-- 펼쳐지는 추가 폼 -->
+      <div id="cal-add-form" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:7px;padding:10px 14px;margin-bottom:10px;font-size:12px;line-height:1.8;color:#1e40af;">
+          <b>연결 방법</b> &nbsp;—&nbsp;
+          <a href="https://calendar.google.com/calendar/r/settings" target="_blank" style="color:var(--blue);font-weight:600;">Google 캘린더 설정</a>
+          → 캘린더 선택 → <b>캘린더 통합</b> → <b>공개 URL로 삽입</b> 복사 후 아래 붙여넣기
         </div>
-
-        <!-- 캘린더 추가 폼 -->
-        <div style="background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;">
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <input type="text" id="cal-name-input" placeholder="이름 (예: 경공매)" style="flex:0 0 120px;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:white;">
-            <input type="text" id="cal-url-input" placeholder="https://calendar.google.com/calendar/embed?src=..." style="flex:1;min-width:220px;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:white;">
-            <button onclick="addCalendar()" style="padding:9px 20px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;">+ 추가</button>
-          </div>
+        <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
+          <select id="cal-color-input" style="flex:0 0 auto;padding:7px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:white;cursor:pointer;">
+            <option value="#E67C73">🔴 빨강</option>
+            <option value="#D81B60">🌸 분홍</option>
+            <option value="#F09300">🟠 주황</option>
+            <option value="#F6BF26">🟡 노랑</option>
+            <option value="#E4C441">💛 연노랑</option>
+            <option value="#33B679">🟢 연두</option>
+            <option value="#0B8043">🌲 초록</option>
+            <option value="#039BE5" selected>🔵 파랑</option>
+            <option value="#3F51B5">🔷 남색</option>
+            <option value="#7986CB">💜 연보라</option>
+            <option value="#8D24B2">🟣 보라</option>
+            <option value="#616161">⬛ 회색</option>
+          </select>
+          <input type="text" id="cal-name-input" placeholder="이름 (예: 경공매)"
+            style="flex:0 0 120px;padding:7px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+          <input type="text" id="cal-url-input" placeholder="https://calendar.google.com/calendar/embed?src=..."
+            style="flex:1;min-width:220px;padding:7px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+          <button onclick="addCalendar()"
+            style="padding:7px 18px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;">
+            추가
+          </button>
+          <button onclick="toggleCalForm()"
+            style="padding:7px 12px;background:white;color:var(--gray);border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;">
+            ✕
+          </button>
         </div>
-
-        <!-- 추가된 캘린더 목록 -->
-        <div id="cal-list" style="margin-bottom:12px;"></div>
-
-        <!-- 캘린더 iframe -->
-        <div id="cal-frame-wrap" style="display:none;border-radius:10px;overflow:hidden;border:1px solid var(--border);">
-          <iframe id="cal-iframe" src="" style="width:100%;height:680px;border:none;" frameborder="0" scrolling="no"></iframe>
-        </div>
-        <div id="cal-empty" style="text-align:center;padding:60px 20px;color:var(--gray);">
-          <div style="font-size:48px;margin-bottom:12px;">📅</div>
-          <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Google 캘린더를 연결하세요</div>
-          <div style="font-size:13px;">위 안내에 따라 캘린더를 추가하면 여기에 표시됩니다</div>
-        </div>
-
       </div>
     </div>
   </div>
+
+  <!-- ② 캘린더 iframe (화면 가득) -->
+  <div id="cal-frame-wrap" style="display:none;padding:6px 20px 16px;">
+    <iframe id="cal-iframe" src="" style="width:100%;height:calc(100vh - 215px);min-height:500px;border:1px solid var(--border);border-radius:10px;display:block;" frameborder="0" scrolling="no"></iframe>
+  </div>
+  <div id="cal-empty" style="text-align:center;padding:80px 20px;color:var(--gray);">
+    <div style="font-size:48px;margin-bottom:12px;">📅</div>
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Google 캘린더를 연결하세요</div>
+    <div style="font-size:13px;">위 <b>+ 추가</b> 버튼을 눌러 캘린더를 추가하면 여기에 표시됩니다</div>
+  </div>
+
 </div>
 
 <script>
@@ -946,16 +970,29 @@ function getCalendars() {
   renderCalendarList();
 })();
 
+// 기본 색상 팔레트 (색상 미지정 캘린더에 순서대로 배정)
+const CAL_COLORS = ['#039BE5','#E67C73','#33B679','#F09300','#3F51B5','#8D24B2','#0B8043','#F6BF26','#D81B60','#7986CB'];
+
+function toggleCalForm() {
+  const form = document.getElementById('cal-add-form');
+  const btn  = document.getElementById('cal-toggle-btn');
+  const open = form.style.display === 'none';
+  form.style.display = open ? '' : 'none';
+  btn.textContent    = open ? '✕ 닫기' : '+ 추가';
+}
+
 function addCalendar() {
-  const name = document.getElementById('cal-name-input').value.trim();
-  const url  = document.getElementById('cal-url-input').value.trim();
+  const name  = document.getElementById('cal-name-input').value.trim();
+  const url   = document.getElementById('cal-url-input').value.trim();
+  const color = document.getElementById('cal-color-input').value;
   if (!url) { alert('URL을 입력해주세요'); return; }
   if (!url.includes('calendar.google.com')) { alert('Google 캘린더 URL이 아닙니다'); return; }
   const cals = getCalendars();
-  cals.push({ name: name || ('캘린더 ' + (cals.length + 1)), url, id: Date.now() });
+  cals.push({ name: name || ('캘린더 ' + (cals.length + 1)), url, color, id: Date.now() });
   localStorage.setItem(CAL_KEY, JSON.stringify(cals));
   document.getElementById('cal-name-input').value = '';
-  document.getElementById('cal-url-input').value = '';
+  document.getElementById('cal-url-input').value  = '';
+  toggleCalForm();
   renderCalendarList();
 }
 
@@ -966,24 +1003,27 @@ function removeCalendar(id) {
 }
 
 function renderCalendarList() {
-  const cals = getCalendars();
-  const listEl = document.getElementById('cal-list');
-  if (!listEl) return;
+  const cals    = getCalendars();
+  const chipsEl = document.getElementById('cal-chips');
+  if (!chipsEl) return;
 
   if (cals.length === 0) {
-    listEl.innerHTML = '';
+    chipsEl.innerHTML = '';
     document.getElementById('cal-frame-wrap').style.display = 'none';
-    document.getElementById('cal-empty').style.display = '';
+    document.getElementById('cal-empty').style.display      = '';
     return;
   }
 
-  listEl.innerHTML = cals.map(c => `
-    <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:white;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;">
-      <span style="font-size:15px;">📅</span>
-      <span style="flex:0 0 110px;font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.name}</span>
-      <span style="flex:1;font-size:11px;color:var(--gray);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.url}</span>
-      <button onclick="removeCalendar(${c.id})" style="flex:0 0 auto;padding:4px 12px;background:white;color:var(--red);border:1px solid var(--red);border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;">삭제</button>
-    </div>`).join('');
+  // 색상 없는 구버전 항목에 기본 색 배정
+  chipsEl.innerHTML = cals.map((c, i) => {
+    const col = c.color || CAL_COLORS[i % CAL_COLORS.length];
+    return `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px 4px 8px;border-radius:20px;font-size:12px;font-weight:600;color:white;background:${col};white-space:nowrap;">
+      <span style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.5);flex-shrink:0;"></span>
+      ${c.name}
+      <button onclick="removeCalendar(${c.id})" title="삭제"
+        style="background:none;border:none;color:rgba(255,255,255,0.85);cursor:pointer;font-size:15px;padding:0;line-height:1;margin-left:2px;font-family:inherit;">×</button>
+    </span>`;
+  }).join('');
 
   renderCombinedCalendar(cals);
 }
@@ -993,19 +1033,32 @@ function extractSrcs(url) {
 }
 
 function renderCombinedCalendar(cals) {
-  const srcs = [...new Set(cals.flatMap(c => extractSrcs(c.url)))];
+  // 각 캘린더의 src 목록과 색상을 쌍으로 수집
+  const pairs = [];
+  const seen  = new Set();
+  cals.forEach((c, i) => {
+    const col  = c.color || CAL_COLORS[i % CAL_COLORS.length];
+    const srcs = extractSrcs(c.url);
+    srcs.forEach(s => {
+      if (!seen.has(s)) { seen.add(s); pairs.push({ src: s, color: col }); }
+    });
+  });
+
   let embedUrl;
-  if (srcs.length > 0) {
-    embedUrl = 'https://calendar.google.com/calendar/embed?' +
-      srcs.map(s => 'src=' + encodeURIComponent(s)).join('&') +
+  if (pairs.length > 0) {
+    // src=...&color=...&src=...&color=... 형식으로 조합 (Google Calendar 임베드 규격)
+    const params = pairs.map(p =>
+      'src=' + encodeURIComponent(p.src) + '&color=' + encodeURIComponent(p.color)
+    ).join('&');
+    embedUrl = 'https://calendar.google.com/calendar/embed?' + params +
       '&hl=ko&wkst=2&bgcolor=%23ffffff&ctz=Asia%2FSeoul&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=1&showTz=0&mode=MONTH';
   } else {
-    // src 추출 불가 시 첫 번째 URL 그대로 사용
-    embedUrl = cals[0].url;
+    embedUrl = cals[0].url;  // src 추출 불가 시 원본 URL 그대로
   }
+
   document.getElementById('cal-iframe').src = embedUrl;
   document.getElementById('cal-frame-wrap').style.display = '';
-  document.getElementById('cal-empty').style.display = 'none';
+  document.getElementById('cal-empty').style.display      = 'none';
 }
 
 function $(id){return document.getElementById(id);}
