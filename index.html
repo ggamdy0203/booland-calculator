@@ -157,8 +157,11 @@
 
   /* 폴더 */
   .folder-row { margin-bottom: 8px; }
-  .folder-header { display:flex; align-items:center; gap:8px; padding:8px 12px; background:#f5f3ff; border:1.5px solid #ddd6fe; border-radius:8px; cursor:pointer; font-size:13px; font-weight:700; color:#5b21b6; user-select:none; }
+  .folder-header { display:flex; align-items:center; gap:8px; padding:8px 12px; background:#f5f3ff; border:1.5px solid #ddd6fe; border-radius:8px; cursor:pointer; font-size:13px; font-weight:700; color:#5b21b6; user-select:none; transition:background 0.12s, border-color 0.12s; }
   .folder-header:hover { background:#ede9fe; }
+  .folder-header.drag-over { background:#ede9fe; border-color:#7c3aed; border-style:dashed; }
+  .unassigned-drop.drag-over { border-color:#6b7280 !important; border-style:dashed !important; background:#f9fafb; }
+  .save-item.dragging { opacity:0.45; }
   .folder-toggle { font-size:11px; color:#7c3aed; transition:transform 0.15s; }
   .folder-items { padding: 4px 0 0 16px; }
   .folder-item-indent { border-left: 2px solid #ddd6fe; padding-left: 10px; margin-bottom: 6px; }
@@ -2155,6 +2158,34 @@ async function loadOrderFromCloud() {
   } catch(e) {}
 }
 
+// ── 아이템 드래그 → 폴더 이동 ───────────────────
+let _dragSaveId = null;
+function onItemDragStart(e, saveId) {
+  _dragSaveId = saveId;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.classList.add('dragging');
+}
+function onItemDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+}
+function onFolderDragOver(e, el) {
+  if (!_dragSaveId) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  el.classList.add('drag-over');
+}
+function onFolderDragLeave(e, el) {
+  if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+  el.classList.remove('drag-over');
+}
+function onFolderDrop(e, folderId, el) {
+  e.preventDefault();
+  el.classList.remove('drag-over');
+  if (!_dragSaveId) return;
+  moveToFolder(_dragSaveId, folderId);
+  _dragSaveId = null;
+}
+
 // ── 정렬 ────────────────────────────────────────
 function sortSaves(saves) {
   return [...saves].sort((a, b) => {
@@ -2251,7 +2282,8 @@ function _renderSaveItem(s, folders) {
     ${realInvestVal !== null ? `&nbsp;&nbsp;실투자금: <span style="color:var(--green);font-weight:700">${fmt(realInvestVal)}</span>` : ''}
     ${monthlyNetVal !== null ? `&nbsp;&nbsp;월순수익: <span style="color:var(--red);font-weight:700">${fmt(monthlyNetVal)}</span>` : ''}` : '';
   const inFolder = folders.find(f => f.itemIds.includes(s.id));
-  return `<div class="save-item" data-id="${s.id}">
+  return `<div class="save-item" data-id="${s.id}" draggable="true"
+      ondragstart="onItemDragStart(event,'${s.id}')" ondragend="onItemDragEnd(event)">
     <div class="save-item-inner" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
       <div style="flex:1;min-width:0;">
         <div class="save-item-title" style="display:flex;align-items:center;gap:8px;">
@@ -2320,7 +2352,11 @@ async function renderSavesList() {
     const items = sortSaves(folder.itemIds.map(id => sorted.find(s => s.id === id)).filter(Boolean));
     const isOpen = folder.open !== false;
     html += `<div class="folder-row">
-      <div class="folder-header" onclick="toggleFolder('${folder.id}')">
+      <div class="folder-header"
+          onclick="toggleFolder('${folder.id}')"
+          ondragover="onFolderDragOver(event,this)"
+          ondragleave="onFolderDragLeave(event,this)"
+          ondrop="onFolderDrop(event,'${folder.id}',this)">
         <span class="folder-toggle">${isOpen ? '▼' : '▶'}</span>
         <span>${isOpen ? '📂' : '📁'} ${folder.name}</span>
         <span style="font-size:11px;font-weight:400;color:#7c3aed;opacity:0.7">(${items.length}개)</span>
@@ -2337,11 +2373,14 @@ async function renderSavesList() {
   });
 
   // ── 폴더 밖 항목 렌더
-  if (rootItems.length > 0) {
-    if (folders.length > 0) {
-      html += `<div style="font-size:11px;font-weight:700;color:#6b7280;margin:10px 0 4px 2px;letter-spacing:0.03em">📌 폴더 미분류</div>`;
-    }
-    html += rootItems.map(s => _renderSaveItem(s, folders)).join('');
+  if (rootItems.length > 0 || folders.length > 0) {
+    const unassignedHeader = folders.length > 0
+      ? `<div class="unassigned-drop" style="font-size:11px;font-weight:700;color:#6b7280;margin:10px 0 4px 2px;letter-spacing:0.03em;padding:4px 8px;border-radius:6px;border:1.5px solid transparent;"
+          ondragover="onFolderDragOver(event,this)"
+          ondragleave="onFolderDragLeave(event,this)"
+          ondrop="onFolderDrop(event,null,this)">📌 폴더 미분류 (여기에 드롭하면 폴더에서 제거)</div>`
+      : '';
+    html += unassignedHeader + rootItems.map(s => _renderSaveItem(s, folders)).join('');
   }
 
   list.innerHTML = html || '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">저장된 항목이 없습니다.</div>';
