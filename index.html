@@ -1198,7 +1198,7 @@ function renderCombinedCalendar(cals) {
       'src=' + encodeURIComponent(p.src) + '&color=' + encodeURIComponent(p.color)
     ).join('&');
     embedUrl = 'https://calendar.google.com/calendar/embed?' + params +
-      '&hl=ko&wkst=2&bgcolor=%23ffffff&ctz=Asia%2FSeoul&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=1&showTz=0&mode=MONTH';
+      '&hl=ko&wkst=1&bgcolor=%23ffffff&ctz=Asia%2FSeoul&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=1&showTz=0&mode=MONTH';
   } else {
     embedUrl = cals[0].url;  // src 추출 불가 시 원본 URL 그대로
   }
