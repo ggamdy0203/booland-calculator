@@ -181,9 +181,9 @@
   .save-item-memo { font-size: 11px; color: #374151; background: var(--gray-light); padding: 3px 8px; border-radius: 6px; word-break: break-word; border-left: 3px solid #93c5fd; max-height: 40px; overflow-y: scroll; scroll-snap-type: y mandatory; }
   .save-item-memo-line { line-height: 20px; height: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; scroll-snap-align: start; }
   .save-item-actions { display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; }
-  .btn-load { padding: 6px 16px; background: var(--blue); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .btn-load { padding: 5px 12px; background: var(--blue); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
   .btn-load:hover { background: #1e40af; }
-  .btn-del  { padding: 6px 16px; background: white; color: var(--red); border: 1.5px solid var(--red); border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .btn-del  { padding: 5px 12px; background: white; color: var(--red); border: 1.5px solid var(--red); border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
   .btn-del:hover  { background: var(--red-light); }
   .save-empty { text-align: center; color: var(--text-sub); padding: 48px 0; font-size: 13px; }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: 10px 22px; border-radius: 8px; font-size: 13px; font-weight: 600; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
@@ -238,11 +238,21 @@
     .tax-table { font-size: 11px; }
     .tax-table th, .tax-table td { padding: 6px 8px; }
 
-    /* 저장 목록 — 인라인 스타일 덮어쓰기 */
+    /* 저장 목록 — 모바일 */
     .save-item { padding: 10px 12px; }
-    .save-item .save-item-inner { flex-direction: column !important; gap: 8px !important; }
-    .save-item .save-item-right { width: 100% !important; flex-direction: column !important; gap: 6px !important; }
-    .save-item .save-item-btns { flex-direction: row !important; justify-content: flex-end !important; }
+    /* 세로 레이아웃 전환 */
+    .save-item-inner { flex-direction: column !important; gap: 6px !important; }
+    .save-item-right { width: 100% !important; flex-direction: column !important; gap: 6px !important; }
+    /* PC용 입찰일 badge 숨기고 모바일용 표시 */
+    .biddate-inline { display: none !important; }
+    .biddate-mobile { display: block !important; }
+    /* 메모 더 크게 */
+    .save-item-memo { max-height: 72px !important; }
+    .save-memo-empty { min-height: 48px !important; }
+    /* 버튼 가로 정렬 + 작게 */
+    .save-item-btns { flex-direction: row !important; justify-content: flex-end; gap: 6px !important; }
+    .btn-folder, .btn-load, .btn-del { padding: 5px 10px !important; font-size: 11px !important; }
+    .folder-header { font-size: 12px; padding: 7px 10px; }
 
     /* 입찰 일정 캘린더 추가 폼 */
     #cal-add-form > div { flex-wrap: wrap !important; }
@@ -1203,9 +1213,25 @@ function renderCombinedCalendar(cals) {
     embedUrl = cals[0].url;  // src 추출 불가 시 원본 URL 그대로
   }
 
-  document.getElementById('cal-iframe').src = embedUrl;
-  document.getElementById('cal-frame-wrap').style.display = '';
-  document.getElementById('cal-empty').style.display      = 'none';
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (isMobile) {
+    // 모바일: iframe 대신 링크 버튼 표시
+    document.getElementById('cal-frame-wrap').innerHTML = `
+      <div style="text-align:center;padding:40px 20px;">
+        <div style="font-size:48px;margin-bottom:16px;">📅</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:8px;color:#1e40af;">Google 캘린더가 연결됐습니다!</div>
+        <div style="font-size:13px;color:#6b7280;margin-bottom:24px;">모바일에서는 앱에서 직접 확인하세요.</div>
+        <a href="${embedUrl.replace('/embed?','/r?')}" target="_blank"
+          style="display:inline-block;padding:12px 28px;background:#1a56db;color:white;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;">
+          📅 Google 캘린더 앱으로 열기
+        </a>
+      </div>`;
+    document.getElementById('cal-frame-wrap').style.display = '';
+  } else {
+    document.getElementById('cal-iframe').src = embedUrl;
+    document.getElementById('cal-frame-wrap').style.display = '';
+  }
+  document.getElementById('cal-empty').style.display = 'none';
 }
 
 function $(id){return document.getElementById(id);}
@@ -2192,13 +2218,13 @@ function sortSaves(saves) {
     // 입찰일 오름차순 (없으면 뒤로)
     if (a.bidDate && b.bidDate) {
       if (a.bidDate !== b.bidDate) return a.bidDate < b.bidDate ? -1 : 1;
-      // 입찰일 같으면 사건번호 오름차순
-      return (a.caseNo || '').localeCompare(b.caseNo || '', 'ko');
+      // 입찰일 같으면 사건번호 오름차순 (숫자 포함 자연 정렬)
+      return (a.caseNo || '').localeCompare(b.caseNo || '', 'ko', { numeric: true });
     }
     if (a.bidDate) return -1;
     if (b.bidDate) return 1;
     // 입찰일 없으면 사건번호 오름차순
-    return (a.caseNo || '').localeCompare(b.caseNo || '', 'ko');
+    return (a.caseNo || '').localeCompare(b.caseNo || '', 'ko', { numeric: true });
   });
 }
 
@@ -2269,41 +2295,53 @@ function hideFolderMenu() {
 
 // ── 저장 목록 렌더 ──────────────────────────────
 function _renderSaveItem(s, folders) {
-  const fmt   = n => isNaN(n) ? '-' : Math.round(n).toLocaleString('ko-KR') + '원';
-  const fmtP  = n => isNaN(n) ? '-' : n.toFixed(1) + '%';
-  const fmtDate = d => d ? d.replace(/-/g, '.') : null;
-  const title = [s.caseNo, s.addr].filter(Boolean).join(' · ') || '(제목 없음)';
+  const fmt    = n => isNaN(n) ? '-' : Math.round(n).toLocaleString('ko-KR') + '원';
+  const fmtP   = n => isNaN(n) ? '-' : n.toFixed(1) + '%';
+  const fmtDate= d => d ? d.replace(/-/g, '.') : null;
+  const title  = [s.caseNo, s.addr].filter(Boolean).join(' · ') || '(제목 없음)';
   const memoHtml = s.memo ? s.memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
   const monthlyNetVal = s.monthlyNet !== undefined ? s.monthlyNet : null;
   const realInvestVal = s.realInvest !== undefined ? s.realInvest : null;
   const bidDateStr = fmtDate(s.bidDate);
-  const extraMeta = (realInvestVal !== null || monthlyNetVal !== null) ? `
-    <span style="margin-left:4px">|</span>
-    ${realInvestVal !== null ? `&nbsp;&nbsp;실투자금: <span style="color:var(--green);font-weight:700">${fmt(realInvestVal)}</span>` : ''}
-    ${monthlyNetVal !== null ? `&nbsp;&nbsp;월순수익: <span style="color:var(--red);font-weight:700">${fmt(monthlyNetVal)}</span>` : ''}` : '';
   const inFolder = folders.find(f => f.itemIds.includes(s.id));
+
+  const metaHtml = `낙찰가: <span style="color:var(--blue);font-weight:700">${fmt(s.bid)}</span>
+    &nbsp;|&nbsp; 연환산 ROE: <strong>${fmtP(s.roeAnn)}/년</strong>
+    &nbsp;|&nbsp; 순이익: <span style="color:var(--red);font-weight:700">${fmt(s.netProfit)}</span>
+    ${realInvestVal !== null ? `&nbsp;|&nbsp; 실투자금: <span style="color:var(--green);font-weight:700">${fmt(realInvestVal)}</span>` : ''}
+    ${monthlyNetVal !== null ? `&nbsp;|&nbsp; 월순수익: <span style="color:var(--red);font-weight:700">${fmt(monthlyNetVal)}</span>` : ''}`;
+
+  const memoBlock = memoHtml
+    ? `<div class="save-item-memo">${memoHtml.split('\n').map(l=>`<div class="save-item-memo-line">${l||'&nbsp;'}</div>`).join('')}</div>`
+    : `<div class="save-memo-empty" style="min-height:36px;background:var(--gray-light);border-radius:6px;border-left:3px solid #e5e7eb;"></div>`;
+
   return `<div class="save-item" data-id="${s.id}" draggable="true"
       ondragstart="onItemDragStart(event,'${s.id}')" ondragend="onItemDragEnd(event)">
     <div class="save-item-inner" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
-      <div style="flex:1;min-width:0;">
-        <div class="save-item-title" style="display:flex;align-items:center;gap:8px;">
+
+      <!-- PC: 왼쪽 (제목+메타) -->
+      <div class="save-item-left" style="flex:1;min-width:0;">
+        <!-- 제목 + 입찰일 badge (PC: 한 줄) -->
+        <div class="save-item-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           📌 ${title}
-          ${bidDateStr ? `<span style="padding:2px 8px;background:#f3e8ff;color:#7c3aed;border-radius:10px;font-size:11px;font-weight:700">🗓 입찰일 ${bidDateStr}</span>` : ''}
+          ${bidDateStr ? `<span class="biddate-inline" style="padding:2px 8px;background:#f3e8ff;color:#7c3aed;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;">🗓 입찰일 ${bidDateStr}</span>` : ''}
         </div>
-        <div class="save-item-meta" style="margin-top:4px;padding-left:4px;">
-          낙찰가: <span style="color:var(--blue);font-weight:700">${fmt(s.bid)}</span>&nbsp;&nbsp;|&nbsp;&nbsp;연환산 ROE: <strong>${fmtP(s.roeAnn)}/년</strong>&nbsp;&nbsp;|&nbsp;&nbsp;순이익: <span style="color:var(--red);font-weight:700">${fmt(s.netProfit)}</span>${extraMeta}
-        </div>
+        <!-- 입찰일 별도 줄 (모바일 전용) -->
+        ${bidDateStr ? `<div class="biddate-mobile" style="display:none;margin:3px 0 2px;font-size:12px;font-weight:700;color:#7c3aed;">🗓 입찰일 ${bidDateStr}</div>` : ''}
+        <!-- 수익 정보 -->
+        <div class="save-item-meta" style="margin-top:4px;">${metaHtml}</div>
       </div>
+
+      <!-- PC: 오른쪽 (메모+버튼) -->
       <div class="save-item-right" style="flex-shrink:0;display:flex;gap:8px;align-items:center;width:42%;">
-        <div style="flex:1;min-width:0;">
-          ${memoHtml ? `<div class="save-item-memo">${memoHtml.split('\n').map(l => `<div class="save-item-memo-line">${l || '&nbsp;'}</div>`).join('')}</div>` : '<div style="min-height:36px;background:var(--gray-light);border-radius:6px;border-left:3px solid #e5e7eb;"></div>'}
-        </div>
+        <div style="flex:1;min-width:0;">${memoBlock}</div>
         <div class="save-item-btns" style="display:flex;flex-direction:row;gap:6px;flex-shrink:0;">
-          <button class="btn-folder" onclick="event.stopPropagation();showFolderMenu('${s.id}',this)" title="폴더 지정">📁${inFolder ? ' ✓' : ''}</button>
-          <button class="btn-load" onclick="loadSave('${s.id}')">📂 불러오기</button>
-          <button class="btn-del" onclick="deleteSave('${s.id}')">🗑 삭제</button>
+          <button class="btn-folder" onclick="event.stopPropagation();showFolderMenu('${s.id}',this)">📁${inFolder?' ✓':''}</button>
+          <button class="btn-load"   onclick="loadSave('${s.id}')">📂 불러오기</button>
+          <button class="btn-del"    onclick="deleteSave('${s.id}')">🗑 삭제</button>
         </div>
       </div>
+
     </div>
   </div>`;
 }
@@ -2347,8 +2385,19 @@ async function renderSavesList() {
 
   let html = '';
 
+  // ── 폴더를 대표 입찰일 기준으로 정렬 (폴더 내 가장 빠른 입찰일 기준)
+  const sortedFolders = [...folders].sort((a, b) => {
+    const getMinDate = f => f.itemIds.map(id => sorted.find(s => s.id === id)).filter(Boolean)
+      .map(s => s.bidDate).filter(Boolean).sort()[0] || '';
+    const da = getMinDate(a), db = getMinDate(b);
+    if (da && db) return da < db ? -1 : da > db ? 1 : 0;
+    if (da) return -1;
+    if (db) return 1;
+    return 0;
+  });
+
   // ── 폴더 렌더
-  folders.forEach(folder => {
+  sortedFolders.forEach(folder => {
     const items = sortSaves(folder.itemIds.map(id => sorted.find(s => s.id === id)).filter(Boolean));
     const isOpen = folder.open !== false;
     html += `<div class="folder-row">
