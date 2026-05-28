@@ -106,11 +106,12 @@
   .form-input-wrap { flex: 1; display: flex; align-items: center; gap: 6px; }
   .form-note { font-size: 11px; color: #9ca3af; flex: 0 0 auto; }
 
-  input[type="text"], select {
+  input[type="text"], input[type="date"], select {
     width: 100%; padding: 5px 8px; border: 1.5px solid var(--border); border-radius: 6px;
     font-family: inherit; font-size: 13px; color: var(--text); background: var(--blue-light);
     transition: border 0.15s;
   }
+  input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.5; cursor: pointer; }
   input[type="text"]:focus, select:focus { outline: none; border-color: var(--blue); }
   input[type="text"].currency { text-align: right; }
   input[type="text"].pct { background: var(--blue-light); }
@@ -154,13 +155,29 @@
   .divider { height: 1px; background: var(--border); margin: 14px 0; }
   .chart-wrap { max-width: 420px; margin: 0 auto; }
 
+  /* 폴더 */
+  .folder-row { margin-bottom: 8px; }
+  .folder-header { display:flex; align-items:center; gap:8px; padding:8px 12px; background:#f5f3ff; border:1.5px solid #ddd6fe; border-radius:8px; cursor:pointer; font-size:13px; font-weight:700; color:#5b21b6; user-select:none; }
+  .folder-header:hover { background:#ede9fe; }
+  .folder-toggle { font-size:11px; color:#7c3aed; transition:transform 0.15s; }
+  .folder-items { padding: 4px 0 0 16px; }
+  .folder-item-indent { border-left: 2px solid #ddd6fe; padding-left: 10px; margin-bottom: 6px; }
+  .btn-folder { padding:4px 8px; background:#f5f3ff; color:#7c3aed; border:1px solid #ddd6fe; border-radius:5px; font-size:11px; font-weight:600; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  .btn-folder:hover { background:#ede9fe; }
+  /* 폴더 팝업 메뉴 */
+  #folderMenu { display:none; position:fixed; z-index:9999; background:white; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.13); padding:6px; min-width:160px; }
+  .folder-menu-item { padding:7px 12px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600; color:#374151; }
+  .folder-menu-item:hover { background:#f3f4f6; }
+  .folder-menu-item.active { color:#7c3aed; background:#f5f3ff; }
+
   /* 저장 목록 */
-  .save-item { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; background: white; transition: border-color 0.15s; }
+  .save-item { border: 1px solid var(--border); border-radius: 10px; padding: 8px 14px; margin-bottom: 6px; background: white; transition: border-color 0.15s; }
   .save-item:hover { border-color: #93c5fd; }
-  .save-item-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
-  .save-item-meta { font-size: 11px; color: var(--text-sub); line-height: 1.9; }
-  .save-item-memo { font-size: 11px; color: #374151; background: var(--gray-light); padding: 7px 10px; border-radius: 6px; margin-top: 8px; white-space: pre-wrap; word-break: break-word; border-left: 3px solid #93c5fd; }
-  .save-item-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .save-item-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .save-item-meta { font-size: 11px; color: var(--text-sub); line-height: 1.5; }
+  .save-item-memo { font-size: 11px; color: #374151; background: var(--gray-light); padding: 3px 8px; border-radius: 6px; word-break: break-word; border-left: 3px solid #93c5fd; max-height: 40px; overflow-y: scroll; scroll-snap-type: y mandatory; }
+  .save-item-memo-line { line-height: 20px; height: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; scroll-snap-align: start; }
+  .save-item-actions { display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; }
   .btn-load { padding: 6px 16px; background: var(--blue); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
   .btn-load:hover { background: #1e40af; }
   .btn-del  { padding: 6px 16px; background: white; color: var(--red); border: 1.5px solid var(--red); border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
@@ -175,6 +192,63 @@
     .col-span-2 { grid-column: span 1; }
   }
 
+  /* ═══════ 모바일 스타일 (640px 이하) ═══════ */
+  @media (max-width: 640px) {
+    /* 헤더 */
+    .header { height: 54px; padding: 0 14px; }
+    .header-title { font-size: 20px; }
+    .header-sub { font-size: 9px; letter-spacing: 1px; }
+    .header-desc { display: none; }
+    .header-shape { display: none; }
+    .auth-btn { padding: 5px 10px; font-size: 12px; }
+    .auth-user-name { max-width: 100px; font-size: 11px; }
+
+    /* 탭 */
+    .tabs { padding: 0 8px; }
+    .tab { padding: 10px 12px; font-size: 12px; white-space: nowrap; }
+
+    /* 페이지 여백 */
+    .page { padding: 12px 10px; }
+
+    /* 카드 */
+    .card-header { padding: 10px 12px; font-size: 12px; }
+    .card-body { padding: 10px 12px; }
+
+    /* 폼 행 */
+    .form-row { flex-wrap: wrap; gap: 4px; padding: 6px 0; }
+    .form-label { flex: 0 0 100%; font-size: 11px; color: var(--text); font-weight: 600; padding-bottom: 2px; }
+    .form-input-wrap { flex: 1; width: 100%; }
+    .form-note { font-size: 10px; }
+
+    /* 결과 그리드 */
+    .result-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .result-value { font-size: 15px; }
+    .result-value.gold { font-size: 17px; }
+    .result-item { padding: 10px 12px; }
+
+    /* 민감도 테이블 가로 스크롤 */
+    .sens-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .sens-table { min-width: 480px; font-size: 11px; }
+    .sens-table th, .sens-table td { padding: 5px 7px; }
+
+    /* 세율 참고표 */
+    .tax-table { font-size: 11px; }
+    .tax-table th, .tax-table td { padding: 6px 8px; }
+
+    /* 저장 목록 — 인라인 스타일 덮어쓰기 */
+    .save-item { padding: 10px 12px; }
+    .save-item .save-item-inner { flex-direction: column !important; gap: 8px !important; }
+    .save-item .save-item-right { width: 100% !important; flex-direction: column !important; gap: 6px !important; }
+    .save-item .save-item-btns { flex-direction: row !important; justify-content: flex-end !important; }
+
+    /* 입찰 일정 캘린더 추가 폼 */
+    #cal-add-form > div { flex-wrap: wrap !important; }
+    #cal-url-input { min-width: 0 !important; }
+
+    /* 로그인 모달 */
+    .modal-box { padding: 22px 16px; width: 95vw; }
+  }
+
   /* ═══════ 인쇄 스타일 ═══════ */
   @media print {
     @page { size: A4 landscape; margin: 5mm 6mm; }
@@ -182,7 +256,7 @@
 
     /* 숨길 요소 */
     .header-shape, .auth-area, .tabs,
-    #tab-calendar, #tab-tax, #tab-saves,
+    #tab-calendar, #tab-tax, #tab-saves, #tab-price,
     .modal-overlay, #loginModal, button, .notice { display: none !important; }
 
     /* 전체 */
@@ -282,6 +356,7 @@
 <div class="tabs">
   <div class="tab active" onclick="showTab('calendar')">📅 입찰 일정</div>
   <div class="tab" onclick="showTab('calc')">📋 수익률 분석</div>
+  <div class="tab" onclick="showTab('price')">🏠 실거래가 조회</div>
   <div class="tab" onclick="showTab('saves')" id="tab-btn-saves">📁 저장된 분석 <span id="savesCount" style="background:#1a56db;color:white;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:3px;display:none">0</span></div>
   <div class="tab" onclick="showTab('tax')">📖 세율 참고표</div>
 </div>
@@ -319,9 +394,19 @@
           <div class="form-label">전용면적</div>
           <div class="form-input-wrap">
             <select id="smallArea" onchange="calc()">
+              <option value="Y" selected>85㎡ 이하 (농특세 면제)</option>
               <option value="N">85㎡ 초과</option>
-              <option value="Y">85㎡ 이하 (농특세 면제)</option>
             </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label" style="color:#7c3aed;font-weight:700">입찰일 🗓</div>
+          <div class="form-input-wrap" style="gap:6px">
+            <input type="date" id="bidDate" style="flex:1" onchange="calc()">
+            <button onclick="addBidToCalendar()" title="Google 캘린더에 입찰일 추가"
+              style="padding:4px 10px;background:#7c3aed;color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;">
+              📅 캘린더
+            </button>
           </div>
         </div>
         <div class="form-row" style="flex-direction:column;align-items:flex-start;gap:6px;padding-bottom:8px">
@@ -795,12 +880,40 @@
   </div>
 </div>
 
+<!-- ═══════════════ TAB: 실거래가 조회 ═══════════════ -->
+<div id="tab-price" class="page" style="padding:0;">
+  <div style="width:100%;height:calc(100vh - 120px);min-height:600px;position:relative;">
+    <iframe
+      id="priceFrame"
+      src="about:blank"
+      data-src="https://dandypark.github.io/Estimating-the-amount-of-real-estate/"
+      style="width:100%;height:100%;border:none;display:block;"
+      allowfullscreen
+      loading="lazy"
+      title="부동산 실거래가 조회"
+    ></iframe>
+    <div id="priceLoading" style="display:none;position:absolute;inset:0;background:white;align-items:center;justify-content:center;flex-direction:column;gap:12px;">
+      <div style="font-size:40px">🏠</div>
+      <div style="font-size:15px;font-weight:700;color:var(--blue)">실거래가 조회 로딩 중...</div>
+      <div style="font-size:12px;color:var(--gray)">잠시만 기다려 주세요</div>
+    </div>
+  </div>
+  <div style="text-align:right;padding:6px 16px;font-size:11px;color:var(--gray);background:white;border-top:1px solid var(--border);">
+    출처: <a href="https://dandypark.github.io/Estimating-the-amount-of-real-estate/" target="_blank" style="color:var(--blue)">dandypark 실거래가 조회</a>
+    &nbsp;|&nbsp;
+    <a href="https://dandypark.github.io/Estimating-the-amount-of-real-estate/" target="_blank" style="color:var(--blue)">새 탭으로 열기 ↗</a>
+  </div>
+</div>
+
 <!-- ═══════════════ TAB 5: 저장된 분석 ═══════════════ -->
 <div id="tab-saves" class="page">
   <div class="card">
     <div class="card-header blue" style="justify-content:space-between">
       <span>📁 저장된 분석 목록</span>
-      <button onclick="clearAllSaves()" style="font-size:11px;padding:3px 10px;background:white;color:var(--red);border:1px solid var(--red);border-radius:5px;cursor:pointer;font-family:inherit">전체 삭제</button>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button onclick="createFolder()" style="font-size:11px;padding:3px 10px;background:white;color:#7c3aed;border:1px solid #7c3aed;border-radius:5px;cursor:pointer;font-family:inherit;font-weight:700">📁 새 폴더</button>
+        <button onclick="clearAllSaves()" style="font-size:11px;padding:3px 10px;background:white;color:var(--red);border:1px solid var(--red);border-radius:5px;cursor:pointer;font-family:inherit">전체 삭제</button>
+      </div>
     </div>
     <div class="card-body">
       <div id="savesEmpty" class="save-empty">💾 저장된 분석이 없습니다.<br><span style="font-size:12px">수익률 분석 탭에서 <strong>분석 저장</strong> 버튼을 눌러 저장해보세요.</span></div>
@@ -815,6 +928,7 @@
     <div class="card">
       <div class="card-header blue">🏛 취득세 세율표 (취득세 + 농특세 + 지교세)</div>
       <div class="card-body">
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
         <table class="tax-table">
           <thead>
             <tr><th>구분</th><th>취득세</th><th>농어촌특별세</th><th>지방교육세</th><th>합계</th></tr>
@@ -828,6 +942,7 @@
             <tr><td>오피스텔 / 상가 / 토지</td><td>4.0%</td><td>0.2%</td><td>0.4%</td><td style="font-weight:700">4.6%</td></tr>
           </tbody>
         </table>
+        </div>
         <p style="font-size:11px;color:var(--text-sub);margin-top:10px">
           * 전용면적 85㎡ 이하 주택은 농어촌특별세 면제<br>
           ※ 6~9억 취득세율 공식: (취득가액 × 2 ÷ 3억 − 3)%
@@ -838,6 +953,7 @@
       <div class="card-header blue">💸 양도소득세 — 단기세율 &amp; 누진세율표</div>
       <div class="card-body">
         <p style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:6px">▶ 단기 양도 (기본공제 없음)</p>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
         <table class="tax-table" style="margin-bottom:12px">
           <thead><tr><th>보유기간</th><th>세율</th><th>기본공제</th></tr></thead>
           <tbody>
@@ -845,7 +961,9 @@
             <tr><td>1년 이상 ~ 2년 미만</td><td style="color:var(--red);font-weight:700">60%</td><td>없음</td></tr>
           </tbody>
         </table>
+        </div>
         <p style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:6px">▶ 일반 누진세율 (2년 이상 보유, 기본공제 250만원 적용)</p>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
         <table class="tax-table">
           <thead><tr><th>과세표준</th><th>세율</th><th>누진공제</th></tr></thead>
           <tbody>
@@ -859,6 +977,7 @@
             <tr><td>10억원 초과</td><td style="color:var(--red);font-weight:700">45%</td><td>6,594만원</td></tr>
           </tbody>
         </table>
+        </div>
         <p style="font-size:11px;color:var(--text-sub);margin-top:8px">
           ※ 세액 = 과세표준 × 세율 − 누진공제 &nbsp;|&nbsp; 과세표준 = 양도차익 − 기본공제(250만)<br>
           ※ 다주택·조정대상지역 중과세, 장기보유특별공제 등 별도 적용 가능. 세무사 상담 권장.
@@ -868,6 +987,7 @@
     <div class="card col-span-2">
       <div class="card-header blue">📌 매도 중개보수율 기준 (주거용 기준)</div>
       <div class="card-body">
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
         <table class="tax-table">
           <thead>
             <tr><th>거래금액</th><th>상한요율</th><th>한도액</th></tr>
@@ -881,6 +1001,7 @@
             <tr><td>15억 이상</td><td>0.7%</td><td>없음</td></tr>
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   </div>
@@ -962,6 +1083,28 @@ function getCalendars() {
   try { return JSON.parse(localStorage.getItem(CAL_KEY) || '[]'); } catch { return []; }
 }
 
+// Firestore에 캘린더 목록 저장 (로그인 시)
+async function saveCalendarsToCloud(cals) {
+  if (!db || !currentUser) return;
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('settings').doc('calendars').set({ cals, updatedAt: Date.now() });
+  } catch(e) { console.warn('캘린더 클라우드 저장 실패:', e.message); }
+}
+
+// Firestore에서 캘린더 목록 불러오기 (로그인 직후 호출)
+async function loadCalendarsFromCloud() {
+  if (!db || !currentUser) return;
+  try {
+    const snap = await db.collection('users').doc(currentUser.uid).collection('settings').doc('calendars').get();
+    if (snap.exists && Array.isArray(snap.data().cals)) {
+      const cals = snap.data().cals;
+      localStorage.setItem(CAL_KEY, JSON.stringify(cals));
+      renderCalendarList();
+      showToast('📅 캘린더 목록을 불러왔습니다');
+    }
+  } catch(e) { console.warn('캘린더 클라우드 불러오기 실패:', e.message); }
+}
+
 (function initCalendar() {
   // 구버전 단일 URL → 다중 포맷 마이그레이션
   const oldUrl = localStorage.getItem('booland_cal_url');
@@ -980,7 +1123,7 @@ function toggleCalForm() {
   btn.textContent    = open ? '✕ 닫기' : '+ 추가';
 }
 
-function addCalendar() {
+async function addCalendar() {
   const name  = document.getElementById('cal-name-input').value.trim();
   const url   = document.getElementById('cal-url-input').value.trim();
   const color = document.getElementById('cal-color-input').value;
@@ -989,15 +1132,17 @@ function addCalendar() {
   const cals = getCalendars();
   cals.push({ name: name || ('캘린더 ' + (cals.length + 1)), url, color, id: Date.now() });
   localStorage.setItem(CAL_KEY, JSON.stringify(cals));
+  await saveCalendarsToCloud(cals);
   document.getElementById('cal-name-input').value = '';
   document.getElementById('cal-url-input').value  = '';
   toggleCalForm();
   renderCalendarList();
 }
 
-function removeCalendar(id) {
+async function removeCalendar(id) {
   const cals = getCalendars().filter(c => c.id !== id);
   localStorage.setItem(CAL_KEY, JSON.stringify(cals));
+  await saveCalendarsToCloud(cals);
   renderCalendarList();
 }
 
@@ -1442,6 +1587,17 @@ function printAnalysis() {
   setTimeout(() => window.print(), 150);
 }
 
+// ── Google Calendar (URL 방식) ────────────────────────────
+function addBidToCalendar() {
+  const date = $('bidDate').value;
+  if (!date) { alert('입찰일을 먼저 선택해주세요'); return; }
+  const caseNo = $('caseNo').value.trim();
+  const addr   = $('addr').value.trim();
+  const title  = encodeURIComponent('입찰: ' + (caseNo ? caseNo + (addr ? ' ' + addr : '') : addr || '경매물건'));
+  const ds     = date.replace(/-/g, '');
+  window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${ds}T090000/${ds}T180000&details=${encodeURIComponent('Booland Calculator에서 등록')}`, '_blank');
+}
+
 function onAgentFeeModeChange() {
   const manual = $('agentFeeMode').value === 'manual';
   $('agentRateRow').style.display = manual ? 'none' : '';
@@ -1739,6 +1895,15 @@ function showTab(name, tabEl) {
   if (target) target.classList.add('active');
   if (name === 'saves') renderSavesList();
   if (name === 'calendar') renderCalendarList();
+  if (name === 'price') {
+    const frame = document.getElementById('priceFrame');
+    if (frame && frame.src === 'about:blank') {
+      const loading = document.getElementById('priceLoading');
+      if (loading) { loading.style.display = 'flex'; }
+      frame.src = frame.dataset.src;
+      frame.onload = () => { if (loading) loading.style.display = 'none'; };
+    }
+  }
 }
 
 // ─── Firebase 설정 ────────────────────────────────────────────────────────────
@@ -1773,7 +1938,11 @@ if (FB_READY) {
     currentUser = user;
     updateAuthUI();
     updateSavesCount();
-    if (user && document.getElementById('tab-saves').classList.contains('active')) renderSavesList();
+    if (user) {
+      loadCalendarsFromCloud();   // 로그인 시 캘린더 목록 클라우드에서 불러오기
+      loadOrderFromCloud();       // 로그인 시 저장 순서 클라우드에서 불러오기
+      if (document.getElementById('tab-saves').classList.contains('active')) renderSavesList();
+    }
   });
 }
 
@@ -1858,7 +2027,9 @@ function _buildEntry(v) {
     holdMonth:$('holdMonth').value, loanRate:$('loanRate').value, prepayRate:$('prepayRate').value,
     agentFeeMode:$('agentFeeMode').value, agentFeeManual:$('agentFee').value,
     capGainMethod:$('capGainMethod').value, customCapGainRate:$('customCapGainRate').value,
-    bid:v.bid, roe:v.roe, roeAnn:v.roeAnn, netProfit:v.netProfit, equity:v.equity
+    bid:v.bid, roe:v.roe, roeAnn:v.roeAnn, netProfit:v.netProfit, equity:v.equity,
+    monthlyNet:v.monthlyNet, realInvest:v.realInvest,
+    bidDate: $('bidDate').value || ''
   };
 }
 
@@ -1866,23 +2037,47 @@ async function saveCurrent() {
   const caseNo = $('caseNo').value.trim(), addr = $('addr').value.trim();
   if (!caseNo && !addr) { alert('사건번호 또는 물건 주소를 먼저 입력해주세요.'); return; }
   if (FB_READY && !currentUser) { openLoginModal(); return; }
+
+
+  // 사건번호 + 주소가 같은 기존 항목 찾기
+  function isSame(s) {
+    return s.caseNo === caseNo && s.addr === addr;
+  }
+
   try {
     const entry = _buildEntry(computeAll());
     if (FB_READY && currentUser) {
-      await db.collection('users').doc(currentUser.uid).collection('saves').add(entry);
+      const col = db.collection('users').doc(currentUser.uid).collection('saves');
+      // Firestore에서 동일 항목 검색
+      const snap = await col.where('caseNo','==',caseNo).where('addr','==',addr).limit(1).get();
+      if (!snap.empty) {
+        await col.doc(snap.docs[0].id).set(entry);
+        showToast('🔄 덮어쓰기 저장됐습니다!');
+      } else {
+        await col.add(entry);
+        showToast('✅ 저장되었습니다!');
+      }
     } else {
-      entry.id = Date.now().toString();
-      const saves = getSaves(); saves.unshift(entry);
+      const saves = getSaves();
+      const idx = saves.findIndex(isSame);
+      if (idx !== -1) {
+        entry.id = saves[idx].id;
+        saves[idx] = entry;
+        showToast('🔄 덮어쓰기 저장됐습니다!');
+      } else {
+        entry.id = Date.now().toString();
+        saves.unshift(entry);
+        showToast('✅ 저장되었습니다!');
+      }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(saves));
     }
-    showToast('✅ 저장되었습니다!');
     updateSavesCount();
   } catch(e) { alert('저장 실패: ' + e.message); }
 }
 
 function _applyEntry(entry) {
   const txt = ['caseNo','addr','memo','appraised','minBid','bidPrice','seniorDeposit',
-    'legalFee','repairFee','evictFee','extraFee','unpaidMgmtFee','jeonse','monthlyRent','salePrice','loanRate','prepayRate','customCapGainRate'];
+    'legalFee','repairFee','evictFee','extraFee','unpaidMgmtFee','jeonse','monthlyRent','salePrice','loanRate','prepayRate','customCapGainRate','bidDate'];
   const sel = ['propType','smallArea','loanRatio','appraisalLoanRatio','depositRatio','houseCount','holdMonth','capGainMethod','minBidRatio','agentFeeMode'];
   txt.forEach(f => { if ($(f) && entry[f] !== undefined) $(f).value = entry[f]; });
   sel.forEach(f => { if ($(f) && entry[f] !== undefined) $(f).value = entry[f]; });
@@ -1943,9 +2138,146 @@ function updateSavesCount(n) {
   }
 }
 
+// ── 저장 순서 관리 ────────────────────────────────
+const ORDER_KEY = 'booland_saves_order';
+function getOrder() { try { return JSON.parse(localStorage.getItem(ORDER_KEY) || 'null'); } catch { return null; } }
+function setOrder(ids) { localStorage.setItem(ORDER_KEY, JSON.stringify(ids)); }
+
+async function saveOrderToCloud(ids) {
+  if (!db || !currentUser) return;
+  try { await db.collection('users').doc(currentUser.uid).collection('settings').doc('savesOrder').set({ ids, updatedAt: Date.now() }); } catch(e) {}
+}
+async function loadOrderFromCloud() {
+  if (!db || !currentUser) return;
+  try {
+    const snap = await db.collection('users').doc(currentUser.uid).collection('settings').doc('savesOrder').get();
+    if (snap.exists && Array.isArray(snap.data().ids)) setOrder(snap.data().ids);
+  } catch(e) {}
+}
+
+// ── 정렬 ────────────────────────────────────────
+function sortSaves(saves) {
+  return [...saves].sort((a, b) => {
+    // 입찰일 오름차순 (없으면 뒤로)
+    if (a.bidDate && b.bidDate) {
+      if (a.bidDate !== b.bidDate) return a.bidDate < b.bidDate ? -1 : 1;
+      // 입찰일 같으면 사건번호 오름차순
+      return (a.caseNo || '').localeCompare(b.caseNo || '', 'ko');
+    }
+    if (a.bidDate) return -1;
+    if (b.bidDate) return 1;
+    // 입찰일 없으면 사건번호 오름차순
+    return (a.caseNo || '').localeCompare(b.caseNo || '', 'ko');
+  });
+}
+
+// ── 폴더 ────────────────────────────────────────
+const FOLDER_KEY = 'booland_folders';
+function getFolders() { try { return JSON.parse(localStorage.getItem(FOLDER_KEY)||'[]'); } catch { return []; } }
+function saveFolders(f) { localStorage.setItem(FOLDER_KEY, JSON.stringify(f)); }
+
+function createFolder() {
+  const name = prompt('폴더 이름을 입력해주세요:');
+  if (!name || !name.trim()) return;
+  const folders = getFolders();
+  folders.push({ id: 'f' + Date.now(), name: name.trim(), open: true, itemIds: [] });
+  saveFolders(folders);
+  renderSavesList();
+}
+
+function deleteFolder(folderId) {
+  if (!confirm('폴더를 삭제할까요?\n(안에 있는 분석은 삭제되지 않습니다)')) return;
+  saveFolders(getFolders().filter(f => f.id !== folderId));
+  renderSavesList();
+}
+
+function toggleFolder(folderId) {
+  const folders = getFolders();
+  const f = folders.find(f => f.id === folderId);
+  if (f) { f.open = !f.open; saveFolders(folders); renderSavesList(); }
+}
+
+function moveToFolder(saveId, folderId) {
+  const folders = getFolders();
+  folders.forEach(f => { f.itemIds = f.itemIds.filter(id => id !== saveId); });
+  if (folderId) {
+    const t = folders.find(f => f.id === folderId);
+    if (t && !t.itemIds.includes(saveId)) t.itemIds.push(saveId);
+  }
+  saveFolders(folders);
+  hideFolderMenu();
+  renderSavesList();
+}
+
+function showFolderMenu(saveId, btn) {
+  let menu = document.getElementById('folderMenu');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.id = 'folderMenu';
+    document.body.appendChild(menu);
+  }
+  const folders = getFolders();
+  const currentFolder = folders.find(f => f.itemIds.includes(saveId));
+  let html = `<div class="folder-menu-item ${!currentFolder ? 'active' : ''}" onclick="moveToFolder('${saveId}', null)">📌 폴더 없음</div>`;
+  folders.forEach(f => {
+    html += `<div class="folder-menu-item ${currentFolder?.id === f.id ? 'active' : ''}" onclick="moveToFolder('${saveId}','${f.id}')">📁 ${f.name}</div>`;
+  });
+  if (folders.length === 0) html += `<div style="padding:8px 12px;font-size:11px;color:#9ca3af">폴더가 없습니다.<br>상단 [📁 새 폴더]로 만드세요.</div>`;
+  menu.innerHTML = html;
+  menu.style.display = 'block';
+  const rect = btn.getBoundingClientRect();
+  menu.style.top  = (rect.bottom + 4) + 'px';
+  menu.style.left = Math.min(rect.left, window.innerWidth - 180) + 'px';
+  setTimeout(() => document.addEventListener('click', hideFolderMenu, { once: true }), 0);
+}
+
+function hideFolderMenu() {
+  const m = document.getElementById('folderMenu');
+  if (m) m.style.display = 'none';
+}
+
+// ── 저장 목록 렌더 ──────────────────────────────
+function _renderSaveItem(s, folders) {
+  const fmt   = n => isNaN(n) ? '-' : Math.round(n).toLocaleString('ko-KR') + '원';
+  const fmtP  = n => isNaN(n) ? '-' : n.toFixed(1) + '%';
+  const fmtDate = d => d ? d.replace(/-/g, '.') : null;
+  const title = [s.caseNo, s.addr].filter(Boolean).join(' · ') || '(제목 없음)';
+  const memoHtml = s.memo ? s.memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+  const monthlyNetVal = s.monthlyNet !== undefined ? s.monthlyNet : null;
+  const realInvestVal = s.realInvest !== undefined ? s.realInvest : null;
+  const bidDateStr = fmtDate(s.bidDate);
+  const extraMeta = (realInvestVal !== null || monthlyNetVal !== null) ? `
+    <span style="margin-left:4px">|</span>
+    ${realInvestVal !== null ? `&nbsp;&nbsp;실투자금: <span style="color:var(--green);font-weight:700">${fmt(realInvestVal)}</span>` : ''}
+    ${monthlyNetVal !== null ? `&nbsp;&nbsp;월순수익: <span style="color:var(--red);font-weight:700">${fmt(monthlyNetVal)}</span>` : ''}` : '';
+  const inFolder = folders.find(f => f.itemIds.includes(s.id));
+  return `<div class="save-item" data-id="${s.id}">
+    <div class="save-item-inner" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
+      <div style="flex:1;min-width:0;">
+        <div class="save-item-title" style="display:flex;align-items:center;gap:8px;">
+          📌 ${title}
+          ${bidDateStr ? `<span style="padding:2px 8px;background:#f3e8ff;color:#7c3aed;border-radius:10px;font-size:11px;font-weight:700">🗓 입찰일 ${bidDateStr}</span>` : ''}
+        </div>
+        <div class="save-item-meta" style="margin-top:4px;padding-left:4px;">
+          낙찰가: <span style="color:var(--blue);font-weight:700">${fmt(s.bid)}</span>&nbsp;&nbsp;|&nbsp;&nbsp;연환산 ROE: <strong>${fmtP(s.roeAnn)}/년</strong>&nbsp;&nbsp;|&nbsp;&nbsp;순이익: <span style="color:var(--red);font-weight:700">${fmt(s.netProfit)}</span>${extraMeta}
+        </div>
+      </div>
+      <div class="save-item-right" style="flex-shrink:0;display:flex;gap:8px;align-items:center;width:42%;">
+        <div style="flex:1;min-width:0;">
+          ${memoHtml ? `<div class="save-item-memo">${memoHtml.split('\n').map(l => `<div class="save-item-memo-line">${l || '&nbsp;'}</div>`).join('')}</div>` : '<div style="min-height:36px;background:var(--gray-light);border-radius:6px;border-left:3px solid #e5e7eb;"></div>'}
+        </div>
+        <div class="save-item-btns" style="display:flex;flex-direction:row;gap:6px;flex-shrink:0;">
+          <button class="btn-folder" onclick="event.stopPropagation();showFolderMenu('${s.id}',this)" title="폴더 지정">📁${inFolder ? ' ✓' : ''}</button>
+          <button class="btn-load" onclick="loadSave('${s.id}')">📂 불러오기</button>
+          <button class="btn-del" onclick="deleteSave('${s.id}')">🗑 삭제</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
 async function renderSavesList() {
   const empty = $('savesEmpty'), list = $('savesList');
-  // Firebase 설정됐지만 로그인 안 된 경우에만 로그인 요구
   if (FB_READY && !currentUser) {
     list.innerHTML = '';
     empty.style.display = '';
@@ -1957,7 +2289,6 @@ async function renderSavesList() {
     </div>`;
     return;
   }
-  // Firebase 미설정 시 → localStorage 모드로 조용히 동작 (아래 else 블록에서 처리)
   list.innerHTML = '<div style="text-align:center;padding:24px;color:#9ca3af;font-size:13px">불러오는 중...</div>';
   empty.style.display = 'none';
   let saves = [];
@@ -1968,28 +2299,52 @@ async function renderSavesList() {
     } else { saves = getSaves(); }
   } catch(e) { list.innerHTML = `<div style="color:red;padding:20px">오류: ${e.message}</div>`; return; }
 
+  const folders = getFolders();
   updateSavesCount(saves.length);
-  if (saves.length === 0) {
+
+  if (saves.length === 0 && folders.length === 0) {
     list.innerHTML = '';
     empty.style.display = '';
     empty.innerHTML = '💾 저장된 분석이 없습니다.<br><span style="font-size:12px">물건 정보 탭의 <strong>이 분석 저장</strong> 버튼을 눌러 저장해보세요.</span>';
     return;
   }
-  const fmt  = n => isNaN(n) ? '-' : Math.round(n).toLocaleString('ko-KR') + '원';
-  const fmtP = n => isNaN(n) ? '-' : n.toFixed(1) + '%';
-  list.innerHTML = saves.map(s => {
-    const title = [s.caseNo, s.addr].filter(Boolean).join(' · ') || '(제목 없음)';
-    const memoHtml = s.memo ? `<div class="save-item-memo">${s.memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` : '';
-    return `<div class="save-item">
-      <div class="save-item-title">📌 ${title}</div>
-      <div class="save-item-meta">📅 ${s.savedAt}&nbsp;&nbsp;|&nbsp;&nbsp;낙찰가: ${fmt(s.bid)}&nbsp;&nbsp;|&nbsp;&nbsp;연환산 ROE: <strong>${fmtP(s.roeAnn)}/년</strong>&nbsp;&nbsp;|&nbsp;&nbsp;순이익: ${fmt(s.netProfit)}</div>
-      ${memoHtml}
-      <div class="save-item-actions">
-        <button class="btn-load" onclick="loadSave('${s.id}')">📂 불러오기</button>
-        <button class="btn-del" onclick="deleteSave('${s.id}')">🗑 삭제</button>
+
+  const sorted = sortSaves(saves);
+  const folderItemIds = new Set(folders.flatMap(f => f.itemIds));
+  const rootItems = sorted.filter(s => !folderItemIds.has(s.id));
+
+  let html = '';
+
+  // ── 폴더 렌더
+  folders.forEach(folder => {
+    const items = sortSaves(folder.itemIds.map(id => sorted.find(s => s.id === id)).filter(Boolean));
+    const isOpen = folder.open !== false;
+    html += `<div class="folder-row">
+      <div class="folder-header" onclick="toggleFolder('${folder.id}')">
+        <span class="folder-toggle">${isOpen ? '▼' : '▶'}</span>
+        <span>${isOpen ? '📂' : '📁'} ${folder.name}</span>
+        <span style="font-size:11px;font-weight:400;color:#7c3aed;opacity:0.7">(${items.length}개)</span>
+        <span style="flex:1"></span>
+        <button onclick="event.stopPropagation();deleteFolder('${folder.id}')"
+          style="font-size:10px;padding:2px 7px;background:white;color:#ef4444;border:1px solid #fca5a5;border-radius:4px;cursor:pointer;font-family:inherit">삭제</button>
       </div>
+      ${isOpen ? `<div class="folder-items">${
+        items.length === 0
+          ? '<div style="padding:12px 16px;font-size:12px;color:#9ca3af">폴더가 비어 있습니다. 각 항목의 📁 버튼으로 추가하세요.</div>'
+          : items.map(s => `<div class="folder-item-indent">${_renderSaveItem(s, folders)}</div>`).join('')
+      }</div>` : ''}
     </div>`;
-  }).join('');
+  });
+
+  // ── 폴더 밖 항목 렌더
+  if (rootItems.length > 0) {
+    if (folders.length > 0) {
+      html += `<div style="font-size:11px;font-weight:700;color:#6b7280;margin:10px 0 4px 2px;letter-spacing:0.03em">📌 폴더 미분류</div>`;
+    }
+    html += rootItems.map(s => _renderSaveItem(s, folders)).join('');
+  }
+
+  list.innerHTML = html || '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">저장된 항목이 없습니다.</div>';
 }
 
 calc();
