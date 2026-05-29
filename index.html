@@ -472,6 +472,7 @@
           <div class="form-label">낙찰가 기준 비율</div>
           <div class="form-input-wrap">
             <select id="loanRatio" onchange="calc()">
+              <option value="0">0% (대출 없음)</option>
               <option value="0.5">50%</option>
               <option value="0.6">60%</option>
               <option value="0.7">70%</option>
@@ -484,6 +485,7 @@
           <div class="form-label">감정가 기준 비율</div>
           <div class="form-input-wrap">
             <select id="appraisalLoanRatio" onchange="calc()">
+              <option value="0">0% (대출 없음)</option>
               <option value="0.4">40%</option>
               <option value="0.5">50%</option>
               <option value="0.6" selected="">60%</option>
@@ -751,6 +753,8 @@
               <option value="0.7">70% — 1년 미만 단기</option>
               <option value="0.6">60% — 2년 미만 단기</option>
               <option value="0.2">20% — 매매사업자 등</option>
+              <option value="corp_house">법인 — 주택 (법인세 + 중과 20%)</option>
+              <option value="corp_other">법인 — 비주택 (법인세 기본세율)</option>
               <option value="custom">직접 입력</option>
             </select>
           </div>
@@ -995,6 +999,40 @@
           ※ 세액 = 과세표준 × 세율 − 누진공제 &nbsp;|&nbsp; 과세표준 = 양도차익 − 기본공제(250만)<br>
           ※ 다주택·조정대상지역 중과세, 장기보유특별공제 등 별도 적용 가능. 세무사 상담 권장.
         </p>
+      </div>
+    </div>
+    <div class="card col-span-2">
+      <div class="card-header blue">🏢 법인 부동산 양도세 — 법인세 세율표</div>
+      <div class="card-body">
+        <p style="font-size:11px;font-weight:700;color:var(--blue);margin-bottom:6px">▶ 법인세 기본세율 (2024년 기준)</p>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table class="tax-table" style="margin-bottom:12px">
+          <thead><tr><th>과세표준</th><th>법인세율</th><th>지방소득세 포함</th><th>누진공제 (법인세액)</th></tr></thead>
+          <tbody>
+            <tr><td>2억원 이하</td><td style="font-weight:700">9%</td><td style="color:var(--green);font-weight:700">9.9%</td><td>—</td></tr>
+            <tr><td>2억 ~ 200억원</td><td style="font-weight:700">19%</td><td style="color:var(--yellow);font-weight:700">20.9%</td><td>2,000만원</td></tr>
+            <tr><td>200억 ~ 3,000억원</td><td style="font-weight:700">21%</td><td style="color:var(--yellow);font-weight:700">23.1%</td><td>6,000만원</td></tr>
+            <tr><td>3,000억원 초과</td><td style="color:var(--red);font-weight:700">24%</td><td style="color:var(--red);font-weight:700">26.4%</td><td>96,000만원</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:6px">▶ 법인의 주택 양도 시 추가 중과세</p>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table class="tax-table" style="margin-bottom:12px">
+          <thead><tr><th>구분</th><th>추가 세율</th><th>적용 방식</th><th>비고</th></tr></thead>
+          <tbody>
+            <tr><td>주택 양도차익 중과</td><td style="color:var(--red);font-weight:700">+20%</td><td>양도차익에 별도 추가 과세</td><td>법인세법 제55조의2</td></tr>
+            <tr><td>지방소득세</td><td style="font-weight:700">법인세액의 10%</td><td>중과분 포함 전체에 적용</td><td>지방세법</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:10px 14px;font-size:11px;line-height:1.8;color:#92400e;">
+          <b>💡 법인 주택 양도 시 실효세율 예시 (양도차익 1억원 기준)</b><br>
+          법인세 기본: 1억 × 9% = <b>900만원</b> &nbsp;|&nbsp; 주택 중과: 1억 × 20% = <b>2,000만원</b><br>
+          합계: 2,900만원 × 지방소득세 1.1 = <b>약 3,190만원 (실효 약 31.9%)</b><br>
+          <span style="color:var(--red)">※ 법인은 양도차익에 기본공제(250만원) 적용 없음. 개인 사업용 부동산·토지는 중과 해당 없음.</span><br>
+          ※ 본 계산기는 부동산 양도차익만 법인세 계산에 적용 (법인 전체 과세표준과 다를 수 있음). 세무사 상담 필수.
+        </div>
       </div>
     </div>
     <div class="card col-span-2">
@@ -1348,6 +1386,21 @@ function progressiveTax(taxable) {
   return Math.max(0, taxable * b.rate - b.ded);
 }
 
+// 법인세 기본세율 누진 계산 (지방소득세 10% 포함)
+function calcCorpBaseTax(gain) {
+  let tax = 0;
+  if (gain <= 200000000) {
+    tax = gain * 0.09;
+  } else if (gain <= 20000000000) {
+    tax = 18000000 + (gain - 200000000) * 0.19;
+  } else if (gain <= 300000000000) {
+    tax = 3798000000 + (gain - 20000000000) * 0.21;
+  } else {
+    tax = 63798000000 + (gain - 300000000000) * 0.24;
+  }
+  return tax * 1.1; // 지방소득세 10% 포함
+}
+
 function calcCapGainTax(capGain) {
   const method = $('capGainMethod').value;
   if (capGain <= 0) return { tax: 0, basicDed: 0 };
@@ -1355,6 +1408,13 @@ function calcCapGainTax(capGain) {
     return { tax: capGain * 0.7, basicDed: 0 };
   } else if (method === '0.6') {
     return { tax: capGain * 0.6, basicDed: 0 };
+  } else if (method === 'corp_house') {
+    // 법인세 기본 + 주택 중과 20% (각각 지방소득세 10% 포함)
+    const corpBase = calcCorpBaseTax(capGain);
+    const surcharge = capGain * 0.20 * 1.1;
+    return { tax: corpBase + surcharge, basicDed: 0 };
+  } else if (method === 'corp_other') {
+    return { tax: calcCorpBaseTax(capGain), basicDed: 0 };
   } else if (method === 'custom') {
     const rate = parseFloat($('customCapGainRate').value) / 100 || 0.20;
     const basicDed = 2500000;
@@ -1373,8 +1433,8 @@ function onCapGainMethodChange() {
 function computeAll() {
   const bid      = parseVal('bidPrice');
   const app      = parseVal('appraised');
-  const lr       = +$('loanRatio').value || 0.8;
-  const alr      = +$('appraisalLoanRatio').value || 0.6;
+  const lr       = $('loanRatio').value !== '' ? +$('loanRatio').value : 0.8;
+  const alr      = $('appraisalLoanRatio').value !== '' ? +$('appraisalLoanRatio').value : 0.6;
   const seniorDep= parseVal('seniorDeposit');
   const legalFee = parseVal('legalFee');
   const repair   = parseVal('repairFee');
@@ -1467,9 +1527,11 @@ function calc() {
   setFmt('loanInterest', v.loanInterest);
   setFmt('capGainTax',   v.capGainTax);
   // 양도소득세 기본공제·방식 표시
-  $('capGainBasicDed').value = v.capGainBasicDed > 0 ? v.capGainBasicDed.toLocaleString('ko-KR') : '없음 (단기)';
-  $('capGainBasicDedNote').textContent = v.capGainBasicDed > 0 ? '자동 적용' : '단기양도 미적용';
-  const methodMap = { auto: '누진세율 자동 (6~45%, 기본공제 250만)', '0.7': '70% 단기 (1년 미만)', '0.6': '60% 단기 (2년 미만)', '0.2': '20% (매매사업자 등)', custom: '직접입력 ' + ($('customCapGainRate').value || '20') + '%' };
+  const _cgMethod = $('capGainMethod').value;
+  const _isCorpMethod = _cgMethod === 'corp_house' || _cgMethod === 'corp_other';
+  $('capGainBasicDed').value = v.capGainBasicDed > 0 ? v.capGainBasicDed.toLocaleString('ko-KR') : _isCorpMethod ? '없음 (법인)' : '없음 (단기)';
+  $('capGainBasicDedNote').textContent = v.capGainBasicDed > 0 ? '자동 적용' : _isCorpMethod ? '법인 미적용' : '단기양도 미적용';
+  const methodMap = { auto: '누진세율 자동 (6~45%, 기본공제 250만)', '0.7': '70% 단기 (1년 미만)', '0.6': '60% 단기 (2년 미만)', '0.2': '20% (매매사업자 등)', corp_house: '법인 — 주택 (법인세+중과20%+지방소득세)', corp_other: '법인 — 비주택 (법인세+지방소득세)', custom: '직접입력 ' + ($('customCapGainRate').value || '20') + '%' };
   $('capGainMethodNote').textContent = methodMap[$('capGainMethod').value] || '누진세율 자동';
   setFmt('prepayFee', v.prepayFee);
   if (!($('agentFeeMode') && $('agentFeeMode').value === 'manual')) setFmt('agentFee', v.agentFee);
@@ -1551,7 +1613,7 @@ function updateCharts(v) {
 
 function updateSensTable() {
   const bid       = parseVal('bidPrice');
-  const lr        = +$('loanRatio').value || 0.8;
+  const lr        = $('loanRatio').value !== '' ? +$('loanRatio').value : 0.8;
   const legalFee  = parseVal('legalFee');
   const repair    = parseVal('repairFee');
   const evict     = parseVal('evictFee');
@@ -1563,7 +1625,7 @@ function updateSensTable() {
   const jeonse    = parseVal('jeonse');
   const monthly   = parseVal('monthlyRent');
 
-  const alr       = +$('appraisalLoanRatio').value || 0.6;
+  const alr       = $('appraisalLoanRatio').value !== '' ? +$('appraisalLoanRatio').value : 0.6;
   const seniorDep = parseVal('seniorDeposit');
   const app       = parseVal('appraised');
   const loan      = Math.min(bid * lr, Math.max(0, app * alr - seniorDep));
@@ -1890,7 +1952,7 @@ function exportExcel() {
   dataRow('매도 중개보수율', (v.agentR * 100).toFixed(2) + '%', '매도가 기준 자동 적용', true, false);
   emptyRow();
   dataRow('대출 이자 합계',    v.loanInterest, '대출금 × 금리 × 보유기간', true);
-  const methodMap2 = { auto: '누진세율 자동(6~45%)', '0.7': '70% 단기', '0.6': '60% 단기', '0.2': '20% 매매사업자', custom: '직접입력 ' + ($('customCapGainRate').value || '20') + '%' };
+  const methodMap2 = { auto: '누진세율 자동(6~45%)', '0.7': '70% 단기', '0.6': '60% 단기', '0.2': '20% 매매사업자', corp_house: '법인-주택(법인세+중과20%+지방소득세)', corp_other: '법인-비주택(법인세+지방소득세)', custom: '직접입력 ' + ($('customCapGainRate').value || '20') + '%' };
   dataRow('양도소득세 (추정)', v.capGainTax, '기본공제 ' + (v.capGainBasicDed > 0 ? '250만 · ' : '없음 · ') + methodMap2[$('capGainMethod').value], true);
   dataRow('중도 상환 수수료',  v.prepayFee,    '대출금 × 수수료율', true);
   dataRow('매도 중개보수',     v.agentFee,     '매도가 × 수수료율', true);
