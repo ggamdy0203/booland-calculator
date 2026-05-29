@@ -1096,6 +1096,24 @@ function getCalendars() {
   try { return JSON.parse(localStorage.getItem(CAL_KEY) || '[]'); } catch { return []; }
 }
 
+// ── 폴더 클라우드 저장/불러오기 ─────────────────
+async function saveFoldersToCloud(folders) {
+  if (!db || !currentUser) return;
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('settings').doc('folders').set({ folders, updatedAt: Date.now() });
+  } catch(e) { console.warn('폴더 클라우드 저장 실패:', e.message); }
+}
+async function loadFoldersFromCloud() {
+  if (!db || !currentUser) return;
+  try {
+    const snap = await db.collection('users').doc(currentUser.uid).collection('settings').doc('folders').get();
+    if (snap.exists && Array.isArray(snap.data().folders)) {
+      localStorage.setItem(FOLDER_KEY, JSON.stringify(snap.data().folders));
+      renderSavesList();
+    }
+  } catch(e) { console.warn('폴더 클라우드 불러오기 실패:', e.message); }
+}
+
 // Firestore에 캘린더 목록 저장 (로그인 시)
 async function saveCalendarsToCloud(cals) {
   if (!db || !currentUser) return;
@@ -1969,6 +1987,7 @@ if (FB_READY) {
     updateSavesCount();
     if (user) {
       loadCalendarsFromCloud();   // 로그인 시 캘린더 목록 클라우드에서 불러오기
+      loadFoldersFromCloud();     // 로그인 시 폴더 구조 클라우드에서 불러오기
       loadOrderFromCloud();       // 로그인 시 저장 순서 클라우드에서 불러오기
       if (document.getElementById('tab-saves').classList.contains('active')) renderSavesList();
     }
@@ -2231,7 +2250,7 @@ function sortSaves(saves) {
 // ── 폴더 ────────────────────────────────────────
 const FOLDER_KEY = 'booland_folders';
 function getFolders() { try { return JSON.parse(localStorage.getItem(FOLDER_KEY)||'[]'); } catch { return []; } }
-function saveFolders(f) { localStorage.setItem(FOLDER_KEY, JSON.stringify(f)); }
+function saveFolders(f) { localStorage.setItem(FOLDER_KEY, JSON.stringify(f)); saveFoldersToCloud(f); }
 
 function createFolder() {
   const name = prompt('폴더 이름을 입력해주세요:');
