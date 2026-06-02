@@ -189,10 +189,35 @@
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: 10px 22px; border-radius: 8px; font-size: 13px; font-weight: 600; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
   .toast.show { opacity: 1; }
 
+  /* 실투자 수익 관리 */
+  .invest-summary-card { padding:14px 16px; border-radius:10px; }
+  .invest-summary-label { font-size:11px; color:#374151; font-weight:600; margin-bottom:4px; }
+  .invest-summary-value { font-size:22px; font-weight:800; line-height:1.2; }
+  .invest-summary-sub { font-size:11px; color:#374151; margin-top:3px; }
+  .invest-item { border:1px solid var(--border); border-radius:10px; padding:8px 14px; margin-bottom:6px; background:white; transition:border-color 0.15s; }
+  .invest-item:hover { border-color:#93c5fd; }
+  .invest-item-title { font-size:13px; font-weight:700; color:var(--text); margin:4px 0 2px; }
+  .invest-item-meta { font-size:11px; color:var(--text-sub); margin-bottom:4px; line-height:1.6; }
+  .invest-badge { display:inline-block; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:700; margin-right:4px; }
+  .invest-badge-sold    { background:#d1fae5; color:#065f46; }
+  .invest-badge-holding { background:#dbeafe; color:#1e40af; }
+  .invest-badge-type    { background:var(--gray-light); color:var(--gray); }
+  .invest-price-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px; font-weight:700; padding:3px 0; }
+  .btn-invest-edit { padding:4px 10px; background:white; color:var(--blue); border:1px solid var(--blue); border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .btn-invest-edit:hover { background:var(--blue-light); }
+  .iv-label { font-size:12px; font-weight:600; color:var(--text-sub); display:block; margin-bottom:4px; }
+  .iv-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+  .iv-amount-wrap { display:flex; align-items:center; gap:4px; }
+  .iv-amount-wrap .modal-input { margin:0; text-align:right; }
+  .iv-unit { font-size:12px; color:var(--gray); white-space:nowrap; }
+  .iv-section { border-radius:8px; padding:12px; margin-bottom:8px; }
+  .iv-preview { display:none; margin-top:10px; padding:9px 12px; background:white; border-radius:6px; font-size:12px; line-height:1.8; }
+
   @media (max-width: 900px) {
     .grid-3 { grid-template-columns: 1fr; }
     .grid-2 { grid-template-columns: 1fr; }
     .col-span-2 { grid-column: span 1; }
+    .iv-row { grid-template-columns: 1fr; }
   }
 
   /* ═══════ 모바일 스타일 (640px 이하) ═══════ */
@@ -269,7 +294,7 @@
 
     /* 숨길 요소 */
     .header-shape, .auth-area, .tabs,
-    #tab-calendar, #tab-tax, #tab-saves, #tab-price,
+    #tab-calendar, #tab-tax, #tab-saves, #tab-price, #tab-invest,
     .modal-overlay, #loginModal, button, .notice { display: none !important; }
 
     /* 전체 */
@@ -366,10 +391,129 @@
   </div>
 </div>
 
+<!-- 실투자 수익 입력 모달 -->
+<div class="modal-overlay" id="investModal">
+  <div class="modal-box" style="width:540px;max-height:88vh;overflow-y:auto;padding:26px 28px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 id="investModalTitle" style="font-size:16px;font-weight:700">수익 기록 추가</h2>
+      <button onclick="closeInvestModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af;line-height:1">✕</button>
+    </div>
+    <input type="hidden" id="iv-type">
+    <input type="hidden" id="iv-edit-id">
+    <label class="iv-label">📍 주소 / 물건명</label>
+    <input class="modal-input" type="text" id="iv-addr" placeholder="예) 서울 강남구 대치동 123-4 아파트 101호" style="margin-bottom:8px;">
+    <div class="iv-row">
+      <div>
+        <label class="iv-label">🏷 물건 종류</label>
+        <select class="modal-input" id="iv-propType" style="margin:0;">
+          <option>아파트</option><option>빌라/다세대</option><option>단독주택</option>
+          <option>오피스텔</option><option>상가</option><option>토지</option>
+        </select>
+      </div>
+      <div>
+        <label class="iv-label">📅 낙찰일</label>
+        <input class="modal-input" type="month" id="iv-bidDate" style="margin:0;">
+      </div>
+    </div>
+    <div style="margin-bottom:8px;">
+      <label class="iv-label">💰 낙찰가</label>
+      <div class="iv-amount-wrap">
+        <input class="modal-input currency" type="text" inputmode="numeric" id="iv-bidPrice" placeholder="150,000,000" oninput="fmtInp(this);calcInvestPreview()">
+        <span class="iv-unit">원</span>
+      </div>
+    </div>
+    <!-- 매도 완료 섹션 -->
+    <div id="iv-sold-section" class="iv-section" style="background:#f0fdf4;border:1px solid #bbf7d0;">
+      <div style="font-size:11px;font-weight:700;color:#065f46;margin-bottom:10px;">✅ 매도 정보</div>
+      <div class="iv-row">
+        <div>
+          <label class="iv-label">매도가</label>
+          <div class="iv-amount-wrap">
+            <input class="modal-input currency" type="text" inputmode="numeric" id="iv-salePrice" placeholder="200,000,000" oninput="fmtInp(this);calcInvestPreview()">
+            <span class="iv-unit">원</span>
+          </div>
+        </div>
+        <div>
+          <label class="iv-label">매도일</label>
+          <input class="modal-input" type="month" id="iv-saleDate" style="margin:0;">
+        </div>
+      </div>
+      <div class="iv-row">
+        <div>
+          <label class="iv-label">총 비용 합계 <span style="font-weight:400;color:#9ca3af;font-size:11px;">(취득세·법무비·수리비·대출이자 등)</span></label>
+          <div class="iv-amount-wrap">
+            <input class="modal-input currency" type="text" inputmode="numeric" id="iv-totalCost" placeholder="15,000,000" oninput="fmtInp(this);calcInvestPreview()">
+            <span class="iv-unit">원</span>
+          </div>
+        </div>
+        <div>
+          <label class="iv-label">자기자본 (실 투입금)</label>
+          <div class="iv-amount-wrap">
+            <input class="modal-input currency" type="text" inputmode="numeric" id="iv-equity" placeholder="50,000,000" oninput="fmtInp(this);calcInvestPreview()">
+            <span class="iv-unit">원</span>
+          </div>
+        </div>
+      </div>
+      <div id="iv-sold-preview" class="iv-preview" style="border:1px solid #bbf7d0;"></div>
+    </div>
+    <!-- 보유 중 섹션 -->
+    <div id="iv-holding-section" class="iv-section" style="background:#eff6ff;border:1px solid #bfdbfe;">
+      <div style="font-size:11px;font-weight:700;color:#1e40af;margin-bottom:10px;">🏠 임대 정보</div>
+      <div class="iv-row">
+        <div>
+          <label class="iv-label">보증금</label>
+          <div class="iv-amount-wrap">
+            <input class="modal-input currency" type="text" inputmode="numeric" id="iv-deposit" placeholder="10,000,000" oninput="fmtInp(this)">
+            <span class="iv-unit">원</span>
+          </div>
+        </div>
+        <div>
+          <label class="iv-label">월 임대료</label>
+          <div class="iv-amount-wrap">
+            <input class="modal-input currency" type="text" inputmode="numeric" id="iv-monthlyRent" placeholder="500,000" oninput="fmtInp(this);calcInvestPreview()">
+            <span class="iv-unit">원</span>
+          </div>
+        </div>
+      </div>
+      <div class="iv-row">
+        <div>
+          <label class="iv-label">월 대출이자</label>
+          <div class="iv-amount-wrap">
+            <input class="modal-input currency" type="text" inputmode="numeric" id="iv-monthlyLoan" placeholder="300,000" oninput="fmtInp(this);calcInvestPreview()">
+            <span class="iv-unit">원</span>
+          </div>
+        </div>
+        <div>
+          <label class="iv-label">자기자본 (실 투입금)</label>
+          <div class="iv-amount-wrap">
+            <input class="modal-input currency" type="text" inputmode="numeric" id="iv-equity-h" placeholder="50,000,000" oninput="fmtInp(this);calcInvestPreview()">
+            <span class="iv-unit">원</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <label class="iv-label">현재 예상 시세 <span style="font-weight:400;color:#9ca3af;font-size:11px;">(선택)</span></label>
+        <div class="iv-amount-wrap">
+          <input class="modal-input currency" type="text" inputmode="numeric" id="iv-curMarket" placeholder="180,000,000" oninput="fmtInp(this)">
+          <span class="iv-unit">원</span>
+        </div>
+      </div>
+      <div id="iv-holding-preview" class="iv-preview" style="border:1px solid #bfdbfe;margin-top:8px;"></div>
+    </div>
+    <label class="iv-label">📝 메모</label>
+    <textarea class="modal-input" id="iv-memo" placeholder="특이사항, 권리관계, 임차인 현황 등" style="min-height:60px;resize:vertical;margin-bottom:14px;"></textarea>
+    <div style="display:flex;gap:8px;">
+      <button onclick="saveInvestEntry()" style="flex:1;padding:11px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">💾 저장</button>
+      <button onclick="closeInvestModal()" style="padding:11px 18px;background:white;color:var(--gray);border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;">취소</button>
+    </div>
+  </div>
+</div>
+
 <div class="tabs">
   <div class="tab active" onclick="showTab('calendar')">📅 입찰 일정</div>
   <div class="tab" onclick="showTab('calc')">📋 수익률 분석</div>
   <div class="tab" onclick="showTab('saves')" id="tab-btn-saves">📁 저장된 분석 <span id="savesCount" style="background:#1a56db;color:white;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:3px;display:none">0</span></div>
+  <div class="tab" onclick="showTab('invest')">💰 실투자 수익</div>
   <div class="tab" onclick="showTab('price')">🏠 실거래가 조회</div>
   <div class="tab" onclick="showTab('tax')">📖 세율 참고표</div>
 </div>
@@ -885,6 +1029,14 @@
             🖨️ A4 인쇄
           </button>
         </div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button onclick="openInvestModalFromCalc('sold')" style="flex:1;padding:9px;background:#059669;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;">
+            💰 매도 완료 기록
+          </button>
+          <button onclick="openInvestModalFromCalc('holding')" style="flex:1;padding:9px;background:#1e40af;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;">
+            🏠 보유 중 기록
+          </button>
+        </div>
       </div>
     </div>
 
@@ -935,6 +1087,31 @@
     <div class="card-body">
       <div id="savesEmpty" class="save-empty">💾 저장된 분석이 없습니다.<br><span style="font-size:12px">수익률 분석 탭에서 <strong>분석 저장</strong> 버튼을 눌러 저장해보세요.</span></div>
       <div id="savesList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ TAB: 실투자 수익 관리 ═══════════════ -->
+<div id="tab-invest" class="page">
+  <div id="investSummaryBar" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px;"></div>
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-header" style="background:#d1fae5;color:#065f46;justify-content:space-between;align-items:center;">
+      <span>✅ 매도 완료</span>
+      <button onclick="openInvestModal('sold')" style="font-size:12px;padding:4px 14px;background:#059669;color:white;border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;">+ 추가</button>
+    </div>
+    <div class="card-body">
+      <div id="investSoldEmpty" class="save-empty" style="padding:28px 0;">매도 완료 기록이 없습니다.<br><span style="font-size:12px;">+ 추가 버튼으로 매도한 물건의 수익을 기록해보세요.</span></div>
+      <div id="investSoldList"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header" style="background:#dbeafe;color:#1e40af;justify-content:space-between;align-items:center;">
+      <span>🏠 보유 중 (임대 수익)</span>
+      <button onclick="openInvestModal('holding')" style="font-size:12px;padding:4px 14px;background:var(--blue);color:white;border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;">+ 추가</button>
+    </div>
+    <div class="card-body">
+      <div id="investHoldingEmpty" class="save-empty" style="padding:28px 0;">보유 중인 물건 기록이 없습니다.<br><span style="font-size:12px;">+ 추가 버튼으로 현재 임대 중인 물건을 등록해보세요.</span></div>
+      <div id="investHoldingList"></div>
     </div>
   </div>
 </div>
@@ -2004,6 +2181,7 @@ function showTab(name, tabEl) {
   if (target) target.classList.add('active');
   if (name === 'saves') renderSavesList();
   if (name === 'calendar') renderCalendarList();
+  if (name === 'invest') renderInvestTab();
   if (name === 'price') {
     const frame = document.getElementById('priceFrame');
     if (frame && frame.src === 'about:blank') {
@@ -2052,6 +2230,7 @@ if (FB_READY) {
       loadFoldersFromCloud();     // 로그인 시 폴더 구조 클라우드에서 불러오기
       loadOrderFromCloud();       // 로그인 시 저장 순서 클라우드에서 불러오기
       if (document.getElementById('tab-saves').classList.contains('active')) renderSavesList();
+      if (document.getElementById('tab-invest').classList.contains('active')) renderInvestTab();
     }
   });
 }
@@ -2195,7 +2374,7 @@ function _applyEntry(entry) {
     if ($('agentFee')) $('agentFee').value = entry.agentFeeManual;
   }
   onAgentFeeModeChange(); onCapGainMethodChange(); calc();
-  showTab('calc', document.querySelectorAll('.tab')[0]);
+  showTab('calc', document.querySelectorAll('.tab')[1]);
   showToast('📂 불러왔습니다!');
 }
 
@@ -2375,7 +2554,9 @@ function hideFolderMenu() {
 }
 
 // ── 저장 목록 렌더 ──────────────────────────────
+const _saveRegistry = {};
 function _renderSaveItem(s, folders) {
+  _saveRegistry[s.id] = s; // 실투자 기록용 참조 저장
   const fmt    = n => isNaN(n) ? '-' : Math.round(n).toLocaleString('ko-KR') + '원';
   const fmtP   = n => isNaN(n) ? '-' : n.toFixed(1) + '%';
   const fmtDate= d => d ? d.replace(/-/g, '.') : null;
@@ -2418,6 +2599,7 @@ function _renderSaveItem(s, folders) {
         <div style="flex:1;min-width:0;">${memoBlock}</div>
         <div class="save-item-btns" style="display:flex;flex-direction:row;gap:6px;flex-shrink:0;">
           <button class="btn-folder" onclick="event.stopPropagation();showFolderMenu('${s.id}',this)">📁${inFolder?' ✓':''}</button>
+          <button style="padding:4px 8px;background:#f0fdf4;color:#059669;border:1px solid #a7f3d0;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;" onclick="event.stopPropagation();showInvestMenu('${s.id}',this)">💰 실투자</button>
           <button class="btn-load"   onclick="loadSave('${s.id}')">📂 불러오기</button>
           <button class="btn-del"    onclick="deleteSave('${s.id}')">🗑 삭제</button>
         </div>
@@ -2514,6 +2696,357 @@ async function renderSavesList() {
   }
 
   list.innerHTML = html || '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">저장된 항목이 없습니다.</div>';
+}
+
+// ─── 수익률 분석 / 저장 분석 → 실투자 수익 연동 ──────────────────────────
+
+function openInvestModalFromCalc(type) {
+  openInvestModal(type); // 모달 열고 필드 초기화
+  const v = computeAll();
+  const fmtN = n => Math.round(n).toLocaleString('ko-KR');
+  const bidDateRaw = $('bidDate').value; // YYYY-MM-DD
+
+  // 공통 필드
+  const addrParts = [$('caseNo').value.trim(), $('addr').value.trim()].filter(Boolean);
+  $('iv-addr').value     = addrParts.join(' · ');
+  $('iv-propType').value = $('propType').value;
+  $('iv-bidPrice').value = fmtN(parseVal('bidPrice'));
+  $('iv-bidDate').value  = bidDateRaw ? bidDateRaw.substring(0, 7) : '';
+  $('iv-memo').value     = $('memo').value.trim();
+
+  if (type === 'sold') {
+    // 총비용 = 취득세합계 + 기타비용합계 + 매도비용합계 (이자+세금+수수료+중개보수)
+    $('iv-salePrice').value = fmtN(parseVal('salePrice'));
+    $('iv-totalCost').value = fmtN(v.taxTotal + v.miscTotal + v.saleExpTotal);
+    $('iv-equity').value    = fmtN(v.equity);
+  } else {
+    $('iv-deposit').value     = fmtN(parseVal('jeonse'));
+    $('iv-monthlyRent').value = fmtN(parseVal('monthlyRent'));
+    $('iv-monthlyLoan').value = fmtN(v.monthlyLoanInterest);
+    $('iv-equity-h').value    = fmtN(v.equity);
+  }
+  calcInvestPreview();
+}
+
+function showInvestMenu(saveId, btn) {
+  let menu = document.getElementById('investTypeMenu');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.id = 'investTypeMenu';
+    menu.style.cssText = 'display:none;position:fixed;z-index:9999;background:white;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.13);padding:6px;min-width:170px;';
+    document.body.appendChild(menu);
+  }
+  menu.innerHTML = `
+    <div style="padding:6px 10px;font-size:11px;font-weight:700;color:#9ca3af;border-bottom:1px solid #f3f4f6;margin-bottom:4px;">실투자 수익에 기록</div>
+    <div class="folder-menu-item" style="color:#065f46;" onclick="openInvestModalFromSave('${saveId}','sold');hideInvestMenu()">✅ 매도 완료로 기록</div>
+    <div class="folder-menu-item" style="color:#1e40af;" onclick="openInvestModalFromSave('${saveId}','holding');hideInvestMenu()">🏠 보유 중으로 기록</div>`;
+  menu.style.display = 'block';
+  const rect = btn.getBoundingClientRect();
+  menu.style.top  = (rect.bottom + 4) + 'px';
+  menu.style.left = Math.min(rect.left, window.innerWidth - 190) + 'px';
+  setTimeout(() => document.addEventListener('click', hideInvestMenu, { once: true }), 0);
+}
+
+function hideInvestMenu() {
+  const m = document.getElementById('investTypeMenu');
+  if (m) m.style.display = 'none';
+}
+
+function openInvestModalFromSave(saveId, type) {
+  const s = _saveRegistry[saveId];
+  if (!s) return;
+  openInvestModal(type);
+  const fmtN = n => (n != null && !isNaN(n)) ? Math.round(n).toLocaleString('ko-KR') : '';
+  const parseStr = str => str ? parseInt(String(str).replace(/[^0-9]/g,'') || '0', 10) : 0;
+  const bidDateRaw = s.bidDate || '';
+
+  // 공통 필드
+  $('iv-addr').value     = [s.caseNo, s.addr].filter(Boolean).join(' · ');
+  $('iv-propType').value = s.propType || '아파트';
+  $('iv-bidPrice').value = fmtN(s.bid || parseStr(s.bidPrice));
+  $('iv-bidDate').value  = bidDateRaw ? bidDateRaw.substring(0, 7) : '';
+  $('iv-memo').value     = s.memo || '';
+
+  if (type === 'sold') {
+    $('iv-salePrice').value = fmtN(parseStr(s.salePrice));
+    $('iv-equity').value    = fmtN(s.equity);
+    // totalCost는 비워두어 사용자가 실제 비용 입력하도록
+  } else {
+    const mr = parseStr(s.monthlyRent);
+    const ml = mr - (s.monthlyNet || 0); // 월대출이자 역산
+    $('iv-deposit').value     = fmtN(parseStr(s.jeonse));
+    $('iv-monthlyRent').value = fmtN(mr);
+    $('iv-monthlyLoan').value = fmtN(Math.max(0, ml));
+    $('iv-equity-h').value    = fmtN(s.equity);
+  }
+  calcInvestPreview();
+}
+
+// ─── 실투자 수익 관리 ───────────────────────────────────────────────────────
+
+const INVEST_KEY = 'booland_invest';
+function getInvestments() { try { return JSON.parse(localStorage.getItem(INVEST_KEY)||'[]'); } catch { return []; } }
+
+function ivNum(id) {
+  const el = document.getElementById(id);
+  return el ? parseInt(el.value.replace(/[^0-9]/g,'') || '0', 10) : 0;
+}
+
+function openInvestModal(type, editId) {
+  $('iv-type').value    = type;
+  $('iv-edit-id').value = editId || '';
+  $('iv-sold-section').style.display    = type === 'sold'    ? '' : 'none';
+  $('iv-holding-section').style.display = type === 'holding' ? '' : 'none';
+  $('investModalTitle').textContent =
+    (editId ? '수익 기록 수정 — ' : '수익 기록 추가 — ') +
+    (type === 'sold' ? '✅ 매도 완료' : '🏠 보유 중');
+  ['iv-addr','iv-bidPrice','iv-bidDate','iv-salePrice','iv-saleDate',
+   'iv-totalCost','iv-equity','iv-deposit','iv-monthlyRent',
+   'iv-monthlyLoan','iv-equity-h','iv-curMarket','iv-memo']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  $('iv-sold-preview').style.display    = 'none';
+  $('iv-holding-preview').style.display = 'none';
+  if (editId) {
+    const entry = getInvestments().find(e => e.id === editId);
+    if (entry) _ivFill(entry, type);
+  }
+  $('investModal').style.display = 'flex';
+}
+
+function _ivFill(e, type) {
+  const fmtN = n => (n && !isNaN(n)) ? Math.round(n).toLocaleString('ko-KR') : '';
+  $('iv-addr').value     = e.addr || '';
+  $('iv-propType').value = e.propType || '아파트';
+  $('iv-bidDate').value  = e.bidDate || '';
+  $('iv-memo').value     = e.memo || '';
+  $('iv-bidPrice').value = fmtN(e.bidPrice);
+  if (type === 'sold') {
+    $('iv-salePrice').value = fmtN(e.salePrice);
+    $('iv-saleDate').value  = e.saleDate || '';
+    $('iv-totalCost').value = fmtN(e.totalCost);
+    $('iv-equity').value    = fmtN(e.equity);
+  } else {
+    $('iv-deposit').value     = fmtN(e.deposit);
+    $('iv-monthlyRent').value = fmtN(e.monthlyRent);
+    $('iv-monthlyLoan').value = fmtN(e.monthlyLoan);
+    $('iv-equity-h').value    = fmtN(e.equity);
+    $('iv-curMarket').value   = fmtN(e.curMarket);
+  }
+  calcInvestPreview();
+}
+
+function closeInvestModal() { $('investModal').style.display = 'none'; }
+
+function calcInvestPreview() {
+  const type = $('iv-type').value;
+  const fmt  = n => Math.round(n).toLocaleString('ko-KR') + '원';
+  if (type === 'sold') {
+    const net = ivNum('iv-salePrice') - ivNum('iv-bidPrice') - ivNum('iv-totalCost');
+    const eq  = ivNum('iv-equity');
+    const roe = eq > 0 ? net / eq * 100 : NaN;
+    const prev = $('iv-sold-preview');
+    if (ivNum('iv-salePrice') > 0 || ivNum('iv-totalCost') > 0) {
+      const col = net >= 0 ? '#059669' : '#dc2626';
+      prev.style.display = '';
+      prev.innerHTML = `순이익 <b style="color:${col}">${fmt(net)}</b>`
+        + (!isNaN(roe) ? `&nbsp;&nbsp;|&nbsp;&nbsp;ROE <b style="color:${col}">${roe.toFixed(1)}%</b>` : '');
+    } else { prev.style.display = 'none'; }
+  } else {
+    const net  = ivNum('iv-monthlyRent') - ivNum('iv-monthlyLoan');
+    const eq   = ivNum('iv-equity-h');
+    const roe  = eq > 0 ? net * 12 / eq * 100 : NaN;
+    const prev = $('iv-holding-preview');
+    if (ivNum('iv-monthlyRent') > 0) {
+      const col = net >= 0 ? '#1d4ed8' : '#dc2626';
+      prev.style.display = '';
+      prev.innerHTML = `월 순수익 <b style="color:${col}">${fmt(net)}</b>`
+        + (!isNaN(roe) ? `&nbsp;&nbsp;|&nbsp;&nbsp;연 임대 ROE <b style="color:${col}">${roe.toFixed(1)}%</b>` : '');
+    } else { prev.style.display = 'none'; }
+  }
+}
+
+function _calcHoldingMonths(bidDate, endDate) {
+  if (!bidDate) return 0;
+  const [by, bm] = bidDate.split('-').map(Number);
+  if (endDate) {
+    const [ey, em] = endDate.split('-').map(Number);
+    return Math.max(0, (ey - by) * 12 + (em - bm));
+  }
+  const now = new Date();
+  return Math.max(0, (now.getFullYear() - by) * 12 + (now.getMonth() + 1 - bm));
+}
+
+async function saveInvestEntry() {
+  const type   = $('iv-type').value;
+  const editId = $('iv-edit-id').value;
+  const addr   = $('iv-addr').value.trim();
+  if (!addr) { alert('주소 / 물건명을 입력해주세요.'); return; }
+  const bid = ivNum('iv-bidPrice');
+  const entry = {
+    type, id: editId || Date.now().toString(),
+    savedAtMs: Date.now(),
+    savedAt: new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),
+    addr, propType: $('iv-propType').value,
+    bidPrice: bid, bidDate: $('iv-bidDate').value,
+    memo: $('iv-memo').value.trim(),
+  };
+  if (type === 'sold') {
+    const sale = ivNum('iv-salePrice'), cost = ivNum('iv-totalCost'), eq = ivNum('iv-equity');
+    entry.salePrice = sale; entry.saleDate = $('iv-saleDate').value;
+    entry.totalCost = cost; entry.equity = eq;
+    entry.netProfit = sale - bid - cost;
+    entry.roe = eq > 0 ? entry.netProfit / eq * 100 : null;
+    entry.holdingMonths = _calcHoldingMonths(entry.bidDate, entry.saleDate);
+  } else {
+    const rent = ivNum('iv-monthlyRent'), loan = ivNum('iv-monthlyLoan'), eq = ivNum('iv-equity-h');
+    entry.deposit = ivNum('iv-deposit'); entry.monthlyRent = rent;
+    entry.monthlyLoan = loan; entry.equity = eq;
+    entry.curMarket = ivNum('iv-curMarket');
+    entry.monthlyNet = rent - loan;
+    entry.rentRoeAnn = eq > 0 ? entry.monthlyNet * 12 / eq * 100 : null;
+    entry.holdingMonths = _calcHoldingMonths(entry.bidDate, null);
+  }
+  try {
+    if (FB_READY && currentUser) {
+      const col = db.collection('users').doc(currentUser.uid).collection('invest');
+      editId ? await col.doc(editId).set(entry) : await col.add(entry);
+    } else {
+      let all = getInvestments();
+      all = editId ? all.map(e => e.id === editId ? entry : e) : [entry, ...all];
+      localStorage.setItem(INVEST_KEY, JSON.stringify(all));
+    }
+    closeInvestModal(); renderInvestTab();
+    showToast(editId ? '✏️ 수정되었습니다!' : '✅ 저장되었습니다!');
+  } catch(e) { alert('저장 실패: ' + e.message); }
+}
+
+async function deleteInvestment(id) {
+  if (!confirm('이 기록을 삭제하시겠습니까?')) return;
+  try {
+    if (FB_READY && currentUser) {
+      await db.collection('users').doc(currentUser.uid).collection('invest').doc(id).delete();
+    } else {
+      localStorage.setItem(INVEST_KEY, JSON.stringify(getInvestments().filter(e => e.id !== id)));
+    }
+    renderInvestTab(); showToast('🗑 삭제되었습니다.');
+  } catch(e) { alert('삭제 실패: ' + e.message); }
+}
+
+async function renderInvestTab() {
+  const soldListEl = $('investSoldList'), holdListEl = $('investHoldingList');
+  const soldEmptyEl = $('investSoldEmpty'), holdEmptyEl = $('investHoldingEmpty');
+  const summaryEl = $('investSummaryBar');
+  if (!soldListEl) return;
+
+  if (FB_READY && !currentUser) {
+    soldListEl.innerHTML = holdListEl.innerHTML = '';
+    soldEmptyEl.style.display = holdEmptyEl.style.display = 'none';
+    summaryEl.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:36px 20px;">
+      <div style="font-size:44px;margin-bottom:12px">🔐</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">로그인이 필요합니다</div>
+      <button onclick="openLoginModal()" style="padding:10px 28px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">🔑 로그인 / 회원가입</button>
+    </div>`; return;
+  }
+
+  let all = [];
+  try {
+    if (FB_READY && currentUser) {
+      const snap = await db.collection('users').doc(currentUser.uid).collection('invest').orderBy('savedAtMs','desc').get();
+      all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } else { all = getInvestments(); }
+  } catch(e) { soldListEl.innerHTML = `<div style="color:red;padding:20px">오류: ${e.message}</div>`; return; }
+
+  const sold = all.filter(e => e.type === 'sold');
+  const holding = all.filter(e => e.type === 'holding');
+  const fmt  = n => (n == null || isNaN(n)) ? '-' : Math.round(n).toLocaleString('ko-KR') + '원';
+  const fmtP = n => (n == null || isNaN(n)) ? '-' : n.toFixed(1) + '%';
+
+  const totalProfit = sold.reduce((s, e) => s + (e.netProfit || 0), 0);
+  const totalMonthly = holding.reduce((s, e) => s + (e.monthlyNet || 0), 0);
+  const totalAccum = holding.reduce((s, e) => s + (e.monthlyNet || 0) * _calcHoldingMonths(e.bidDate, null), 0);
+
+  summaryEl.innerHTML = `
+    <div class="invest-summary-card" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);border:1px solid #6ee7b7;">
+      <div class="invest-summary-label">✅ 매도 완료</div>
+      <div class="invest-summary-value" style="color:#065f46;">${sold.length}건</div>
+      <div class="invest-summary-sub">총 실현이익 <b style="color:${totalProfit>=0?'#065f46':'#dc2626'}">${fmt(totalProfit)}</b></div>
+    </div>
+    <div class="invest-summary-card" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);border:1px solid #93c5fd;">
+      <div class="invest-summary-label">🏠 보유 중</div>
+      <div class="invest-summary-value" style="color:#1e40af;">${holding.length}건</div>
+      <div class="invest-summary-sub">월 순수익 합계 <b>${fmt(totalMonthly)}</b></div>
+    </div>
+    <div class="invest-summary-card" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fcd34d;">
+      <div class="invest-summary-label">📈 누적 임대 수익</div>
+      <div class="invest-summary-value" style="color:#92400e;">${fmt(totalAccum)}</div>
+      <div class="invest-summary-sub">보유 기간 × 월 순수익 합산</div>
+    </div>
+    <div class="invest-summary-card" style="background:linear-gradient(135deg,#ede9fe,#ddd6fe);border:1px solid #c4b5fd;">
+      <div class="invest-summary-label">🏆 실현이익 + 누적임대</div>
+      <div class="invest-summary-value" style="color:#5b21b6;">${fmt(totalProfit + totalAccum)}</div>
+      <div class="invest-summary-sub">종합 수익 합산</div>
+    </div>`;
+
+  // 매도 완료 목록
+  if (sold.length === 0) { soldListEl.innerHTML = ''; soldEmptyEl.style.display = ''; }
+  else {
+    soldEmptyEl.style.display = 'none';
+    soldListEl.innerHTML = sold.map(e => {
+      const net = e.netProfit || 0, col = net >= 0 ? '#059669' : '#dc2626';
+      const hm = e.holdingMonths != null ? `${e.holdingMonths}개월 보유` : '';
+      const memoHtml = e.memo ? `<div class="save-item-memo">${e.memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` : '';
+      return `<div class="invest-item">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <div><span class="invest-badge invest-badge-sold">✅ 매도</span><span class="invest-badge invest-badge-type">${e.propType||''}</span></div>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            <button class="btn-invest-edit" onclick="openInvestModal('sold','${e.id}')">✏️ 수정</button>
+            <button class="btn-del" style="font-size:11px;padding:3px 9px;" onclick="deleteInvestment('${e.id}')">🗑</button>
+          </div>
+        </div>
+        <div class="invest-item-title">📌 ${e.addr||'(주소 없음)'}</div>
+        <div class="invest-item-meta">
+          ${e.bidDate?`낙찰 ${e.bidDate}`:''}${e.saleDate?` → 매도 ${e.saleDate}`:''}${hm?` (${hm})`:''}
+          &nbsp;|&nbsp; <span style="color:#6b7280;">${fmt(e.bidPrice)}</span> → <span>${fmt(e.salePrice)}</span>
+          &nbsp; <span style="color:${col};font-weight:800;">${net>=0?'▲':'▼'} ${fmt(Math.abs(net))}</span>
+          ${e.roe!=null?`<span style="color:${col};"> ROE ${fmtP(e.roe)}</span>`:''}
+          ${e.totalCost?`&nbsp;|&nbsp; 총비용 ${fmt(e.totalCost)}`:''}
+        </div>
+        ${memoHtml}
+      </div>`;
+    }).join('');
+  }
+
+  // 보유 중 목록
+  if (holding.length === 0) { holdListEl.innerHTML = ''; holdEmptyEl.style.display = ''; }
+  else {
+    holdEmptyEl.style.display = 'none';
+    holdListEl.innerHTML = holding.map(e => {
+      const hm = _calcHoldingMonths(e.bidDate, null);
+      const accum = (e.monthlyNet||0) * hm;
+      const net = e.monthlyNet||0, netCol = net>=0?'#1d4ed8':'#dc2626';
+      const memoHtml = e.memo ? `<div class="save-item-memo">${e.memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` : '';
+      return `<div class="invest-item">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <div><span class="invest-badge invest-badge-holding">🏠 보유중</span><span class="invest-badge invest-badge-type">${e.propType||''}</span></div>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            <button class="btn-invest-edit" onclick="openInvestModal('holding','${e.id}')">✏️ 수정</button>
+            <button class="btn-del" style="font-size:11px;padding:3px 9px;" onclick="deleteInvestment('${e.id}')">🗑</button>
+          </div>
+        </div>
+        <div class="invest-item-title">📌 ${e.addr||'(주소 없음)'}</div>
+        <div class="invest-item-meta">
+          낙찰가 <b>${fmt(e.bidPrice)}</b>${e.bidDate?` · ${e.bidDate} 낙찰`:''} · 보유 ${hm}개월
+          &nbsp;|&nbsp; 월 임대료 <b style="color:#1d4ed8">${fmt(e.monthlyRent)}</b>
+          &nbsp;|&nbsp; 대출이자 <b style="color:#dc2626">-${fmt(e.monthlyLoan)}</b>
+          &nbsp;|&nbsp; 월 순수익 <b style="color:${netCol};font-size:12px;">${fmt(net)}</b>
+          &nbsp;|&nbsp; 누적 <b style="color:#5b21b6">${fmt(accum)}</b>
+          ${e.rentRoeAnn!=null?`&nbsp;|&nbsp; 연ROE <b style="color:#1d4ed8">${fmtP(e.rentRoeAnn)}</b>`:''}
+          ${e.curMarket?`&nbsp;|&nbsp; 시세 ${fmt(e.curMarket)} · 평가이익 <b style="color:${(e.curMarket-(e.bidPrice||0))>=0?'#059669':'#dc2626'}">${fmt(e.curMarket-(e.bidPrice||0))}</b>`:''}
+        </div>
+        ${memoHtml}
+      </div>`;
+    }).join('');
+  }
 }
 
 calc();
