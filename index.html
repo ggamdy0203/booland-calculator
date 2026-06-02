@@ -196,6 +196,23 @@
   .invest-summary-sub { font-size:11px; color:#374151; margin-top:3px; }
   .invest-item { border:1px solid var(--border); border-radius:10px; padding:8px 14px; margin-bottom:6px; background:white; transition:border-color 0.15s; }
   .invest-item:hover { border-color:#93c5fd; }
+  /* 실투자 폴더 */
+  .invest-folder-row { margin-bottom:8px; }
+  .invest-folder-header { display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f0fdf4;border:1.5px solid #6ee7b7;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;color:#065f46;user-select:none;transition:background 0.12s,border-color 0.12s; }
+  .invest-folder-header:hover { background:#dcfce7; }
+  .invest-folder-header.drag-over { background:#dcfce7;border-color:#059669;border-style:dashed; }
+  .invest-folder-stats { font-size:11px;font-weight:400;color:#374151;margin-top:2px;line-height:1.6; }
+  .invest-folder-items { padding:6px 0 6px 16px; }
+  .invest-section-label { font-size:11px;font-weight:700;color:#6b7280;margin:8px 0 4px 2px;letter-spacing:0.03em; }
+  .invest-unassigned-drop { font-size:11px;font-weight:700;color:#6b7280;margin:10px 0 4px 2px;padding:4px 8px;border-radius:6px;border:1.5px solid transparent; }
+  .invest-unassigned-drop.drag-over { border-color:#6b7280 !important;border-style:dashed !important;background:#f9fafb; }
+  /* 드래그 핸들 (저장된 분석 + 실투자 수익 공통) */
+  .drag-handle-col { width:18px;flex-shrink:0;display:flex;align-items:center;cursor:grab;color:#d1d5db;font-size:15px;user-select:none;padding-right:4px; }
+  .drag-handle-col:hover { color:var(--blue); }
+  .drag-handle-col:active { cursor:grabbing; }
+  .save-item.row-drag-over { border-color:var(--blue) !important; border-top:2px solid var(--blue) !important; background:#f0f9ff; }
+  .invest-item.row-drag-over { border-color:var(--blue) !important; border-top:2px solid var(--blue) !important; background:#f0f9ff; }
+  .save-item.row-dragging, .invest-item.row-dragging { opacity:0.45; }
   .invest-item-title { font-size:13px; font-weight:700; color:var(--text); margin:4px 0 2px; }
   .invest-item-meta { font-size:11px; color:var(--text-sub); margin-bottom:4px; line-height:1.6; }
   .invest-badge { display:inline-block; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:700; margin-right:4px; }
@@ -559,7 +576,7 @@
         <div class="form-row">
           <div class="form-label" style="color:#7c3aed;font-weight:700">입찰일 🗓</div>
           <div class="form-input-wrap" style="gap:6px">
-            <input type="date" id="bidDate" style="flex:1" onchange="calc()">
+            <input type="text" id="bidDate" style="flex:1" placeholder="YYYY-MM-DD" maxlength="10" autocomplete="off" inputmode="numeric">
             <button onclick="addBidToCalendar()" title="Google 캘린더에 입찰일 추가"
               style="padding:4px 10px;background:#7c3aed;color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;">
               📅 캘린더
@@ -1094,24 +1111,18 @@
 <!-- ═══════════════ TAB: 실투자 수익 관리 ═══════════════ -->
 <div id="tab-invest" class="page">
   <div id="investSummaryBar" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px;"></div>
-  <div class="card" style="margin-bottom:16px;">
-    <div class="card-header" style="background:#d1fae5;color:#065f46;justify-content:space-between;align-items:center;">
-      <span>✅ 매도 완료</span>
-      <button onclick="openInvestModal('sold')" style="font-size:12px;padding:4px 14px;background:#059669;color:white;border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;">+ 추가</button>
-    </div>
-    <div class="card-body">
-      <div id="investSoldEmpty" class="save-empty" style="padding:28px 0;">매도 완료 기록이 없습니다.<br><span style="font-size:12px;">+ 추가 버튼으로 매도한 물건의 수익을 기록해보세요.</span></div>
-      <div id="investSoldList"></div>
-    </div>
-  </div>
   <div class="card">
-    <div class="card-header" style="background:#dbeafe;color:#1e40af;justify-content:space-between;align-items:center;">
-      <span>🏠 보유 중 (임대 수익)</span>
-      <button onclick="openInvestModal('holding')" style="font-size:12px;padding:4px 14px;background:var(--blue);color:white;border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;">+ 추가</button>
+    <div class="card-header" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+      <span>💰 실투자 수익 목록</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button onclick="createInvestFolder()" style="font-size:11px;padding:3px 10px;background:white;color:#7c3aed;border:1px solid #7c3aed;border-radius:5px;cursor:pointer;font-family:inherit;font-weight:700">📁 새 폴더</button>
+        <button onclick="openInvestModal('sold')" style="font-size:12px;padding:4px 10px;background:#059669;color:white;border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;">✅ 매도 추가</button>
+        <button onclick="openInvestModal('holding')" style="font-size:12px;padding:4px 10px;background:var(--blue);color:white;border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;">🏠 보유 추가</button>
+      </div>
     </div>
     <div class="card-body">
-      <div id="investHoldingEmpty" class="save-empty" style="padding:28px 0;">보유 중인 물건 기록이 없습니다.<br><span style="font-size:12px;">+ 추가 버튼으로 현재 임대 중인 물건을 등록해보세요.</span></div>
-      <div id="investHoldingList"></div>
+      <div id="investEmpty" class="save-empty">💰 실투자 기록이 없습니다.<br><span style="font-size:12px;">위 버튼으로 매도 완료 또는 보유 중인 물건을 기록해보세요.</span></div>
+      <div id="investMainList"></div>
     </div>
   </div>
 </div>
@@ -1873,6 +1884,49 @@ function printAnalysis() {
   setTimeout(() => window.print(), 150);
 }
 
+// ── 입찰일 텍스트 마스크 (YYYY-MM-DD 자동 포맷) ──────────────
+(function () {
+  function setupBidDateMask() {
+    const bd = document.getElementById('bidDate');
+    if (!bd) return;
+
+    // 숫자·제어키 이외 입력 차단
+    bd.addEventListener('keydown', function (e) {
+      const ctrl = e.ctrlKey || e.metaKey;
+      const allowed = /^\d$/.test(e.key) || ctrl ||
+        ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Enter','Home','End'].includes(e.key);
+      if (!allowed) e.preventDefault();
+    });
+
+    // input 이벤트: 숫자만 추출 → YYYY-MM-DD 자동 포맷
+    bd.addEventListener('input', function () {
+      const cur = this.selectionStart; // 현재 커서 위치
+      let digits = this.value.replace(/\D/g, '').slice(0, 8);
+      let fmt = digits;
+      if (digits.length > 4) fmt = digits.slice(0, 4) + '-' + digits.slice(4);
+      if (digits.length > 6) fmt = digits.slice(0, 4) + '-' + digits.slice(4, 6) + '-' + digits.slice(6);
+      if (this.value !== fmt) {
+        this.value = fmt;
+        // 대시가 삽입된 경우 커서를 한 칸 앞으로 보정
+        const newPos = (fmt.length > (cur || 0)) ? fmt.length : cur;
+        try { this.setSelectionRange(newPos, newPos); } catch (_) {}
+      }
+      calc(); // 실시간 계산 갱신
+    });
+
+    // 붙여넣기도 마스크 적용
+    bd.addEventListener('paste', function () {
+      setTimeout(() => this.dispatchEvent(new Event('input', { bubbles: true })), 0);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupBidDateMask);
+  } else {
+    setupBidDateMask();
+  }
+})();
+
 // ── Google Calendar (URL 방식) ────────────────────────────
 function addBidToCalendar() {
   const date = $('bidDate').value;
@@ -2229,6 +2283,7 @@ if (FB_READY) {
       loadCalendarsFromCloud();   // 로그인 시 캘린더 목록 클라우드에서 불러오기
       loadFoldersFromCloud();     // 로그인 시 폴더 구조 클라우드에서 불러오기
       loadOrderFromCloud();       // 로그인 시 저장 순서 클라우드에서 불러오기
+      loadInvestFoldersFromCloud(); // 로그인 시 실투자 폴더 클라우드에서 불러오기
       if (document.getElementById('tab-saves').classList.contains('active')) renderSavesList();
       if (document.getElementById('tab-invest').classList.contains('active')) renderInvestTab();
     }
@@ -2444,15 +2499,57 @@ async function loadOrderFromCloud() {
   } catch(e) {}
 }
 
-// ── 아이템 드래그 → 폴더 이동 ───────────────────
+// ── 행 순서 드래그 (저장된 분석) ────────────────
 let _dragSaveId = null;
+let _dragSaveRowId = null;   // 순서변경 드래그 전용
+
+function onSaveRowDragOver(e, targetId) {
+  if (!_dragSaveRowId || _dragSaveRowId === targetId) return;
+  e.preventDefault();
+  e.stopPropagation(); // 폴더 dragover 이벤트 방지
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.save-item.row-drag-over').forEach(el => el.classList.remove('row-drag-over'));
+  e.currentTarget.classList.add('row-drag-over');
+}
+function onSaveRowDragLeave(e) {
+  if (!e.currentTarget.contains(e.relatedTarget)) {
+    e.currentTarget.classList.remove('row-drag-over');
+  }
+}
+function onSaveRowDrop(e, targetId) {
+  e.preventDefault();
+  e.stopPropagation();
+  document.querySelectorAll('.save-item.row-drag-over').forEach(el => el.classList.remove('row-drag-over'));
+  if (!_dragSaveRowId || _dragSaveRowId === targetId) return;
+  // 폴더에 속하지 않은 루트 항목만 순서 관리 (폴더 내 항목 제외)
+  const folderItemIds = new Set(getFolders().flatMap(f => f.itemIds));
+  let currentIds = [...document.querySelectorAll('#savesList .save-item')]
+    .map(el => el.dataset.id)
+    .filter(id => id && !folderItemIds.has(id));
+  const srcIdx = currentIds.indexOf(_dragSaveRowId);
+  const tgtIdx = currentIds.indexOf(targetId);
+  if (srcIdx < 0 || tgtIdx < 0) { _dragSaveRowId = null; return; }
+  currentIds.splice(srcIdx, 1);
+  currentIds.splice(tgtIdx, 0, _dragSaveRowId);
+  setOrder(currentIds);
+  saveOrderToCloud(currentIds);
+  _dragSaveRowId = null;
+  renderSavesList();
+}
+
+// ── 아이템 드래그 → 폴더 이동 ───────────────────
 function onItemDragStart(e, saveId) {
   _dragSaveId = saveId;
+  _dragSaveRowId = saveId;  // 순서변경 드래그도 함께 시작
   e.dataTransfer.effectAllowed = 'move';
   e.currentTarget.classList.add('dragging');
+  e.currentTarget.classList.add('row-dragging');
 }
 function onItemDragEnd(e) {
+  _dragSaveRowId = null;
   e.currentTarget.classList.remove('dragging');
+  e.currentTarget.classList.remove('row-dragging');
+  document.querySelectorAll('.save-item.row-drag-over').forEach(el => el.classList.remove('row-drag-over'));
 }
 function onFolderDragOver(e, el) {
   if (!_dragSaveId) return;
@@ -2578,8 +2675,11 @@ function _renderSaveItem(s, folders) {
     : `<div class="save-memo-empty" style="min-height:36px;background:var(--gray-light);border-radius:6px;border-left:3px solid #e5e7eb;"></div>`;
 
   return `<div class="save-item" data-id="${s.id}" draggable="true"
-      ondragstart="onItemDragStart(event,'${s.id}')" ondragend="onItemDragEnd(event)">
+      ondragstart="onItemDragStart(event,'${s.id}')" ondragend="onItemDragEnd(event)"
+      ondragover="onSaveRowDragOver(event,'${s.id}')" ondragleave="onSaveRowDragLeave(event)" ondrop="onSaveRowDrop(event,'${s.id}')">
     <div class="save-item-inner" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
+      <!-- 드래그 핸들 -->
+      <span class="drag-handle-col" title="드래그하여 순서 변경">⠿</span>
 
       <!-- PC: 왼쪽 (제목+메타) -->
       <div class="save-item-left" style="flex:1;min-width:0;">
@@ -2642,7 +2742,19 @@ async function renderSavesList() {
     return;
   }
 
-  const sorted = sortSaves(saves);
+  // 수동 순서가 저장된 경우 우선 적용, 없으면 날짜순 정렬
+  const savedOrder = getOrder();
+  let sorted;
+  if (savedOrder && savedOrder.length > 0) {
+    const orderMap = new Map(savedOrder.map((id, i) => [id, i]));
+    sorted = [...saves].sort((a, b) => {
+      const ia = orderMap.has(a.id) ? orderMap.get(a.id) : 99999;
+      const ib = orderMap.has(b.id) ? orderMap.get(b.id) : 99999;
+      return ia !== ib ? ia - ib : (sortSaves([a, b])[0].id === a.id ? -1 : 1);
+    });
+  } else {
+    sorted = sortSaves(saves);
+  }
   const folderItemIds = new Set(folders.flatMap(f => f.itemIds));
   const rootItems = sorted.filter(s => !folderItemIds.has(s.id));
 
@@ -2788,6 +2900,186 @@ const INVEST_KEY = 'booland_invest';
 const _investRegistry = {}; // 렌더링된 항목을 id → 데이터로 보관 (Firebase·localStorage 모두 지원)
 function getInvestments() { try { return JSON.parse(localStorage.getItem(INVEST_KEY)||'[]'); } catch { return []; } }
 
+// ── 실투자 폴더 시스템 ──────────────────────────────────
+const INVEST_FOLDER_KEY = 'booland_invest_folders';
+function getInvestFolders() { try { return JSON.parse(localStorage.getItem(INVEST_FOLDER_KEY)||'[]'); } catch { return []; } }
+function saveInvestFolders(f) { localStorage.setItem(INVEST_FOLDER_KEY, JSON.stringify(f)); saveInvestFoldersToCloud(f); }
+
+async function saveInvestFoldersToCloud(folders) {
+  if (!db || !currentUser) return;
+  try { await db.collection('users').doc(currentUser.uid).collection('settings').doc('investFolders').set({ folders, updatedAt: Date.now() }); } catch(e) {}
+}
+async function loadInvestFoldersFromCloud() {
+  if (!db || !currentUser) return;
+  try {
+    const snap = await db.collection('users').doc(currentUser.uid).collection('settings').doc('investFolders').get();
+    if (snap.exists && Array.isArray(snap.data().folders)) {
+      localStorage.setItem(INVEST_FOLDER_KEY, JSON.stringify(snap.data().folders));
+    }
+  } catch(e) {}
+}
+
+function createInvestFolder() {
+  const name = prompt('폴더 이름을 입력해주세요:');
+  if (!name || !name.trim()) return;
+  const folders = getInvestFolders();
+  folders.push({ id: 'if' + Date.now(), name: name.trim(), open: true, itemIds: [] });
+  saveInvestFolders(folders);
+  renderInvestTab();
+}
+function deleteInvestFolder(folderId) {
+  if (!confirm('폴더를 삭제할까요?\n(안에 있는 기록은 삭제되지 않습니다)')) return;
+  saveInvestFolders(getInvestFolders().filter(f => f.id !== folderId));
+  renderInvestTab();
+}
+function toggleInvestFolder(folderId) {
+  const folders = getInvestFolders();
+  const f = folders.find(f => f.id === folderId);
+  if (f) { f.open = !f.open; saveInvestFolders(folders); renderInvestTab(); }
+}
+function moveToInvestFolder(investId, folderId) {
+  const folders = getInvestFolders();
+  folders.forEach(f => { f.itemIds = f.itemIds.filter(id => id !== investId); });
+  if (folderId) {
+    const t = folders.find(f => f.id === folderId);
+    if (t && !t.itemIds.includes(investId)) t.itemIds.push(investId);
+  }
+  saveInvestFolders(folders);
+  hideInvestFolderMenu();
+  renderInvestTab();
+}
+function showInvestFolderMenu(investId, btn) {
+  let menu = document.getElementById('investFolderMenu');
+  if (!menu) { menu = document.createElement('div'); menu.id = 'investFolderMenu'; document.body.appendChild(menu); }
+  menu.className = 'folder-menu'; // 기존 저장된 분석 팝업 스타일 재사용
+  const folders = getInvestFolders();
+  const currentFolder = folders.find(f => f.itemIds.includes(investId));
+  let html = `<div class="folder-menu-item ${!currentFolder?'active':''}" onclick="moveToInvestFolder('${investId}',null)">📌 폴더 없음</div>`;
+  folders.forEach(f => {
+    html += `<div class="folder-menu-item ${currentFolder?.id===f.id?'active':''}" onclick="moveToInvestFolder('${investId}','${f.id}')">📁 ${f.name}</div>`;
+  });
+  if (folders.length === 0) html += `<div style="padding:8px 12px;font-size:11px;color:#9ca3af">폴더가 없습니다.<br>상단 [📁 새 폴더]로 만드세요.</div>`;
+  menu.innerHTML = html;
+  menu.style.display = 'block';
+  const rect = btn.getBoundingClientRect();
+  menu.style.top  = (rect.bottom + 4) + 'px';
+  menu.style.left = Math.min(rect.left, window.innerWidth - 180) + 'px';
+  setTimeout(() => document.addEventListener('click', hideInvestFolderMenu, { once: true }), 0);
+}
+function hideInvestFolderMenu() {
+  const m = document.getElementById('investFolderMenu');
+  if (m) m.style.display = 'none';
+}
+
+// ── 실투자 폴더 드래그 핸들러 ─────────────────────────
+function onInvestFolderDragOver(e, el) {
+  if (!_dragInvestId) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  el.classList.add('drag-over');
+}
+function onInvestFolderDragLeave(e, el) {
+  if (!el.contains(e.relatedTarget)) el.classList.remove('drag-over');
+}
+function onInvestFolderDrop(e, folderId, el) {
+  e.preventDefault();
+  el.classList.remove('drag-over');
+  if (!_dragInvestId) return;
+  moveToInvestFolder(_dragInvestId, folderId);
+  _dragInvestId = null;
+}
+
+// ── 실투자 목록 정렬 상태 ──────────────────────────────
+let investSoldSort = { col: null, dir: 1 };   // col: 필드명, dir: 1=오름차순 -1=내림차순
+let investHoldSort = { col: null, dir: 1 };
+
+// ── 실투자 행 드래그 순서변경 ──────────────────────────
+const INVEST_ORDER_KEY_ALL = 'booland_invest_order_all';
+function getInvestOrder() { try { return JSON.parse(localStorage.getItem(INVEST_ORDER_KEY_ALL)||'null'); } catch { return null; } }
+function setInvestOrder(sec, ids) { localStorage.setItem(INVEST_ORDER_KEY_ALL, JSON.stringify(ids)); }
+
+let _dragInvestId = null, _dragInvestSec = null;
+
+function onInvestDragStart(e, id, sec) {
+  _dragInvestId = id; _dragInvestSec = sec;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.classList.add('row-dragging');
+}
+function onInvestDragEnd(e) {
+  _dragInvestId = null; _dragInvestSec = null;
+  e.currentTarget.classList.remove('row-dragging');
+  document.querySelectorAll('.invest-item.row-drag-over').forEach(el => el.classList.remove('row-drag-over'));
+}
+function onInvestDragOver(e, targetId, sec) {
+  if (!_dragInvestId || _dragInvestId === targetId) return;
+  e.preventDefault();
+  e.stopPropagation();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.invest-item.row-drag-over').forEach(el => el.classList.remove('row-drag-over'));
+  e.currentTarget.classList.add('row-drag-over');
+}
+function onInvestDragLeave(e) {
+  if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.classList.remove('row-drag-over');
+}
+function onInvestDrop(e, targetId, sec) {
+  e.preventDefault();
+  e.stopPropagation();
+  document.querySelectorAll('.invest-item.row-drag-over').forEach(el => el.classList.remove('row-drag-over'));
+  if (!_dragInvestId || _dragInvestId === targetId) return;
+  // 폴더에 속하지 않은 루트 항목만 순서 관리 (investMainList 사용)
+  const investFolderItemIds = new Set(getInvestFolders().flatMap(f => f.itemIds));
+  let currentIds = [...document.querySelectorAll('#investMainList .invest-item')]
+    .map(el => el.dataset.id)
+    .filter(id => id && !investFolderItemIds.has(id));
+  const srcIdx = currentIds.indexOf(_dragInvestId);
+  const tgtIdx = currentIds.indexOf(targetId);
+  if (srcIdx < 0 || tgtIdx < 0) { _dragInvestId = null; _dragInvestSec = null; return; }
+  currentIds.splice(srcIdx, 1);
+  currentIds.splice(tgtIdx, 0, _dragInvestId);
+  // 통합 순서 저장 (sold/hold 구분 없이 단일 키 사용)
+  setInvestOrder('all', currentIds);
+  _dragInvestId = null; _dragInvestSec = null;
+  renderInvestTab();
+}
+
+function toggleInvestSort(section, col) {
+  const s = section === 'sold' ? investSoldSort : investHoldSort;
+  if (s.col === col) s.dir = -s.dir;
+  else { s.col = col; s.dir = 1; }
+  renderInvestTab();
+}
+// 정렬 초기화
+function resetInvestSort(section) {
+  investSoldSort = { col: null, dir: 1 };
+  investHoldSort = { col: null, dir: 1 };
+  renderInvestTab();
+}
+
+function _applyInvestSort(arr, sort) {
+  if (!sort.col) return arr;
+  return [...arr].sort((a, b) => {
+    let va = a[sort.col], vb = b[sort.col];
+    if (va == null) va = typeof a[sort.col] === 'string' ? '' : -Infinity;
+    if (vb == null) vb = typeof b[sort.col] === 'string' ? '' : -Infinity;
+    if (typeof va === 'string' || typeof vb === 'string') {
+      return String(va).localeCompare(String(vb), 'ko', { numeric: true }) * sort.dir;
+    }
+    return (va - vb) * sort.dir;
+  });
+}
+
+function _investSortBar(section, cols, sort) {
+  const btns = cols.map(([col, label]) => {
+    const active = sort.col === col;
+    const arrow = active ? (sort.dir === 1 ? ' ▲' : ' ▼') : '';
+    return `<button onclick="toggleInvestSort('${section}','${col}')" style="font-size:11px;padding:3px 10px;border:1px solid ${active?'var(--blue)':'var(--border)'};border-radius:12px;cursor:pointer;font-family:inherit;font-weight:${active?700:400};background:${active?'var(--blue)':'white'};color:${active?'white':'var(--gray)'};white-space:nowrap;">${label}${arrow}</button>`;
+  }).join('');
+  const resetBtn = sort.col ? `<button onclick="resetInvestSort('${section}')" style="font-size:11px;padding:3px 8px;border:1px solid #fca5a5;border-radius:12px;cursor:pointer;font-family:inherit;background:white;color:#dc2626;white-space:nowrap;">✕ 초기화</button>` : '';
+  return `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);align-items:center;">
+    <span style="font-size:11px;color:var(--text-sub);flex-shrink:0;">정렬</span>${btns}${resetBtn}
+  </div>`;
+}
+
 function ivNum(id) {
   const el = document.getElementById(id);
   return el ? parseInt(el.value.replace(/[^0-9]/g,'') || '0', 10) : 0;
@@ -2879,13 +3171,31 @@ function _calcHoldingMonths(bidDate, endDate) {
 }
 
 async function saveInvestEntry() {
-  const type   = $('iv-type').value;
-  const editId = $('iv-edit-id').value;
-  const addr   = $('iv-addr').value.trim();
+  const type = $('iv-type').value;
+  let editId = $('iv-edit-id').value;
+  const addr = $('iv-addr').value.trim();
   if (!addr) { alert('주소 / 물건명을 입력해주세요.'); return; }
+
+  // ── 덮어쓰기 감지: editId 없을 때 addr 기준으로 기존 항목 검색 ──
+  let isOverwrite = false;
+  if (!editId) {
+    try {
+      if (FB_READY && currentUser) {
+        const dup = await db.collection('users').doc(currentUser.uid).collection('invest')
+          .where('addr', '==', addr).limit(1).get();
+        if (!dup.empty) { editId = dup.docs[0].id; isOverwrite = true; }
+      } else {
+        const existing = getInvestments().find(e => e.addr === addr);
+        if (existing) { editId = existing.id; isOverwrite = true; }
+      }
+    } catch(e) { /* 무시하고 신규로 저장 */ }
+  }
+
   const bid = ivNum('iv-bidPrice');
+  // Firestore doc ID = editId 있으면 그대로, 없으면 timestamp 신규 생성
+  const docId = editId || Date.now().toString();
   const entry = {
-    type, id: editId || Date.now().toString(),
+    type, id: docId,
     savedAtMs: Date.now(),
     savedAt: new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),
     addr, propType: $('iv-propType').value,
@@ -2910,15 +3220,15 @@ async function saveInvestEntry() {
   }
   try {
     if (FB_READY && currentUser) {
-      const col = db.collection('users').doc(currentUser.uid).collection('invest');
-      editId ? await col.doc(editId).set(entry) : await col.add(entry);
+      // col.doc(docId).set() 으로 통일 → Firestore 문서 ID = entry.id → 삭제/수정 정상 동작
+      await db.collection('users').doc(currentUser.uid).collection('invest').doc(docId).set(entry);
     } else {
       let all = getInvestments();
       all = editId ? all.map(e => e.id === editId ? entry : e) : [entry, ...all];
       localStorage.setItem(INVEST_KEY, JSON.stringify(all));
     }
     closeInvestModal(); renderInvestTab();
-    showToast(editId ? '✏️ 수정되었습니다!' : '✅ 저장되었습니다!');
+    showToast(isOverwrite || $('iv-edit-id').value ? '✏️ 덮어쓰기 저장되었습니다!' : '✅ 저장되었습니다!');
   } catch(e) { alert('저장 실패: ' + e.message); }
 }
 
@@ -2935,14 +3245,13 @@ async function deleteInvestment(id) {
 }
 
 async function renderInvestTab() {
-  const soldListEl = $('investSoldList'), holdListEl = $('investHoldingList');
-  const soldEmptyEl = $('investSoldEmpty'), holdEmptyEl = $('investHoldingEmpty');
+  const mainEl   = $('investMainList');
+  const emptyEl  = $('investEmpty');
   const summaryEl = $('investSummaryBar');
-  if (!soldListEl) return;
+  if (!mainEl) return;
 
   if (FB_READY && !currentUser) {
-    soldListEl.innerHTML = holdListEl.innerHTML = '';
-    soldEmptyEl.style.display = holdEmptyEl.style.display = 'none';
+    mainEl.innerHTML = ''; emptyEl.style.display = 'none';
     summaryEl.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:36px 20px;">
       <div style="font-size:44px;margin-bottom:12px">🔐</div>
       <div style="font-size:15px;font-weight:700;margin-bottom:8px">로그인이 필요합니다</div>
@@ -2954,21 +3263,22 @@ async function renderInvestTab() {
   try {
     if (FB_READY && currentUser) {
       const snap = await db.collection('users').doc(currentUser.uid).collection('invest').orderBy('savedAtMs','desc').get();
-      all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      all = snap.docs.map(d => ({ ...d.data(), id: d.id }));
     } else { all = getInvestments(); }
-  } catch(e) { soldListEl.innerHTML = `<div style="color:red;padding:20px">오류: ${e.message}</div>`; return; }
+  } catch(e) { mainEl.innerHTML = `<div style="color:red;padding:20px">오류: ${e.message}</div>`; return; }
 
-  const sold = all.filter(e => e.type === 'sold');
-  const holding = all.filter(e => e.type === 'holding');
-  // 수정 버튼에서 데이터를 찾을 수 있도록 레지스트리에 등록 (Firebase·localStorage 모두 커버)
   all.forEach(e => { _investRegistry[e.id] = e; });
   const fmt  = n => (n == null || isNaN(n)) ? '-' : Math.round(n).toLocaleString('ko-KR') + '원';
   const fmtP = n => (n == null || isNaN(n)) ? '-' : n.toFixed(1) + '%';
 
-  const totalProfit = sold.reduce((s, e) => s + (e.netProfit || 0), 0);
-  const totalMonthly = holding.reduce((s, e) => s + (e.monthlyNet || 0), 0);
-  const totalAccum = holding.reduce((s, e) => s + (e.monthlyNet || 0) * _calcHoldingMonths(e.bidDate, null), 0);
+  const sold    = all.filter(e => e.type === 'sold');
+  const holding = all.filter(e => e.type === 'holding');
+  const holdingWH = holding.map(e => ({ ...e, holdingMonths: _calcHoldingMonths(e.bidDate, null) }));
 
+  // ── 요약 카드
+  const totalProfit  = sold.reduce((s,e) => s + (e.netProfit||0), 0);
+  const totalMonthly = holdingWH.reduce((s,e) => s + (e.monthlyNet||0), 0);
+  const totalAccum   = holdingWH.reduce((s,e) => s + (e.monthlyNet||0) * 12, 0);
   summaryEl.innerHTML = `
     <div class="invest-summary-card" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);border:1px solid #6ee7b7;">
       <div class="invest-summary-label">✅ 매도 완료</div>
@@ -2981,76 +3291,169 @@ async function renderInvestTab() {
       <div class="invest-summary-sub">월 순수익 합계 <b>${fmt(totalMonthly)}</b></div>
     </div>
     <div class="invest-summary-card" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fcd34d;">
-      <div class="invest-summary-label">📈 누적 임대 수익</div>
+      <div class="invest-summary-label">📈 연 임대 수익</div>
       <div class="invest-summary-value" style="color:#92400e;">${fmt(totalAccum)}</div>
-      <div class="invest-summary-sub">보유 기간 × 월 순수익 합산</div>
+      <div class="invest-summary-sub">월 순수익 합계 × 12개월</div>
     </div>
     <div class="invest-summary-card" style="background:linear-gradient(135deg,#ede9fe,#ddd6fe);border:1px solid #c4b5fd;">
-      <div class="invest-summary-label">🏆 실현이익 + 누적임대</div>
+      <div class="invest-summary-label">🏆 실현이익 + 연임대</div>
       <div class="invest-summary-value" style="color:#5b21b6;">${fmt(totalProfit + totalAccum)}</div>
       <div class="invest-summary-sub">종합 수익 합산</div>
     </div>`;
 
-  // 매도 완료 목록
-  if (sold.length === 0) { soldListEl.innerHTML = ''; soldEmptyEl.style.display = ''; }
-  else {
-    soldEmptyEl.style.display = 'none';
-    soldListEl.innerHTML = sold.map(e => {
-      const net = e.netProfit || 0, col = net >= 0 ? '#059669' : '#dc2626';
-      const hm = e.holdingMonths != null ? `${e.holdingMonths}개월 보유` : '';
-      const memoHtml = e.memo ? `<div class="save-item-memo">${e.memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` : '';
-      return `<div class="invest-item">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <div><span class="invest-badge invest-badge-sold">✅ 매도</span><span class="invest-badge invest-badge-type">${e.propType||''}</span></div>
-          <div style="display:flex;gap:6px;flex-shrink:0;">
-            <button class="btn-invest-edit" onclick="openInvestModal('sold','${e.id}')">✏️ 수정</button>
-            <button class="btn-del" style="font-size:11px;padding:3px 9px;" onclick="deleteInvestment('${e.id}')">🗑</button>
+  if (all.length === 0) { mainEl.innerHTML = ''; emptyEl.style.display = ''; return; }
+  emptyEl.style.display = 'none';
+
+  // ── 아이템 렌더 헬퍼
+  function _renderInvestItem(e, canDrag) {
+    const isSold = e.type === 'sold';
+    const dragAttrs = canDrag
+      ? `draggable="true" ondragstart="onInvestDragStart(event,'${e.id}','${isSold?'sold':'hold'}')" ondragend="onInvestDragEnd(event)" ondragover="onInvestDragOver(event,'${e.id}','${isSold?'sold':'hold'}')" ondragleave="onInvestDragLeave(event)" ondrop="onInvestDrop(event,'${e.id}','${isSold?'sold':'hold'}')"` : '';
+    const handle = canDrag ? `<span class="drag-handle-col" title="드래그하여 순서 변경">⠿</span>` : '';
+    const inFolder = getInvestFolders().find(f => f.itemIds.includes(e.id));
+    const memoHtml = e.memo ? `<div class="save-item-memo">${e.memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` : '';
+
+    let metaHtml;
+    if (isSold) {
+      const net = e.netProfit||0, col = net>=0?'#059669':'#dc2626';
+      const hm  = e.holdingMonths!=null ? `${e.holdingMonths}개월 보유` : '';
+      metaHtml = `${e.bidDate?`낙찰 ${e.bidDate}`:''}${e.saleDate?` → 매도 ${e.saleDate}`:''}${hm?` (${hm})`:''}
+        &nbsp;|&nbsp; <span style="color:#6b7280">${fmt(e.bidPrice)}</span> → <span>${fmt(e.salePrice)}</span>
+        &nbsp; <span style="color:${col};font-weight:800">${net>=0?'▲':'▼'} ${fmt(Math.abs(net))}</span>
+        ${e.roe!=null?`<span style="color:${col}"> ROE ${fmtP(e.roe)}</span>`:''}
+        ${e.totalCost?`&nbsp;|&nbsp; 총비용 ${fmt(e.totalCost)}`:''}`;
+    } else {
+      const hm    = e.holdingMonths ?? _calcHoldingMonths(e.bidDate, null);
+      const accum = (e.monthlyNet||0) * 12;
+      const net   = e.monthlyNet||0, netCol = net>=0?'#1d4ed8':'#dc2626';
+      metaHtml = `낙찰가 <b>${fmt(e.bidPrice)}</b>${e.bidDate?` · ${e.bidDate} 낙찰`:''} · 보유 ${hm}개월
+        &nbsp;|&nbsp; 월 임대료 <b style="color:#1d4ed8">${fmt(e.monthlyRent)}</b>
+        &nbsp;|&nbsp; 대출이자 <b style="color:#dc2626">-${fmt(e.monthlyLoan)}</b>
+        &nbsp;|&nbsp; 월 순수익 <b style="color:${netCol};font-size:12px">${fmt(net)}</b>
+        &nbsp;|&nbsp; 연수익 <b style="color:#5b21b6">${fmt(accum)}</b>
+        ${e.rentRoeAnn!=null?`&nbsp;|&nbsp; 연ROE <b style="color:#1d4ed8">${fmtP(e.rentRoeAnn)}</b>`:''}
+        ${e.curMarket?`&nbsp;|&nbsp; 시세 ${fmt(e.curMarket)} · 평가이익 <b style="color:${(e.curMarket-(e.bidPrice||0))>=0?'#059669':'#dc2626'}">${fmt(e.curMarket-(e.bidPrice||0))}</b>`:''}`;
+    }
+    const badge = isSold
+      ? `<span class="invest-badge invest-badge-sold">✅ 매도</span>`
+      : `<span class="invest-badge invest-badge-holding">🏠 보유중</span>`;
+    const typeModal = isSold ? 'sold' : 'holding';
+    return `<div class="invest-item" data-id="${e.id}" ${dragAttrs}>
+      <div style="display:flex;align-items:center;gap:6px;">
+        ${handle}
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <div>${badge}<span class="invest-badge invest-badge-type">${e.propType||''}</span></div>
+            <div style="display:flex;gap:5px;flex-shrink:0;">
+              <button class="btn-folder" style="padding:3px 8px;font-size:11px;" onclick="event.stopPropagation();showInvestFolderMenu('${e.id}',this)">📁${inFolder?' ✓':''}</button>
+              <button class="btn-invest-edit" onclick="openInvestModal('${typeModal}','${e.id}')">✏️ 수정</button>
+              <button class="btn-del" style="font-size:11px;padding:3px 9px;" onclick="deleteInvestment('${e.id}')">🗑</button>
+            </div>
           </div>
+          <div class="invest-item-title">📌 ${e.addr||'(주소 없음)'}</div>
+          <div class="invest-item-meta">${metaHtml}</div>
+          ${memoHtml}
         </div>
-        <div class="invest-item-title">📌 ${e.addr||'(주소 없음)'}</div>
-        <div class="invest-item-meta">
-          ${e.bidDate?`낙찰 ${e.bidDate}`:''}${e.saleDate?` → 매도 ${e.saleDate}`:''}${hm?` (${hm})`:''}
-          &nbsp;|&nbsp; <span style="color:#6b7280;">${fmt(e.bidPrice)}</span> → <span>${fmt(e.salePrice)}</span>
-          &nbsp; <span style="color:${col};font-weight:800;">${net>=0?'▲':'▼'} ${fmt(Math.abs(net))}</span>
-          ${e.roe!=null?`<span style="color:${col};"> ROE ${fmtP(e.roe)}</span>`:''}
-          ${e.totalCost?`&nbsp;|&nbsp; 총비용 ${fmt(e.totalCost)}`:''}
-        </div>
-        ${memoHtml}
-      </div>`;
-    }).join('');
+      </div>
+    </div>`;
   }
 
-  // 보유 중 목록
-  if (holding.length === 0) { holdListEl.innerHTML = ''; holdEmptyEl.style.display = ''; }
-  else {
-    holdEmptyEl.style.display = 'none';
-    holdListEl.innerHTML = holding.map(e => {
-      const hm = _calcHoldingMonths(e.bidDate, null);
-      const accum = (e.monthlyNet||0) * hm;
-      const net = e.monthlyNet||0, netCol = net>=0?'#1d4ed8':'#dc2626';
-      const memoHtml = e.memo ? `<div class="save-item-memo">${e.memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` : '';
-      return `<div class="invest-item">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <div><span class="invest-badge invest-badge-holding">🏠 보유중</span><span class="invest-badge invest-badge-type">${e.propType||''}</span></div>
-          <div style="display:flex;gap:6px;flex-shrink:0;">
-            <button class="btn-invest-edit" onclick="openInvestModal('holding','${e.id}')">✏️ 수정</button>
-            <button class="btn-del" style="font-size:11px;padding:3px 9px;" onclick="deleteInvestment('${e.id}')">🗑</button>
-          </div>
-        </div>
-        <div class="invest-item-title">📌 ${e.addr||'(주소 없음)'}</div>
-        <div class="invest-item-meta">
-          낙찰가 <b>${fmt(e.bidPrice)}</b>${e.bidDate?` · ${e.bidDate} 낙찰`:''} · 보유 ${hm}개월
-          &nbsp;|&nbsp; 월 임대료 <b style="color:#1d4ed8">${fmt(e.monthlyRent)}</b>
-          &nbsp;|&nbsp; 대출이자 <b style="color:#dc2626">-${fmt(e.monthlyLoan)}</b>
-          &nbsp;|&nbsp; 월 순수익 <b style="color:${netCol};font-size:12px;">${fmt(net)}</b>
-          &nbsp;|&nbsp; 누적 <b style="color:#5b21b6">${fmt(accum)}</b>
-          ${e.rentRoeAnn!=null?`&nbsp;|&nbsp; 연ROE <b style="color:#1d4ed8">${fmtP(e.rentRoeAnn)}</b>`:''}
-          ${e.curMarket?`&nbsp;|&nbsp; 시세 ${fmt(e.curMarket)} · 평가이익 <b style="color:${(e.curMarket-(e.bidPrice||0))>=0?'#059669':'#dc2626'}">${fmt(e.curMarket-(e.bidPrice||0))}</b>`:''}
-        </div>
-        ${memoHtml}
-      </div>`;
-    }).join('');
+  // ── 폴더 헤더 집계 통계
+  function _folderStats(items) {
+    const h = items.filter(e => e.type === 'holding').map(e => ({ ...e, holdingMonths: _calcHoldingMonths(e.bidDate,null) }));
+    const s = items.filter(e => e.type === 'sold');
+    const parts = [];
+    if (items.length) parts.push(`<b>${items.length}개</b>`);
+    if (h.length) {
+      const rent  = h.reduce((a,e) => a+(e.monthlyRent||0),0);
+      const loan  = h.reduce((a,e) => a+(e.monthlyLoan||0),0);
+      const net   = h.reduce((a,e) => a+(e.monthlyNet||0),0);
+      const accum = h.reduce((a,e) => a+(e.monthlyNet||0)*12,0);
+      parts.push(`🏠 월임대료 <b style="color:#1d4ed8">${fmt(rent)}</b>`);
+      parts.push(`대출이자 <b style="color:#dc2626">-${fmt(loan)}</b>`);
+      parts.push(`월순수익 <b style="color:${net>=0?'#1d4ed8':'#dc2626'}">${fmt(net)}</b>`);
+      parts.push(`연수익 <b style="color:#5b21b6">${fmt(accum)}</b>`);
+    }
+    if (s.length) {
+      const profit = s.reduce((a,e) => a+(e.netProfit||0),0);
+      parts.push(`✅ 실현이익 <b style="color:${profit>=0?'#059669':'#dc2626'}">${fmt(profit)}</b>`);
+    }
+    return parts.join('&nbsp;&nbsp;');
   }
+
+  // ── 정렬 헬퍼 (수동 순서 우선, 컬럼 정렬 시 덮어씀)
+  const allSort = { col: investSoldSort.col || investHoldSort.col, dir: investSoldSort.dir };
+  const investOrder = getInvestOrder(); // 수동 순서 배열
+  function _sortItems(arr) {
+    if (!allSort.col && investOrder && investOrder.length > 0) {
+      const orderMap = new Map(investOrder.map((id, i) => [id, i]));
+      return [...arr].sort((a, b) => {
+        const ia = orderMap.has(a.id) ? orderMap.get(a.id) : 99999;
+        const ib = orderMap.has(b.id) ? orderMap.get(b.id) : 99999;
+        return ia - ib;
+      });
+    }
+    return _applyInvestSort(arr, allSort);
+  }
+
+  // ── 폴더 & 미분류 분리
+  const folders = getInvestFolders();
+  const folderItemIds = new Set(folders.flatMap(f => f.itemIds));
+  const rootItems = all.filter(e => !folderItemIds.has(e.id));
+
+  let html = '';
+
+  // ── 폴더 렌더
+  folders.forEach(folder => {
+    const items = folder.itemIds.map(id => all.find(e => e.id === id)).filter(Boolean);
+    const isOpen = folder.open !== false;
+    const stats  = _folderStats(items);
+    html += `<div class="invest-folder-row">
+      <div class="invest-folder-header"
+          onclick="toggleInvestFolder('${folder.id}')"
+          ondragover="onInvestFolderDragOver(event,this)"
+          ondragleave="onInvestFolderDragLeave(event,this)"
+          ondrop="onInvestFolderDrop(event,'${folder.id}',this)">
+        <span style="font-size:14px">${isOpen?'▼':'▶'}</span>
+        <span>${isOpen?'📂':'📁'} ${folder.name}</span>
+        <div style="flex:1;min-width:0;">
+          <div class="invest-folder-stats">${stats}</div>
+        </div>
+        <button onclick="event.stopPropagation();deleteInvestFolder('${folder.id}')"
+          style="font-size:10px;padding:2px 7px;background:white;color:#ef4444;border:1px solid #fca5a5;border-radius:4px;cursor:pointer;font-family:inherit;flex-shrink:0">삭제</button>
+      </div>
+      ${isOpen && items.length > 0 ? `<div class="invest-folder-items">${items.map(e => _renderInvestItem(e, false)).join('')}</div>` : ''}
+      ${isOpen && items.length === 0 ? `<div style="padding:10px 16px;font-size:12px;color:#9ca3af">폴더가 비어 있습니다. 각 항목의 📁 버튼으로 추가하세요.</div>` : ''}
+    </div>`;
+  });
+
+  // ── 미분류 항목 (폴더 없는 항목)
+  if (rootItems.length > 0) {
+    const unassignedHeader = folders.length > 0
+      ? `<div class="invest-unassigned-drop" ondragover="onInvestFolderDragOver(event,this)" ondragleave="onInvestFolderDragLeave(event,this)" ondrop="onInvestFolderDrop(event,null,this)">📌 폴더 미분류 (여기에 드롭하면 폴더에서 제거)</div>`
+      : '';
+
+    // 정렬 바 — 전체 공통 (미분류 목록 위에만 표시)
+    const allSortCols = [['addr','사건번호'],['bidDate','낙찰일'],['bidPrice','낙찰가'],['monthlyRent','월임대료'],['monthlyLoan','대출이자'],['monthlyNet','월순수익'],['netProfit','순이익'],['roe','ROE']];
+    const sortBar = _investSortBar('sold', allSortCols, investSoldSort); // 'sold' sort state 공통 사용
+
+    const rootSold    = _sortItems(rootItems.filter(e => e.type === 'sold'));
+    const rootHolding = _sortItems(rootItems.filter(e => e.type === 'holding').map(e => ({ ...e, holdingMonths: _calcHoldingMonths(e.bidDate,null) })));
+    const canDrag = !allSort.col;
+
+    let rootHtml = unassignedHeader + sortBar;
+    if (rootSold.length > 0) {
+      if (folders.length > 0 || rootHolding.length > 0) rootHtml += `<div class="invest-section-label">✅ 매도 완료 (${rootSold.length}건)</div>`;
+      rootHtml += rootSold.map(e => _renderInvestItem(e, canDrag)).join('');
+    }
+    if (rootHolding.length > 0) {
+      if (folders.length > 0 || rootSold.length > 0) rootHtml += `<div class="invest-section-label">🏠 보유 중 (${rootHolding.length}건)</div>`;
+      rootHtml += rootHolding.map(e => _renderInvestItem(e, canDrag)).join('');
+    }
+    html += rootHtml;
+  }
+
+  mainEl.innerHTML = html;
 }
 
 calc();
