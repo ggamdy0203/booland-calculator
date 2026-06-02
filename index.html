@@ -191,6 +191,21 @@
 
   /* 실투자 수익 관리 */
   .invest-summary-card { padding:14px 16px; border-radius:10px; }
+  /* 연도별 수익 현황 */
+  .invest-yearly-wrap { background:white; border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+  .invest-yearly-header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:#f8fafc; border-bottom:1px solid var(--border); cursor:pointer; user-select:none; }
+  .invest-yearly-header:hover { background:#f1f5f9; }
+  .invest-yearly-title { font-size:13px; font-weight:700; color:var(--text); }
+  .invest-yearly-body { padding:0; }
+  .invest-yearly-row { display:grid; grid-template-columns:72px 1fr 1fr 1fr; gap:0; border-bottom:1px solid #f1f5f9; align-items:center; min-height:38px; }
+  .invest-yearly-row:last-child { border-bottom:none; }
+  .invest-yearly-row.head { background:#f8fafc; min-height:30px; }
+  .invest-yearly-cell { padding:6px 12px; font-size:12px; }
+  .invest-yearly-row.head .invest-yearly-cell { font-size:11px; font-weight:700; color:#6b7280; }
+  @media(max-width:640px){
+    .invest-yearly-row { grid-template-columns:60px 1fr 1fr; }
+    .invest-yearly-total { display:none; }
+  }
   .invest-summary-label { font-size:11px; color:#374151; font-weight:600; margin-bottom:4px; }
   .invest-summary-value { font-size:22px; font-weight:800; line-height:1.2; }
   .invest-summary-sub { font-size:11px; color:#374151; margin-top:3px; }
@@ -1110,7 +1125,8 @@
 
 <!-- ═══════════════ TAB: 실투자 수익 관리 ═══════════════ -->
 <div id="tab-invest" class="page">
-  <div id="investSummaryBar" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px;"></div>
+  <div id="investSummaryBar" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:12px;"></div>
+  <div id="investYearlyBar" style="margin-bottom:16px;"></div>
   <div class="card">
     <div class="card-header" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
       <span>💰 실투자 수익 목록</span>
@@ -3279,11 +3295,31 @@ async function renderInvestTab() {
   const totalProfit  = sold.reduce((s,e) => s + (e.netProfit||0), 0);
   const totalMonthly = holdingWH.reduce((s,e) => s + (e.monthlyNet||0), 0);
   const totalAccum   = holdingWH.reduce((s,e) => s + (e.monthlyNet||0) * 12, 0);
+
+  // ── 연도별 매도 수익 미니 요약 (매도완료 카드용)
+  const soldByYear = {};
+  for (const e of sold) {
+    const yr = e.saleDate ? e.saleDate.substring(0,4) : '?';
+    if (!soldByYear[yr]) soldByYear[yr] = { count:0, profit:0 };
+    soldByYear[yr].count++;
+    soldByYear[yr].profit += e.netProfit||0;
+  }
+  const soldYearKeys = Object.keys(soldByYear).sort((a,b)=>b.localeCompare(a));
+  const soldYearMini = soldYearKeys.length > 1
+    ? `<div style="margin-top:6px;border-top:1px solid rgba(6,95,70,0.2);padding-top:5px;">`
+      + soldYearKeys.map(yr=>{
+          const d=soldByYear[yr], col=d.profit>=0?'#065f46':'#dc2626';
+          return `<div style="font-size:10px;line-height:1.7;color:#374151;">
+            <b>${yr}년</b> ${d.count}건 &nbsp;<span style="color:${col};font-weight:700">${fmt(d.profit)}</span></div>`;
+        }).join('')
+      + `</div>` : '';
+
   summaryEl.innerHTML = `
     <div class="invest-summary-card" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);border:1px solid #6ee7b7;">
       <div class="invest-summary-label">✅ 매도 완료</div>
       <div class="invest-summary-value" style="color:#065f46;">${sold.length}건</div>
-      <div class="invest-summary-sub">총 실현이익 <b style="color:${totalProfit>=0?'#065f46':'#dc2626'}">${fmt(totalProfit)}</b></div>
+      ${soldYearMini}
+      <div class="invest-summary-sub" style="margin-top:${soldYearKeys.length>1?'5':'3'}px;">총 실현이익 <b style="color:${totalProfit>=0?'#065f46':'#dc2626'}">${fmt(totalProfit)}</b></div>
     </div>
     <div class="invest-summary-card" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);border:1px solid #93c5fd;">
       <div class="invest-summary-label">🏠 보유 중</div>
@@ -3300,6 +3336,100 @@ async function renderInvestTab() {
       <div class="invest-summary-value" style="color:#5b21b6;">${fmt(totalProfit + totalAccum)}</div>
       <div class="invest-summary-sub">종합 수익 합산</div>
     </div>`;
+
+  // ── 연도별 수익 현황 테이블
+  const yearlyEl = document.getElementById('investYearlyBar');
+  if (yearlyEl) {
+    if (all.length === 0) {
+      yearlyEl.innerHTML = '';
+    } else {
+      // 모든 관련 연도 수집
+      const curYear = new Date().getFullYear();
+      const yearSet = new Set([String(curYear)]);
+      for (const e of all) {
+        if (e.bidDate)  yearSet.add(e.bidDate.substring(0,4));
+        if (e.saleDate) yearSet.add(e.saleDate.substring(0,4));
+      }
+      const years = [...yearSet].sort((a,b)=>b.localeCompare(a)); // 최신 연도 먼저
+
+      // 연도별 집계
+      const yrData = {};
+      for (const yr of years) yrData[yr] = { soldCnt:0, soldProfit:0, holdCnt:0, rentAnnual:0 };
+
+      // 매도: saleDate 연도 기준
+      for (const e of sold) {
+        const yr = e.saleDate ? e.saleDate.substring(0,4) : String(curYear);
+        yrData[yr].soldCnt++;
+        yrData[yr].soldProfit += e.netProfit||0;
+      }
+      // 임대: 각 연도에 보유 중이었던 물건 집계
+      // (bidDate.year <= yr AND (type=holding OR saleDate.year >= yr))
+      for (const yr of years) {
+        const yrN = parseInt(yr);
+        for (const e of all) {
+          const bidYr  = e.bidDate  ? parseInt(e.bidDate.substring(0,4))  : null;
+          const saleYr = e.saleDate ? parseInt(e.saleDate.substring(0,4)) : null;
+          const active = bidYr != null && bidYr <= yrN &&
+            (e.type === 'holding' || (saleYr != null && saleYr >= yrN));
+          if (active && e.monthlyNet != null) {
+            yrData[yr].holdCnt++;
+            yrData[yr].rentAnnual += (e.monthlyNet||0) * 12;
+          }
+        }
+      }
+
+      // 데이터 있는 연도만 표시
+      const activeYears = years.filter(yr => yrData[yr].soldCnt > 0 || yrData[yr].holdCnt > 0);
+
+      if (activeYears.length === 0) {
+        yearlyEl.innerHTML = '';
+      } else {
+        // 접힘 상태 유지
+        const wasOpen = yearlyEl.dataset.open !== 'false';
+        const isOpen = wasOpen;
+
+        const rows = activeYears.map(yr => {
+          const d = yrData[yr];
+          const profitCol = d.soldProfit >= 0 ? '#059669' : '#dc2626';
+          const rentCol   = d.rentAnnual >= 0 ? '#1d4ed8' : '#dc2626';
+          const totalVal  = d.soldProfit + d.rentAnnual;
+          const totalCol  = totalVal >= 0 ? '#5b21b6' : '#dc2626';
+          const soldCell  = d.soldCnt > 0
+            ? `<span style="color:#374151">${d.soldCnt}건</span> <b style="color:${profitCol}">${fmt(d.soldProfit)}</b>`
+            : `<span style="color:#9ca3af">—</span>`;
+          const rentCell  = d.holdCnt > 0
+            ? `<span style="color:#374151">${d.holdCnt}건</span> <b style="color:${rentCol}">${fmt(d.rentAnnual)}</b>`
+            : `<span style="color:#9ca3af">—</span>`;
+          const totalCell = (d.soldCnt + d.holdCnt) > 0
+            ? `<b style="color:${totalCol}">${fmt(totalVal)}</b>` : `<span style="color:#9ca3af">—</span>`;
+          return `<div class="invest-yearly-row">
+            <div class="invest-yearly-cell" style="font-weight:800;color:#374151">${yr}년</div>
+            <div class="invest-yearly-cell">${soldCell}</div>
+            <div class="invest-yearly-cell">${rentCell}</div>
+            <div class="invest-yearly-cell invest-yearly-total">${totalCell}</div>
+          </div>`;
+        }).join('');
+
+        yearlyEl.dataset.open = isOpen ? 'true' : 'false';
+        yearlyEl.innerHTML = `
+          <div class="invest-yearly-wrap">
+            <div class="invest-yearly-header" onclick="(function(el){const b=el.closest('.invest-yearly-wrap').querySelector('.invest-yearly-body');const open=b.style.display!=='none';b.style.display=open?'none':'';el.closest('#investYearlyBar').dataset.open=open?'false':'true';el.querySelector('.iy-chevron').textContent=open?'▶':'▼';})(this)">
+              <span class="invest-yearly-title">📊 연도별 수익 현황</span>
+              <span class="iy-chevron" style="font-size:11px;color:#6b7280">${isOpen?'▼':'▶'}</span>
+            </div>
+            <div class="invest-yearly-body" style="display:${isOpen?'':'none'}">
+              <div class="invest-yearly-row head">
+                <div class="invest-yearly-cell">연도</div>
+                <div class="invest-yearly-cell">✅ 매도수익</div>
+                <div class="invest-yearly-cell">🏠 임대수익(연환산)</div>
+                <div class="invest-yearly-cell invest-yearly-total">합산</div>
+              </div>
+              ${rows}
+            </div>
+          </div>`;
+      }
+    }
+  }
 
   if (all.length === 0) { mainEl.innerHTML = ''; emptyEl.style.display = ''; return; }
   emptyEl.style.display = 'none';
