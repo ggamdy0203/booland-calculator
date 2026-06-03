@@ -2155,6 +2155,44 @@ async function doAddrSearch() {
     return { median: prices[mid], min: prices[0], max: prices[prices.length - 1], count: prices.length };
   }
 
+  /* vworld 비주거용 집합부동산가격 조회 (오피스텔·상가) */
+  async function _fetchNonresiPrice(vworldKey, pnu, year, dongNm, hoNm) {
+    let url = `https://api.vworld.kr/ned/data/getNonresiHousingPriceAttr` +
+      `?pnu=${encodeURIComponent(pnu)}&stdrYear=${year}&format=json&numOfRows=100` +
+      `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
+    if (dongNm) url += `&dongNm=${encodeURIComponent(dongNm)}`;
+    if (hoNm)   url += `&hoNm=${encodeURIComponent(hoNm)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`vworld 비주거용 API HTTP ${res.status}`);
+    const data = await res.json();
+    const raw = data?.nonresiHousingPrices?.nonresiHousingPrice
+             || data?.bizHousingPrices?.bizHousingPrice;
+    if (!raw) return null;
+    const items = Array.isArray(raw) ? raw : [raw];
+    if (!items.length) return null;
+    const prices = items
+      .map(it => it.pblntfPc || it.pblntfPclnd || it.nrmlPc)
+      .filter(Boolean)
+      .map(s => parseInt(String(s).replace(/[^0-9]/g, ''), 10))
+      .filter(n => !isNaN(n))
+      .sort((a, b) => a - b);
+    if (!prices.length) return null;
+    const mid = Math.floor(prices.length / 2);
+    return { median: prices[mid], min: prices[0], max: prices[prices.length - 1], count: prices.length };
+  }
+
+  /* 가격 조회 공통 헬퍼 */
+  async function _fetchRows(fetchFn, vworldKey, pnu, years, dongNm, hoNm) {
+    const rows = [];
+    for (const yr of years) {
+      try {
+        const r = await fetchFn(vworldKey, pnu, yr, dongNm, hoNm);
+        rows.push({ year: yr, val: r ? r.median : null, extra: r || null });
+      } catch (_) { rows.push({ year: yr, val: null, extra: null }); }
+    }
+    return rows;
+  }
+
   /* 키 입력 UI */
   function _showKeyForm(panel) {
     panel.style.display = '';
@@ -2341,6 +2379,9 @@ async function doAddrSearch() {
         return;
       }
 
+      const propType = ($('propType')?.value || '').trim();
+      const isNonresi = ['오피스텔', '상가'].includes(propType);
+
       panel.innerHTML = `
         <div class="op-head"><span class="op-head-title">🏛 공시가격 · 시가표준액</span></div>
         <div style="padding:16px;text-align:center;color:#6b7280;font-size:12px">📊 연도별 공시가격 조회 중...<br><small style="color:#9ca3af">${addrLabel}</small></div>`;
@@ -2348,15 +2389,27 @@ async function doAddrSearch() {
       const curYear = new Date().getFullYear();
       const years = Array.from({ length: 6 }, (_, i) => curYear - i);
 
-      let rows = [];
-      for (const yr of years) {
-        try {
-          const r = await _fetchAptPrice(vworldKey, pnu, yr, dongNm, hoNm);
-          rows.push({ year: yr, val: r ? r.median : null, extra: r || null });
-        } catch (_) { rows.push({ year: yr, val: null, extra: null }); }
+      let rows, priceTypeName;
+
+      if (isNonresi) {
+        // 오피스텔·상가 → 비주거용 먼저, 없으면 공동주택 시도
+        priceTypeName = '비주거용 집합부동산 공시가격';
+        rows = await _fetchRows(_fetchNonresiPrice, vworldKey, pnu, years, dongNm, hoNm);
+        if (!rows.some(r => r.val != null)) {
+          priceTypeName = '공동주택 공시가격';
+          rows = await _fetchRows(_fetchAptPrice, vworldKey, pnu, years, dongNm, hoNm);
+        }
+      } else {
+        // 아파트·빌라 → 공동주택 먼저, 없으면 비주거용 시도
+        priceTypeName = '공동주택 공시가격';
+        rows = await _fetchRows(_fetchAptPrice, vworldKey, pnu, years, dongNm, hoNm);
+        if (!rows.some(r => r.val != null)) {
+          priceTypeName = '비주거용 집합부동산 공시가격';
+          rows = await _fetchRows(_fetchNonresiPrice, vworldKey, pnu, years, dongNm, hoNm);
+        }
       }
 
-      _renderResult(panel, rows, '공동주택 공시가격', addrLabel, bldNm);
+      _renderResult(panel, rows, priceTypeName, addrLabel, bldNm);
 
     } catch (err) {
       console.error('공시가격 조회 오류:', err);
