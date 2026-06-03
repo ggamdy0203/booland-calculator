@@ -189,6 +189,19 @@
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: 10px 22px; border-radius: 8px; font-size: 13px; font-weight: 600; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
   .toast.show { opacity: 1; }
 
+  /* 공시가격·시가표준액 패널 */
+  .op-panel{margin-top:12px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:white;}
+  .op-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;padding:9px 14px;background:#f8fafc;border-bottom:1px solid var(--border);}
+  .op-head-title{font-size:13px;font-weight:700;color:var(--text);}
+  .op-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .op-table th{background:#f8fafc;padding:7px 12px;font-weight:700;color:#374151;text-align:center;border-bottom:2px solid #e5e7eb;white-space:nowrap;}
+  .op-table td{padding:8px 12px;border-bottom:1px solid #f1f5f9;text-align:right;}
+  .op-table td:first-child{text-align:center;font-weight:800;color:#374151;}
+  .op-table tr:last-child td{border-bottom:none;}
+  .op-table tr:hover td{background:#f9fafb;}
+  .op-key-box{background:#fef9c3;border:1px solid #fcd34d;border-radius:8px;padding:12px 14px;font-size:12px;color:#92400e;line-height:1.8;margin:12px;}
+  .op-key-input{width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;box-sizing:border-box;font-family:inherit;margin-top:4px;}
+  .op-btn{padding:3px 9px;font-size:11px;border-radius:4px;cursor:pointer;font-family:inherit;}
   /* 실투자 수익 관리 */
   .invest-summary-card { padding:14px 16px; border-radius:10px; }
   /* 연도별 수익 현황 */
@@ -564,7 +577,11 @@
         </div>
         <div class="form-row">
           <div class="form-label">물건 주소</div>
-          <div class="form-input-wrap"><input type="text" id="addr" placeholder="예) 서울시 강남구 ..."></div>
+          <div class="form-input-wrap" style="gap:6px">
+            <input type="text" id="addr" style="flex:1" placeholder="예) 서울시 강남구 ...">
+            <button onclick="fetchOfficialPrice()" title="공시지가·시가표준액 연도별 조회"
+              style="padding:5px 10px;background:#6d28d9;color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit">🏛 공시가격</button>
+          </div>
         </div>
         <div class="form-row">
           <div class="form-label">물건 종류</div>
@@ -1073,6 +1090,9 @@
     </div>
 
   </div>
+
+  <!-- 공시가격·시가표준액 패널 -->
+  <div id="opPanel" class="op-panel" style="display:none;"></div>
 
   <div style="margin-top:10px; font-size:11px; color:var(--text-sub); text-align:center;">
     <span class="badge badge-blue">파란색 셀</span> 직접 입력 &nbsp;
@@ -1941,6 +1961,287 @@ function printAnalysis() {
   } else {
     setupBidDateMask();
   }
+})();
+
+// ── 공시가격·시가표준액 조회 ──────────────────────────────
+(function () {
+  /* 키 관리 — 카카오 REST API 키 + vworld 인증키 */
+  function _getKakaoKey()  { return localStorage.getItem('kakaoApiKey')  || ''; }
+  function _getVworldKey() { return localStorage.getItem('vworldApiKey') || ''; }
+  window._setKakaoKey  = k => localStorage.setItem('kakaoApiKey',  k);
+  window._setVworldKey = k => localStorage.setItem('vworldApiKey', k);
+
+  /* 최초 실행 시 vworld 기본 키 자동 설정 */
+  if (!_getVworldKey()) window._setVworldKey('68E62C9C-9CDD-3A7A-AC25-4574AA4AA17F');
+
+  /* 카카오 Local API 주소 검색 → {pnu, bjdongCode, bldNm, roadAddr, jibunAddr} */
+  async function _kakaoSearch(addr) {
+    const key = _getKakaoKey();
+    if (!key) return null;
+    const url = `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(addr)}&analyze_type=similar&page=1&size=5`;
+    const res = await fetch(url, { headers: { Authorization: `KakaoAK ${key}` } });
+    if (!res.ok) throw new Error(`카카오 API HTTP ${res.status} — REST API 키를 확인하세요`);
+    const data = await res.json();
+    const docs = data?.documents;
+    if (!docs?.length) return null;
+    const doc = docs[0];
+    const addrObj = doc.address;
+    const roadObj = doc.road_address;
+
+    /* PNU(19자리) 구성: 법정동코드(10) + 산구분(1) + 본번(4) + 부번(4) */
+    const bCode  = addrObj?.b_code || '';
+    const mainNo = (addrObj?.main_address_no || '0').padStart(4, '0');
+    const subNo  = (addrObj?.sub_address_no  || '0').padStart(4, '0');
+    const mtnYn  = addrObj?.mountain_yn === 'Y' ? '2' : '1';
+    const pnu    = bCode + mtnYn + mainNo + subNo;
+
+    return {
+      pnu,
+      bjdongCode : bCode,
+      bldNm      : roadObj?.building_name || '',
+      roadAddr   : roadObj?.address_name || doc.address_name,
+      jibunAddr  : doc.address_name,
+    };
+  }
+
+  /* vworld 공동주택가격속성 조회 */
+  async function _fetchAptPrice(vworldKey, pnu, year) {
+    const url = `https://api.vworld.kr/ned/data/getApartHousingPriceAttr` +
+      `?pnu=${encodeURIComponent(pnu)}&stdrYear=${year}&format=json&numOfRows=100` +
+      `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`vworld API HTTP ${res.status}`);
+    const data = await res.json();
+    const raw = data?.apartHousingPrices?.apartHousingPrice;
+    if (!raw) return null;
+    const items = Array.isArray(raw) ? raw : [raw];
+    if (!items.length) return null;
+    const prices = items
+      .map(it => it.pblntfPc || it.pblntfPclnd)
+      .filter(Boolean)
+      .map(s => parseInt(String(s).replace(/[^0-9]/g, ''), 10))
+      .filter(n => !isNaN(n))
+      .sort((a, b) => a - b);
+    if (!prices.length) return null;
+    const mid = Math.floor(prices.length / 2);
+    return { median: prices[mid], min: prices[0], max: prices[prices.length - 1], count: prices.length };
+  }
+
+  /* 키 입력 UI */
+  function _showKeyForm(panel) {
+    panel.style.display = '';
+    panel.innerHTML = `
+      <div class="op-head">
+        <span class="op-head-title">🏛 공시가격 · 시가표준액 — API 키 설정</span>
+      </div>
+      <div class="op-key-box">
+        ⚠️ 연도별 공시가격 조회를 위해 무료 API 키 2종이 필요합니다.<br>
+        <b>① 카카오 REST API 키</b> (영구 무료 · 만료 없음)<br>
+        &nbsp;&nbsp;<a href="https://developers.kakao.com/console/app" target="_blank" style="color:#1d4ed8">developers.kakao.com</a>
+        → 애플리케이션 추가 → <b>REST API 키</b> 복사<br>
+        <b>② vworld 인증키</b> (개발키 6개월 · 운영키 2년)<br>
+        &nbsp;&nbsp;<a href="https://www.vworld.kr" target="_blank" style="color:#1d4ed8">vworld.kr</a>
+        → 마이포털 → 나의 오픈API → 인증키 관리에서 발급
+      </div>
+      <div style="padding:0 12px 12px;display:grid;gap:8px">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#f59e0b">① 카카오 REST API 키 (영구 · 만료없음)</label>
+          <input id="op-kakaoKey" class="op-key-input" type="text" value="${_getKakaoKey()}" placeholder="카카오 developers 에서 발급한 REST API 키">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#374151">② vworld 인증키</label>
+          <input id="op-govKey" class="op-key-input" type="text" value="${_getVworldKey()}" placeholder="vworld.kr 마이포털에서 발급받은 인증키">
+        </div>
+        <button onclick="window._opSaveKeys()" style="padding:7px;background:#6d28d9;color:white;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">💾 저장 후 조회</button>
+      </div>`;
+  }
+
+  window._opSaveKeys = function () {
+    const k = document.getElementById('op-kakaoKey')?.value?.trim();
+    const g = document.getElementById('op-govKey')?.value?.trim();
+    if (k) window._setKakaoKey(k);
+    if (g) window._setVworldKey(g);
+    window.fetchOfficialPrice();
+  };
+
+  /* 결과 렌더링 */
+  function _renderResult(panel, rows, priceType, addrLabel, bldNm) {
+    const fmtN = n => n != null ? Math.round(n).toLocaleString('ko-KR') : null;
+    const hasData = rows.some(r => r.val != null);
+
+    if (!hasData) {
+      panel.innerHTML = `
+        <div class="op-head">
+          <span class="op-head-title">🏛 공시가격 · 시가표준액</span>
+          <div style="display:flex;gap:5px">
+            <button onclick="window.fetchOfficialPrice()" class="op-btn" style="background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd">🔄 재조회</button>
+            <button onclick="(function(){var p=document.getElementById('opPanel');window._opShowKeyForm(p);})()" class="op-btn" style="background:white;color:#6b7280;border:1px solid #d1d5db">🔑 키 설정</button>
+          </div>
+        </div>
+        <div style="padding:14px;font-size:12px;color:#6b7280;text-align:center">
+          조회된 공시가격 데이터가 없습니다.<br>
+          <a href="https://www.realtyprice.kr" target="_blank" style="color:#1d4ed8;font-size:11px">🏛 부동산공시가격알리미에서 직접 조회 ↗</a>
+        </div>`;
+      return;
+    }
+
+    const rowsHtml = rows.map((r, i) => {
+      const prev = rows[i + 1];
+      let chgHtml = '<span style="color:#9ca3af">—</span>';
+      if (r.val != null && prev?.val != null && prev.val !== 0) {
+        const pct = (r.val - prev.val) / prev.val * 100;
+        const col = pct > 0 ? '#dc2626' : pct < 0 ? '#059669' : '#9ca3af';
+        const sign = pct > 0 ? '▲' : pct < 0 ? '▼' : '';
+        chgHtml = `<b style="color:${col}">${sign}${Math.abs(pct).toFixed(1)}%</b>`;
+      }
+
+      let priceHtml;
+      if (r.val == null) {
+        priceHtml = '<span style="color:#9ca3af">미공시</span>';
+      } else if (r.extra) {
+        const { min, max, count, median } = r.extra;
+        priceHtml = `<b style="color:#1d4ed8">${fmtN(median)}원</b>` +
+          (count > 1 ? `<div style="font-size:10px;color:#6b7280">${fmtN(min)}~${fmtN(max)} (${count}개 호)</div>` : '');
+      } else {
+        priceHtml = `<b style="color:#1d4ed8">${fmtN(r.val)}원</b>`;
+      }
+
+      const stdHtml = r.val != null
+        ? `<span style="color:#374151">${fmtN(r.val)}원</span>`
+        : '<span style="color:#9ca3af">—</span>';
+
+      return `<tr>
+        <td>${r.year}년</td>
+        <td>${priceHtml}</td>
+        <td>${stdHtml}</td>
+        <td>${chgHtml}</td>
+      </tr>`;
+    }).join('');
+
+    panel.innerHTML = `
+      <div class="op-head">
+        <div>
+          <span class="op-head-title">🏛 공시가격 · 시가표준액</span>
+          ${bldNm ? `<span style="font-size:11px;color:#6b7280;margin-left:6px">${bldNm}</span>` : ''}
+          <div style="font-size:10px;color:#9ca3af;margin-top:1px">${addrLabel}</div>
+        </div>
+        <div style="display:flex;gap:5px;flex-shrink:0">
+          <span style="font-size:10px;color:#6b7280;align-self:center">${priceType}</span>
+          <button onclick="window.fetchOfficialPrice()" class="op-btn" style="background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd">🔄 재조회</button>
+          <button onclick="window._opShowKeyForm(document.getElementById('opPanel'))" class="op-btn" style="background:white;color:#6b7280;border:1px solid #d1d5db">🔑 키</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="op-table">
+          <thead><tr>
+            <th>연도</th>
+            <th>${priceType}</th>
+            <th>시가표준액</th>
+            <th>전년대비</th>
+          </tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+      <div style="padding:5px 12px 8px;font-size:10px;color:#9ca3af">
+        ※ 공동주택 공시가격 = 시가표준액 (동일) · 복수 호 조회 시 중간값 표시
+        &nbsp;|&nbsp; 출처: 국토교통부 vworld Open API
+      </div>`;
+  }
+
+  window._opShowKeyForm = _showKeyForm;
+
+  /* 메인 조회 함수 */
+  window.fetchOfficialPrice = async function () {
+    const addr = ($('addr')?.value || '').trim();
+    const panel = document.getElementById('opPanel');
+    if (!panel) { alert('페이지 오류: opPanel 없음'); return; }
+    if (!addr) { alert('물건 주소를 먼저 입력하세요'); return; }
+
+    const kakaoKey  = _getKakaoKey();
+    const vworldKey = _getVworldKey();
+
+    if (!kakaoKey) {
+      _showKeyForm(panel);
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
+    panel.style.display = '';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    panel.innerHTML = `
+      <div class="op-head"><span class="op-head-title">🏛 공시가격 · 시가표준액</span></div>
+      <div style="padding:16px;text-align:center;color:#6b7280;font-size:12px">🔍 주소 검색 중...</div>`;
+
+    try {
+      const kakao = await _kakaoSearch(addr);
+      if (!kakao) {
+        panel.innerHTML = `
+          <div class="op-head"><span class="op-head-title">🏛 공시가격 · 시가표준액</span>
+            <button onclick="window._opShowKeyForm(document.getElementById('opPanel'))" class="op-btn" style="background:white;color:#6b7280;border:1px solid #d1d5db">🔑 키 설정</button>
+          </div>
+          <div style="padding:12px;font-size:12px;color:#dc2626">❌ 주소를 찾을 수 없습니다. 도로명/지번 주소를 정확히 입력해주세요.</div>
+          <div style="padding:0 12px 12px"><a href="https://www.realtyprice.kr" target="_blank" style="font-size:11px;color:#1d4ed8">🏛 부동산공시가격알리미에서 직접 조회 ↗</a></div>`;
+        return;
+      }
+
+      const pnu       = kakao.pnu;
+      const bldNm     = kakao.bldNm;
+      const addrLabel = kakao.roadAddr || kakao.jibunAddr || addr;
+
+      if (!vworldKey) {
+        panel.innerHTML = `
+          <div class="op-head">
+            <div>
+              <span class="op-head-title">🏛 공시가격 · 시가표준액</span>
+              <div style="font-size:10px;color:#6b7280;margin-top:2px">✅ 주소 확인됨: ${addrLabel}${bldNm ? ' · ' + bldNm : ''}</div>
+            </div>
+          </div>
+          <div class="op-key-box" style="margin:12px">
+            📊 공시가격 조회를 위해 <b>vworld 인증키</b>가 필요합니다.<br>
+            <a href="https://www.vworld.kr" target="_blank" style="color:#1d4ed8">vworld.kr</a>
+            → 로그인 → 마이포털 → 나의 오픈API → 인증키 관리에서 발급
+          </div>
+          <div style="padding:0 12px 12px;display:grid;gap:8px">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#374151">vworld 인증키 입력</label>
+              <input id="op-govKey2" class="op-key-input" type="text" placeholder="vworld.kr 인증키">
+            </div>
+            <button onclick="(function(){var g=document.getElementById('op-govKey2')?.value?.trim();if(g){window._setVworldKey(g);window.fetchOfficialPrice();}else{alert('키를 입력해주세요');}})()" style="padding:7px;background:#6d28d9;color:white;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">💾 저장 후 조회</button>
+          </div>`;
+        return;
+      }
+
+      panel.innerHTML = `
+        <div class="op-head"><span class="op-head-title">🏛 공시가격 · 시가표준액</span></div>
+        <div style="padding:16px;text-align:center;color:#6b7280;font-size:12px">📊 연도별 공시가격 조회 중...<br><small style="color:#9ca3af">${addrLabel}</small></div>`;
+
+      const curYear = new Date().getFullYear();
+      const years = Array.from({ length: 6 }, (_, i) => curYear - i);
+
+      let rows = [];
+      for (const yr of years) {
+        try {
+          const r = await _fetchAptPrice(vworldKey, pnu, yr);
+          rows.push({ year: yr, val: r ? r.median : null, extra: r || null });
+        } catch (_) { rows.push({ year: yr, val: null, extra: null }); }
+      }
+
+      _renderResult(panel, rows, '공동주택 공시가격', addrLabel, bldNm);
+
+    } catch (err) {
+      console.error('공시가격 조회 오류:', err);
+      const isCors = err.message.includes('fetch') || err.message.includes('NetworkError') || err.message.includes('CORS');
+      panel.innerHTML = `
+        <div class="op-head"><span class="op-head-title">🏛 공시가격 · 시가표준액</span>
+          <button onclick="window._opShowKeyForm(document.getElementById('opPanel'))" class="op-btn" style="background:white;color:#6b7280;border:1px solid #d1d5db">🔑 키 설정</button>
+        </div>
+        <div style="padding:12px;font-size:12px">
+          <div style="color:#dc2626;margin-bottom:6px">❌ 오류: ${err.message}</div>
+          ${isCors ? '<div style="color:#92400e;font-size:11px;margin-bottom:6px">⚠️ 브라우저 보안(CORS) 정책으로 API 접근이 차단됐습니다. GitHub Pages에서 열어서 사용하거나 아래 링크를 이용해주세요.</div>' : ''}
+          <a href="https://www.realtyprice.kr" target="_blank" style="color:#1d4ed8;font-size:11px">🏛 부동산공시가격알리미에서 직접 조회 ↗</a>
+        </div>`;
+    }
+  };
 })();
 
 // ── Google Calendar (URL 방식) ────────────────────────────
@@ -3317,14 +3618,14 @@ async function renderInvestTab() {
   summaryEl.innerHTML = `
     <div class="invest-summary-card" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);border:1px solid #6ee7b7;">
       <div class="invest-summary-label">✅ 매도 완료</div>
-      <div class="invest-summary-value" style="color:#065f46;">${sold.length}건</div>
+      <div class="invest-summary-value" style="color:${totalProfit>=0?'#065f46':'#dc2626'};">${fmt(totalProfit)}</div>
       ${soldYearMini}
-      <div class="invest-summary-sub" style="margin-top:${soldYearKeys.length>1?'5':'3'}px;">총 실현이익 <b style="color:${totalProfit>=0?'#065f46':'#dc2626'}">${fmt(totalProfit)}</b></div>
+      <div class="invest-summary-sub" style="margin-top:${soldYearKeys.length>1?'5':'3'}px;">총 실현이익 &nbsp;<b style="color:#374151">${sold.length}건</b></div>
     </div>
     <div class="invest-summary-card" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);border:1px solid #93c5fd;">
       <div class="invest-summary-label">🏠 보유 중</div>
-      <div class="invest-summary-value" style="color:#1e40af;">${holding.length}건</div>
-      <div class="invest-summary-sub">월 순수익 합계 <b>${fmt(totalMonthly)}</b></div>
+      <div class="invest-summary-value" style="color:#1e40af;">${fmt(totalMonthly)}</div>
+      <div class="invest-summary-sub">월 순수익 합계 &nbsp;<b style="color:#374151">${holding.length}건</b></div>
     </div>
     <div class="invest-summary-card" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fcd34d;">
       <div class="invest-summary-label">📈 연 임대 수익</div>
