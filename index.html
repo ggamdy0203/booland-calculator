@@ -1108,10 +1108,10 @@
   <div id="addrSearchModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;" onclick="if(event.target===this)closeAddrSearchModal()">
     <div style="background:white;border-radius:14px;width:min(480px,95vw);max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">
       <div style="padding:18px 20px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-size:15px;font-weight:700;color:#111827">🔍 주소를 검색해주세요</span>
+        <span data-modal-title style="font-size:15px;font-weight:700;color:#111827">🔍 주소를 검색해주세요</span>
         <button onclick="closeAddrSearchModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6b7280;line-height:1">×</button>
       </div>
-      <div style="padding:14px 16px;border-bottom:1px solid #e5e7eb;">
+      <div id="addrSearchBar" style="padding:14px 16px;border-bottom:1px solid #e5e7eb;">
         <div style="display:flex;gap:8px;">
           <input id="addrSearchInput" type="text" placeholder="도로명, 지번, 건물명 검색"
             style="flex:1;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;outline:none;"
@@ -2014,15 +2014,81 @@ function openAddrSearchModal() {
 
 function closeAddrSearchModal() {
   document.getElementById('addrSearchModal').style.display = 'none';
+  // 상태 초기화 (다음에 열 때 1단계부터)
+  const titleEl = document.querySelector('#addrSearchModal [data-modal-title]');
+  if (titleEl) titleEl.textContent = '🔍 주소를 검색해주세요';
+  const searchBar = document.getElementById('addrSearchBar');
+  if (searchBar) searchBar.style.display = '';
+  const box = document.getElementById('addrSearchResults');
+  if (box) box.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:12px;">위 검색창에 주소를 입력하세요</div>';
+  window._selectedAddr = null;
 }
 
 function selectAddrByIdx(i) {
   const it = (window._addrItems || [])[i];
   if (!it) return;
+  window._selectedAddr = it;
+  // 1단계 → 2단계: 동/호수 입력
+  const titleEl = document.querySelector('#addrSearchModal [data-modal-title]');
+  if (titleEl) titleEl.textContent = '동 · 호수를 입력해주세요';
+  const searchBar = document.getElementById('addrSearchBar');
+  if (searchBar) searchBar.style.display = 'none';
+  const addr = it.road || it.jibun;
+  document.getElementById('addrSearchResults').innerHTML = `
+    <div style="padding:14px 16px">
+      <div style="margin-bottom:12px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px">
+        <div style="font-size:13px;font-weight:700;color:#065f46">${it.bldNm || addr}</div>
+        ${it.road  ? `<div style="font-size:11px;color:#374151;margin-top:2px">[도로명] ${it.road}</div>`  : ''}
+        ${it.jibun ? `<div style="font-size:11px;color:#9ca3af">[지번] ${it.jibun}</div>` : ''}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:4px">동 <span style="color:#9ca3af;font-weight:400">(선택)</span></label>
+          <input id="modalDongInput" type="text" placeholder="예) 101"
+            style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;outline:none"
+            onfocus="this.style.borderColor='#0e9f6e'" onblur="this.style.borderColor='#d1d5db'">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:4px">호수 <span style="color:#9ca3af;font-weight:400">(선택)</span></label>
+          <input id="modalHoInput" type="text" placeholder="예) 1303"
+            style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;outline:none"
+            onfocus="this.style.borderColor='#0e9f6e'" onblur="this.style.borderColor='#d1d5db'"
+            onkeydown="if(event.key==='Enter')confirmAddrSelection()">
+        </div>
+      </div>
+      <div style="font-size:10px;color:#9ca3af;text-align:center;margin-bottom:10px">동·호수 입력 시 해당 호실의 정확한 공시가격을 조회할 수 있습니다</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="goBackToAddrSearch()"
+          style="flex:1;padding:9px;background:white;color:#374151;border:1px solid #d1d5db;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">← 다시 검색</button>
+        <button onclick="confirmAddrSelection()"
+          style="flex:2;padding:9px;background:#0e9f6e;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">✅ 선택 완료</button>
+      </div>
+    </div>`;
+  setTimeout(() => document.getElementById('modalDongInput')?.focus(), 50);
+}
+
+function goBackToAddrSearch() {
+  const titleEl = document.querySelector('#addrSearchModal [data-modal-title]');
+  if (titleEl) titleEl.textContent = '🔍 주소를 검색해주세요';
+  const searchBar = document.getElementById('addrSearchBar');
+  if (searchBar) searchBar.style.display = '';
+  doAddrSearch();
+}
+
+function confirmAddrSelection() {
+  const it = window._selectedAddr;
+  if (!it) return;
   const addr = it.road || it.jibun;
   const full = it.bldNm ? addr + ' (' + it.bldNm + ')' : addr;
-  const inp = document.getElementById('addr');
-  if (inp) { inp.value = full; calc(); }
+  const dong = (document.getElementById('modalDongInput')?.value || '').trim();
+  const ho   = (document.getElementById('modalHoInput')?.value  || '').trim();
+  const addrInp = document.getElementById('addr');
+  if (addrInp) { addrInp.value = full; }
+  const dongInp = document.getElementById('addrDong');
+  const hoInp   = document.getElementById('addrHo');
+  if (dongInp) dongInp.value = dong;
+  if (hoInp)   hoInp.value   = ho;
+  calc();
   closeAddrSearchModal();
 }
 
