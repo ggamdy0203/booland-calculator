@@ -2198,6 +2198,21 @@ async function doAddrSearch() {
     };
   }
 
+  /* CORS 프록시 경유 fetch — vworld API는 브라우저 직접 호출 불가(CORS 미지원) */
+  async function _vworldFetch(apiUrl) {
+    const proxyUrl = 'https://corsproxy.io/?' + apiUrl;
+    try {
+      const r = await fetch(proxyUrl);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r;
+    } catch (_) {
+      // 프록시 실패 시 직접 호출 (로컬/개발환경)
+      const r = await fetch(apiUrl);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r;
+    }
+  }
+
   /* vworld 공동주택가격속성 조회 */
   async function _fetchAptPrice(vworldKey, pnu, year, dongNm, hoNm) {
     let url = `https://api.vworld.kr/ned/data/getApartHousingPriceAttr` +
@@ -2205,7 +2220,7 @@ async function doAddrSearch() {
       `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
     if (dongNm) url += `&dongNm=${encodeURIComponent(dongNm)}`;
     if (hoNm)   url += `&hoNm=${encodeURIComponent(hoNm)}`;
-    const res = await fetch(url);
+    const res = await _vworldFetch(url);
     if (!res.ok) throw new Error(`vworld API HTTP ${res.status}`);
     const data = await res.json();
     console.log(`[vworld apt ${year}] PNU:${pnu}`, JSON.stringify(data).slice(0, 300));
@@ -2235,7 +2250,7 @@ async function doAddrSearch() {
       `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
     if (dongNm) url += `&dongNm=${encodeURIComponent(dongNm)}`;
     if (hoNm)   url += `&hoNm=${encodeURIComponent(hoNm)}`;
-    const res = await fetch(url);
+    const res = await _vworldFetch(url);
     if (!res.ok) throw new Error(`vworld 비주거용 API HTTP ${res.status}`);
     const data = await res.json();
     console.log(`[vworld nonresi ${year}] PNU:${pnu}`, JSON.stringify(data).slice(0, 300));
