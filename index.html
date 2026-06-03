@@ -577,12 +577,20 @@
         </div>
         <div class="form-row">
           <div class="form-label">물건 주소</div>
-          <div class="form-input-wrap" style="gap:6px">
-            <input type="text" id="addr" style="flex:1" placeholder="예) 서울시 강남구 ...">
-            <button onclick="openAddrSearchModal()" title="주소 검색"
-              style="padding:5px 10px;background:#0e9f6e;color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit">🔍 주소검색</button>
-            <button onclick="fetchOfficialPrice()" title="공시지가·시가표준액 연도별 조회"
-              style="padding:5px 10px;background:#6d28d9;color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit">🏛 공시가격</button>
+          <div style="flex:1;display:flex;flex-direction:column;gap:5px">
+            <div class="form-input-wrap" style="gap:6px">
+              <input type="text" id="addr" style="flex:1" placeholder="예) 서울시 강남구 ...">
+              <button onclick="openAddrSearchModal()" title="주소 검색"
+                style="padding:5px 10px;background:#0e9f6e;color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit">🔍 주소검색</button>
+              <button onclick="fetchOfficialPrice()" title="공시지가·시가표준액 연도별 조회"
+                style="padding:5px 10px;background:#6d28d9;color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit">🏛 공시가격</button>
+            </div>
+            <div class="form-input-wrap" style="gap:6px">
+              <input type="text" id="addrDong" style="width:90px;flex:none" placeholder="동 (예: 101)">
+              <span style="font-size:11px;color:#9ca3af;align-self:center">동</span>
+              <input type="text" id="addrHo" style="width:90px;flex:none" placeholder="호 (예: 1303)">
+              <span style="font-size:11px;color:#9ca3af;align-self:center">호 &nbsp;— 공시가격 정확도 향상 (선택)</span>
+            </div>
           </div>
         </div>
         <div class="form-row">
@@ -2006,9 +2014,11 @@ function closeAddrSearchModal() {
   document.getElementById('addrSearchModal').style.display = 'none';
 }
 
-function selectAddr(jibun, road, bldNm) {
-  const addr = road || jibun;
-  const full = bldNm ? addr + ' (' + bldNm + ')' : addr;
+function selectAddrByIdx(i) {
+  const it = (window._addrItems || [])[i];
+  if (!it) return;
+  const addr = it.road || it.jibun;
+  const full = it.bldNm ? addr + ' (' + it.bldNm + ')' : addr;
   const inp = document.getElementById('addr');
   if (inp) { inp.value = full; calc(); }
   closeAddrSearchModal();
@@ -2064,8 +2074,9 @@ async function doAddrSearch() {
       return;
     }
 
+    window._addrItems = items;
     box.innerHTML = items.map((it, i) => `
-      <div onclick="selectAddr(${JSON.stringify(it.jibun)},${JSON.stringify(it.road)},${JSON.stringify(it.bldNm)})"
+      <div onclick="selectAddrByIdx(${i})"
         style="padding:11px 16px;cursor:pointer;border-bottom:1px solid #f3f4f6;transition:background 0.1s"
         onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='white'">
         ${it.bldNm ? `<div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:2px">${it.bldNm}</div>` : ''}
@@ -2120,10 +2131,12 @@ async function doAddrSearch() {
   }
 
   /* vworld 공동주택가격속성 조회 */
-  async function _fetchAptPrice(vworldKey, pnu, year) {
-    const url = `https://api.vworld.kr/ned/data/getApartHousingPriceAttr` +
+  async function _fetchAptPrice(vworldKey, pnu, year, dongNm, hoNm) {
+    let url = `https://api.vworld.kr/ned/data/getApartHousingPriceAttr` +
       `?pnu=${encodeURIComponent(pnu)}&stdrYear=${year}&format=json&numOfRows=100` +
       `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
+    if (dongNm) url += `&dongNm=${encodeURIComponent(dongNm)}`;
+    if (hoNm)   url += `&hoNm=${encodeURIComponent(hoNm)}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`vworld API HTTP ${res.status}`);
     const data = await res.json();
@@ -2302,6 +2315,8 @@ async function doAddrSearch() {
       const pnu       = kakao.pnu;
       const bldNm     = kakao.bldNm;
       const addrLabel = kakao.roadAddr || kakao.jibunAddr || addr;
+      const dongNm    = (document.getElementById('addrDong')?.value || '').trim();
+      const hoNm      = (document.getElementById('addrHo')?.value  || '').trim();
 
       if (!vworldKey) {
         panel.innerHTML = `
@@ -2336,7 +2351,7 @@ async function doAddrSearch() {
       let rows = [];
       for (const yr of years) {
         try {
-          const r = await _fetchAptPrice(vworldKey, pnu, yr);
+          const r = await _fetchAptPrice(vworldKey, pnu, yr, dongNm, hoNm);
           rows.push({ year: yr, val: r ? r.median : null, extra: r || null });
         } catch (_) { rows.push({ year: yr, val: null, extra: null }); }
       }
