@@ -2196,53 +2196,56 @@ async function doAddrSearch() {
   }
 
   /* ── vworld API 호출 전략 (CORS 우회) ──────────────────────
-     1순위: JSONP (스크립트 태그) — 프록시 없이 직접 우회, vworld NED API 지원
-     2순위: corsproxy.io 프록시
-     3순위: allorigins.win 프록시
+     핵심 버그: corsproxy.io에 URL을 그대로 붙이면 & 가 쿼리 분리자로 오인됨
+               → encodeURIComponent 필수
+     1순위: JSONP (3초)
+     2순위: corsproxy.io  (encodeURIComponent 적용)
+     3순위: allorigins.win (encodeURIComponent 적용)
+     4순위: thingproxy (path 방식, & 문제 없음)
      모두 실패 시: isApiError 에러로 UI에 표시 */
 
-  function _vworldJsonp(url) {
+  function _vworldJsonp(apiUrl) {
     return new Promise((resolve, reject) => {
       const cb = '_vw_' + Date.now() + Math.random().toString(36).slice(2, 7);
       const script = document.createElement('script');
-      const timer = setTimeout(() => {
-        cleanup(); reject(new Error('JSONP timeout'));
-      }, 10000);
+      const timer = setTimeout(() => { cleanup(); reject(new Error('jsonp timeout')); }, 3000);
       function cleanup() { clearTimeout(timer); delete window[cb]; script.remove(); }
-      window[cb] = function (data) {
-        cleanup();
-        resolve({ ok: true, json: async () => data });
-      };
-      script.src = url + '&callback=' + cb;
-      script.onerror = () => { cleanup(); reject(new Error('JSONP script load error')); };
+      window[cb] = (data) => { cleanup(); resolve({ ok: true, json: async () => data }); };
+      script.src = apiUrl + '&callback=' + cb;
+      script.onerror = () => { cleanup(); reject(new Error('jsonp error')); };
       document.head.appendChild(script);
     });
   }
 
+  async function _tryProxy(url, timeout) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeout || 9000);
+    try {
+      const r = await fetch(url, { signal: ctrl.signal });
+      clearTimeout(t);
+      return r.ok ? r : null;
+    } catch (_) { clearTimeout(t); return null; }
+  }
+
   async function _vworldFetch(apiUrl) {
-    // 1. JSONP 시도
+    const enc = encodeURIComponent(apiUrl);
+
+    // 1. JSONP
     try { return await _vworldJsonp(apiUrl); } catch (_) {}
 
-    // 2. corsproxy.io 시도
-    try {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 8000);
-      const r = await fetch('https://corsproxy.io/?' + apiUrl, { signal: ctrl.signal });
-      clearTimeout(t);
-      if (r.ok) return r;
-    } catch (_) {}
+    // 2. corsproxy.io — encodeURIComponent 필수 (& 분리 버그 방지)
+    const r2 = await _tryProxy('https://corsproxy.io/?' + enc);
+    if (r2) return r2;
 
-    // 3. allorigins.win 시도
-    try {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 8000);
-      const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(apiUrl), { signal: ctrl.signal });
-      clearTimeout(t);
-      if (r.ok) return r;
-    } catch (_) {}
+    // 3. allorigins.win
+    const r3 = await _tryProxy('https://api.allorigins.win/raw?url=' + enc);
+    if (r3) return r3;
 
-    // 모두 실패
-    const err = new Error('공시가격 API 연결 실패 — 네트워크 상태를 확인하거나 잠시 후 재시도해주세요.');
+    // 4. thingproxy (path 방식)
+    const r4 = await _tryProxy('https://thingproxy.freeboard.io/fetch/' + apiUrl);
+    if (r4) return r4;
+
+    const err = new Error('공시가격 API 연결 실패. 잠시 후 재시도해주세요.');
     err.isApiError = true;
     throw err;
   }
