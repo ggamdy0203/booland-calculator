@@ -2315,13 +2315,11 @@ async function doAddrSearch() {
     return { median: prices[mid], min: prices[0], max: prices[prices.length - 1], count: prices.length };
   }
 
-  /* vworld 비주거용 집합부동산가격 조회 (오피스텔·상가) */
-  async function _fetchNonresiPrice(vworldKey, pnu, year, dongNm, hoNm) {
-    let url = `https://api.vworld.kr/ned/data/getNonresiHousingPriceAttr` +
-      `?pnu=${encodeURIComponent(pnu)}&stdrYear=${year}&format=json&numOfRows=100` +
+  /* vworld 개별주택 공시가격 조회 (빌라·단독·다가구) */
+  async function _fetchIndvdPrice(vworldKey, pnu, year) {
+    const url = `https://api.vworld.kr/ned/data/getIndvdHousingPriceAttr` +
+      `?pnu=${encodeURIComponent(pnu)}&stdrYear=${year}&format=json&numOfRows=10` +
       `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
-    if (dongNm) url += `&dongNm=${encodeURIComponent(dongNm)}`;
-    if (hoNm)   url += `&hoNm=${encodeURIComponent(hoNm)}`;
     const res = await _vworldFetch(url);
     let data;
     try { data = await res.json(); }
@@ -2329,18 +2327,18 @@ async function doAddrSearch() {
       const err = new Error('API 응답 오류: 프록시가 유효한 JSON을 반환하지 않았습니다.');
       err.isApiError = true; throw err;
     }
-    console.log(`[vworld nonresi ${year}] PNU:${pnu} cnt:${data?.nonresiHousingPrices?.totalCnt}`, JSON.stringify(data).slice(0, 200));
+    console.log(`[vworld indvd ${year}] PNU:${pnu} cnt:${data?.indvdHousingPrices?.totalCnt}`, JSON.stringify(data).slice(0, 200));
     if (data?.error) {
       const e = new Error(`vworld 오류(${data.error.code}): ${data.error.text || '인증키 또는 도메인 설정을 확인하세요'}`);
       e.isApiError = true; throw e;
     }
-    const raw = data?.nonresiHousingPrices?.nonresiHousingPrice
-             || data?.bizHousingPrices?.bizHousingPrice;
+    const raw = data?.indvdHousingPrices?.indvdHousingPrice
+             || data?.indvdHousingPrices?.field;
     if (!raw) return null;
     const items = Array.isArray(raw) ? raw : [raw];
     if (!items.length) return null;
     const prices = items
-      .map(it => it.pblntfPc || it.pblntfPclnd || it.nrmlPc)
+      .map(it => it.pblntfPc || it.pblntfPclnd || it.pbintfPc)
       .filter(Boolean)
       .map(s => parseInt(String(s).replace(/[^0-9]/g, ''), 10))
       .filter(n => !isNaN(n))
@@ -2749,35 +2747,35 @@ async function doAddrSearch() {
 
       let rows, priceTypeName;
 
+      let htError = null;
+
       if (isNonresi) {
-        // 오피스텔·상가 → ① vworld 비주거용, ② vworld 공동주택, ③ 손택스 기준시가 순서
-        priceTypeName = '비주거용 집합부동산 공시가격';
-        rows = await _fetchRows(_fetchNonresiPrice, vworldKey, pnu, years, dongNm, hoNm);
-        if (!rows.some(r => r.val != null)) {
-          priceTypeName = '공동주택 공시가격';
-          rows = await _fetchRows(_fetchAptPrice, vworldKey, pnu, years, dongNm, hoNm);
-        }
-        let htError = null;
-        if (!rows.some(r => r.val != null)) {
-          // ③ 손택스 오피스텔 기준시가 자동 조회
-          panel.innerHTML = `
-            <div class="op-head"><span class="op-head-title">🏛 공시가격 · 시가표준액</span></div>
-            <div style="padding:16px;text-align:center;color:#6b7280;font-size:12px">📊 홈택스 기준시가 조회 중...<br><small style="color:#9ca3af">${addrLabel}</small></div>`;
-          try {
-            const htRows = await _fetchHometaxOfficetelRows(pnu, years, hoNm);
-            if (htRows && htRows.some(r => r.val != null)) {
-              priceTypeName = '오피스텔 기준시가 (홈택스)';
-              rows = htRows;
-            }
-          } catch (e) { htError = e; }
+        // 오피스텔·상가 → 손택스 기준시가 자동 조회 (vworld는 오피스텔 미지원)
+        panel.innerHTML = `
+          <div class="op-head"><span class="op-head-title">🏛 공시가격 · 시가표준액</span></div>
+          <div style="padding:16px;text-align:center;color:#6b7280;font-size:12px">📊 홈택스 기준시가 조회 중...<br><small style="color:#9ca3af">${addrLabel}</small></div>`;
+        rows = [];
+        try {
+          const htRows = await _fetchHometaxOfficetelRows(pnu, years, hoNm);
+          if (htRows && htRows.some(r => r.val != null)) {
+            priceTypeName = '오피스텔 기준시가 (홈택스)';
+            rows = htRows;
+          } else {
+            priceTypeName = '오피스텔 기준시가';
+            rows = htRows || years.map(yr => ({ year: yr, val: null, extra: null }));
+          }
+        } catch (e) {
+          htError = e;
+          priceTypeName = '오피스텔 기준시가';
+          rows = years.map(yr => ({ year: yr, val: null, extra: null }));
         }
       } else {
-        // 아파트·빌라 → 공동주택 먼저, 없으면 비주거용 시도
+        // 아파트·빌라/다세대·단독 → ① 공동주택 공시가격, ② 개별주택 공시가격
         priceTypeName = '공동주택 공시가격';
         rows = await _fetchRows(_fetchAptPrice, vworldKey, pnu, years, dongNm, hoNm);
         if (!rows.some(r => r.val != null)) {
-          priceTypeName = '비주거용 집합부동산 공시가격';
-          rows = await _fetchRows(_fetchNonresiPrice, vworldKey, pnu, years, dongNm, hoNm);
+          priceTypeName = '개별주택 공시가격';
+          rows = await _fetchRows(_fetchIndvdPrice, vworldKey, pnu, years);
         }
       }
 
