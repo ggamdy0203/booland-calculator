@@ -2195,19 +2195,56 @@ async function doAddrSearch() {
     };
   }
 
-  /* CORS 프록시 경유 fetch — vworld API는 브라우저 직접 호출 불가(CORS 미지원) */
+  /* ── vworld API 호출 전략 (CORS 우회) ──────────────────────
+     1순위: JSONP (스크립트 태그) — 프록시 없이 직접 우회, vworld NED API 지원
+     2순위: corsproxy.io 프록시
+     3순위: allorigins.win 프록시
+     모두 실패 시: isApiError 에러로 UI에 표시 */
+
+  function _vworldJsonp(url) {
+    return new Promise((resolve, reject) => {
+      const cb = '_vw_' + Date.now() + Math.random().toString(36).slice(2, 7);
+      const script = document.createElement('script');
+      const timer = setTimeout(() => {
+        cleanup(); reject(new Error('JSONP timeout'));
+      }, 10000);
+      function cleanup() { clearTimeout(timer); delete window[cb]; script.remove(); }
+      window[cb] = function (data) {
+        cleanup();
+        resolve({ ok: true, json: async () => data });
+      };
+      script.src = url + '&callback=' + cb;
+      script.onerror = () => { cleanup(); reject(new Error('JSONP script load error')); };
+      document.head.appendChild(script);
+    });
+  }
+
   async function _vworldFetch(apiUrl) {
-    const proxyUrl = 'https://corsproxy.io/?' + apiUrl;
+    // 1. JSONP 시도
+    try { return await _vworldJsonp(apiUrl); } catch (_) {}
+
+    // 2. corsproxy.io 시도
     try {
-      const r = await fetch(proxyUrl);
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r;
-    } catch (_) {
-      // 프록시 실패 시 직접 호출 (로컬/개발환경)
-      const r = await fetch(apiUrl);
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r;
-    }
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 8000);
+      const r = await fetch('https://corsproxy.io/?' + apiUrl, { signal: ctrl.signal });
+      clearTimeout(t);
+      if (r.ok) return r;
+    } catch (_) {}
+
+    // 3. allorigins.win 시도
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 8000);
+      const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(apiUrl), { signal: ctrl.signal });
+      clearTimeout(t);
+      if (r.ok) return r;
+    } catch (_) {}
+
+    // 모두 실패
+    const err = new Error('공시가격 API 연결 실패 — 네트워크 상태를 확인하거나 잠시 후 재시도해주세요.');
+    err.isApiError = true;
+    throw err;
   }
 
   /* vworld 공동주택가격속성 조회 */
@@ -2218,9 +2255,13 @@ async function doAddrSearch() {
     if (dongNm) url += `&dongNm=${encodeURIComponent(dongNm)}`;
     if (hoNm)   url += `&hoNm=${encodeURIComponent(hoNm)}`;
     const res = await _vworldFetch(url);
-    if (!res.ok) throw new Error(`vworld API HTTP ${res.status}`);
-    const data = await res.json();
-    console.log(`[vworld apt ${year}] PNU:${pnu}`, JSON.stringify(data).slice(0, 300));
+    let data;
+    try { data = await res.json(); }
+    catch (e) {
+      const err = new Error('API 응답 오류: 프록시가 유효한 JSON을 반환하지 않았습니다.');
+      err.isApiError = true; throw err;
+    }
+    console.log(`[vworld apt ${year}] PNU:${pnu} cnt:${data?.apartHousingPrices?.totalCnt}`, JSON.stringify(data).slice(0, 200));
     if (data?.error) {
       const e = new Error(`vworld 오류(${data.error.code}): ${data.error.text || '인증키 또는 도메인 설정을 확인하세요'}`);
       e.isApiError = true; throw e;
@@ -2248,9 +2289,13 @@ async function doAddrSearch() {
     if (dongNm) url += `&dongNm=${encodeURIComponent(dongNm)}`;
     if (hoNm)   url += `&hoNm=${encodeURIComponent(hoNm)}`;
     const res = await _vworldFetch(url);
-    if (!res.ok) throw new Error(`vworld 비주거용 API HTTP ${res.status}`);
-    const data = await res.json();
-    console.log(`[vworld nonresi ${year}] PNU:${pnu}`, JSON.stringify(data).slice(0, 300));
+    let data;
+    try { data = await res.json(); }
+    catch (e) {
+      const err = new Error('API 응답 오류: 프록시가 유효한 JSON을 반환하지 않았습니다.');
+      err.isApiError = true; throw err;
+    }
+    console.log(`[vworld nonresi ${year}] PNU:${pnu} cnt:${data?.nonresiHousingPrices?.totalCnt}`, JSON.stringify(data).slice(0, 200));
     if (data?.error) {
       const e = new Error(`vworld 오류(${data.error.code}): ${data.error.text || '인증키 또는 도메인 설정을 확인하세요'}`);
       e.isApiError = true; throw e;
