@@ -2208,6 +2208,11 @@ async function doAddrSearch() {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`vworld API HTTP ${res.status}`);
     const data = await res.json();
+    console.log(`[vworld apt ${year}] PNU:${pnu}`, JSON.stringify(data).slice(0, 300));
+    if (data?.error) {
+      const e = new Error(`vworld 오류(${data.error.code}): ${data.error.text || '인증키 또는 도메인 설정을 확인하세요'}`);
+      e.isApiError = true; throw e;
+    }
     const raw = data?.apartHousingPrices?.apartHousingPrice;
     if (!raw) return null;
     const items = Array.isArray(raw) ? raw : [raw];
@@ -2233,6 +2238,11 @@ async function doAddrSearch() {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`vworld 비주거용 API HTTP ${res.status}`);
     const data = await res.json();
+    console.log(`[vworld nonresi ${year}] PNU:${pnu}`, JSON.stringify(data).slice(0, 300));
+    if (data?.error) {
+      const e = new Error(`vworld 오류(${data.error.code}): ${data.error.text || '인증키 또는 도메인 설정을 확인하세요'}`);
+      e.isApiError = true; throw e;
+    }
     const raw = data?.nonresiHousingPrices?.nonresiHousingPrice
              || data?.bizHousingPrices?.bizHousingPrice;
     if (!raw) return null;
@@ -2256,7 +2266,10 @@ async function doAddrSearch() {
       try {
         const r = await fetchFn(vworldKey, pnu, yr, dongNm, hoNm);
         rows.push({ year: yr, val: r ? r.median : null, extra: r || null });
-      } catch (_) { rows.push({ year: yr, val: null, extra: null }); }
+      } catch (e) {
+        if (e.isApiError) throw e; // 인증/도메인 오류는 위로 전파
+        rows.push({ year: yr, val: null, extra: null });
+      }
     }
     return rows;
   }
@@ -2299,11 +2312,15 @@ async function doAddrSearch() {
   };
 
   /* 결과 렌더링 */
-  function _renderResult(panel, rows, priceType, addrLabel, bldNm) {
+  function _renderResult(panel, rows, priceType, addrLabel, bldNm, isNonresi, pnu) {
     const fmtN = n => n != null ? Math.round(n).toLocaleString('ko-KR') : null;
     const hasData = rows.some(r => r.val != null);
 
     if (!hasData) {
+      const noDataLink = isNonresi
+        ? `<div style="margin-top:6px;font-size:11px;color:#6b7280">오피스텔·상가의 기준시가는 홈택스에서 조회할 수 있습니다.</div>
+           <a href="https://www.hometax.go.kr/websquare/websquare.html?w2xPath=/ui/ab/a/b/UTALABB99M.xml" target="_blank" style="color:#1d4ed8;font-size:11px">🏠 홈택스 기준시가 조회 ↗</a>`
+        : `<a href="https://www.realtyprice.kr" target="_blank" style="color:#1d4ed8;font-size:11px">🏛 부동산공시가격알리미에서 직접 조회 ↗</a>`;
       panel.innerHTML = `
         <div class="op-head">
           <span class="op-head-title">🏛 공시가격 · 시가표준액</span>
@@ -2314,7 +2331,8 @@ async function doAddrSearch() {
         </div>
         <div style="padding:14px;font-size:12px;color:#6b7280;text-align:center">
           조회된 공시가격 데이터가 없습니다.<br>
-          <a href="https://www.realtyprice.kr" target="_blank" style="color:#1d4ed8;font-size:11px">🏛 부동산공시가격알리미에서 직접 조회 ↗</a>
+          ${pnu ? `<div style="font-size:10px;color:#d1d5db;margin:4px 0">검색 PNU: ${pnu}</div>` : ''}
+          ${noDataLink}
         </div>`;
       return;
     }
@@ -2407,14 +2425,21 @@ async function doAddrSearch() {
       <div style="padding:16px;text-align:center;color:#6b7280;font-size:12px">🔍 주소 검색 중...</div>`;
 
     try {
-      const kakao = await _kakaoSearch(addr);
+      /* 건물명 '(...)' 제거 후 검색 — 예) "신선로 566 (GS하이즈자이아파)" → "신선로 566" */
+      const cleanAddr = addr.replace(/\s*\([^)]*\)\s*$/, '').trim();
+      const kakao = await _kakaoSearch(cleanAddr);
       if (!kakao) {
+        const _kakaoNonresi = ['오피스텔','상가'].includes(($('propType')?.value||'').trim());
+        const _kakaoLink = _kakaoNonresi
+          ? `<div style="margin-bottom:4px;font-size:11px;color:#6b7280">오피스텔·상가의 기준시가는 홈택스에서 조회할 수 있습니다.</div>
+             <a href="https://www.hometax.go.kr/websquare/websquare.html?w2xPath=/ui/ab/a/b/UTALABB99M.xml" target="_blank" style="font-size:11px;color:#1d4ed8">🏠 홈택스 기준시가 조회 ↗</a>`
+          : `<a href="https://www.realtyprice.kr" target="_blank" style="font-size:11px;color:#1d4ed8">🏛 부동산공시가격알리미에서 직접 조회 ↗</a>`;
         panel.innerHTML = `
           <div class="op-head"><span class="op-head-title">🏛 공시가격 · 시가표준액</span>
             <button onclick="window._opShowKeyForm(document.getElementById('opPanel'))" class="op-btn" style="background:white;color:#6b7280;border:1px solid #d1d5db">🔑 키 설정</button>
           </div>
           <div style="padding:12px;font-size:12px;color:#dc2626">❌ 주소를 찾을 수 없습니다. 도로명/지번 주소를 정확히 입력해주세요.</div>
-          <div style="padding:0 12px 12px"><a href="https://www.realtyprice.kr" target="_blank" style="font-size:11px;color:#1d4ed8">🏛 부동산공시가격알리미에서 직접 조회 ↗</a></div>`;
+          <div style="padding:0 12px 12px">${_kakaoLink}</div>`;
         return;
       }
 
@@ -2477,11 +2502,16 @@ async function doAddrSearch() {
         }
       }
 
-      _renderResult(panel, rows, priceTypeName, addrLabel, bldNm);
+      _renderResult(panel, rows, priceTypeName, addrLabel, bldNm, isNonresi, pnu);
 
     } catch (err) {
       console.error('공시가격 조회 오류:', err);
       const isCors = err.message.includes('fetch') || err.message.includes('NetworkError') || err.message.includes('CORS');
+      const _errNonresi = ['오피스텔','상가'].includes(($('propType')?.value||'').trim());
+      const _errLink = _errNonresi
+        ? `<div style="margin-bottom:4px;font-size:11px;color:#6b7280">오피스텔·상가의 기준시가는 홈택스에서 조회할 수 있습니다.</div>
+           <a href="https://www.hometax.go.kr/websquare/websquare.html?w2xPath=/ui/ab/a/b/UTALABB99M.xml" target="_blank" style="color:#1d4ed8;font-size:11px">🏠 홈택스 기준시가 조회 ↗</a>`
+        : `<a href="https://www.realtyprice.kr" target="_blank" style="color:#1d4ed8;font-size:11px">🏛 부동산공시가격알리미에서 직접 조회 ↗</a>`;
       panel.innerHTML = `
         <div class="op-head"><span class="op-head-title">🏛 공시가격 · 시가표준액</span>
           <button onclick="window._opShowKeyForm(document.getElementById('opPanel'))" class="op-btn" style="background:white;color:#6b7280;border:1px solid #d1d5db">🔑 키 설정</button>
@@ -2489,7 +2519,7 @@ async function doAddrSearch() {
         <div style="padding:12px;font-size:12px">
           <div style="color:#dc2626;margin-bottom:6px">❌ 오류: ${err.message}</div>
           ${isCors ? '<div style="color:#92400e;font-size:11px;margin-bottom:6px">⚠️ 브라우저 보안(CORS) 정책으로 API 접근이 차단됐습니다. GitHub Pages에서 열어서 사용하거나 아래 링크를 이용해주세요.</div>' : ''}
-          <a href="https://www.realtyprice.kr" target="_blank" style="color:#1d4ed8;font-size:11px">🏛 부동산공시가격알리미에서 직접 조회 ↗</a>
+          ${_errLink}
         </div>`;
     }
   };
