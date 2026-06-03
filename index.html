@@ -2297,12 +2297,15 @@ async function doAddrSearch() {
       const e = new Error(`vworld 오류(${data.error.code}): ${data.error.text || '인증키 또는 도메인 설정을 확인하세요'}`);
       e.isApiError = true; throw e;
     }
-    const raw = data?.apartHousingPrices?.apartHousingPrice;
+    /* vworld 실제 응답 필드: "field" (문서상 "apartHousingPrice" 와 다름) */
+    const raw = data?.apartHousingPrices?.apartHousingPrice
+             || data?.apartHousingPrices?.field;
     if (!raw) return null;
     const items = Array.isArray(raw) ? raw : [raw];
     if (!items.length) return null;
     const prices = items
-      .map(it => it.pblntfPc || it.pblntfPclnd)
+      /* 실제 가격 필드: pbintfPc (문서상 pblntfPc 와 다름) */
+      .map(it => it.pbintfPc || it.pblntfPc || it.pblntfPclnd)
       .filter(Boolean)
       .map(s => parseInt(String(s).replace(/[^0-9]/g, ''), 10))
       .filter(n => !isNaN(n))
