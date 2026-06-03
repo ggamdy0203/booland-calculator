@@ -2072,7 +2072,7 @@ function goBackToAddrSearch() {
   doAddrSearch();
 }
 
-function confirmAddrSelection() {
+async function confirmAddrSelection() {
   const it = window._selectedAddr;
   if (!it) return;
   const addr = it.road || it.jibun;
@@ -2085,6 +2085,34 @@ function confirmAddrSelection() {
   const hoInp   = document.getElementById('addrHo');
   if (dongInp) dongInp.value = dong;
   if (hoInp)   hoInp.value   = ho;
+
+  /* 건물 좌표(x,y)로 coord2address 호출 → 정확한 필지 PNU 미리 저장
+     (address.json 은 도로명→지번 변환 시 잘못된 필지를 반환할 수 있음) */
+  window._selectedPnu = null;
+  if (it.x && it.y) {
+    try {
+      const kakaoKey = localStorage.getItem('kakaoApiKey') || '';
+      if (kakaoKey) {
+        const res = await fetch(
+          `https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${it.x}&y=${it.y}&input_coord=WGS84`,
+          { headers: { Authorization: `KakaoAK ${kakaoKey}` } }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          const addrObj = data?.documents?.[0]?.address;
+          if (addrObj?.b_code?.length >= 10) {
+            const bCode  = addrObj.b_code;
+            const mainNo = (addrObj.main_address_no || '0').padStart(4, '0');
+            const subNo  = (addrObj.sub_address_no  || '0').padStart(4, '0');
+            const mtnYn  = addrObj.mountain_yn === 'Y' ? '2' : '1';
+            window._selectedPnu = bCode + mtnYn + mainNo + subNo;
+            console.log('[coord2address PNU]', window._selectedPnu, addrObj);
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
   calc();
   closeAddrSearchModal();
 }
@@ -2119,7 +2147,7 @@ async function doAddrSearch() {
         const jibun = doc.address_name || '';
         const bldNm = doc.road_address?.building_name || '';
         const key = road || jibun;
-        if (key && !seen.has(key)) { seen.add(key); items.push({ jibun, road, bldNm, type: '주소' }); }
+        if (key && !seen.has(key)) { seen.add(key); items.push({ jibun, road, bldNm, x: doc.x || '', y: doc.y || '', type: '주소' }); }
       }
     }
 
@@ -2130,7 +2158,7 @@ async function doAddrSearch() {
         const jibun = doc.address_name || '';
         const bldNm = doc.place_name || '';
         const key = road || jibun;
-        if (key && !seen.has(key)) { seen.add(key); items.push({ jibun, road, bldNm, type: '장소' }); }
+        if (key && !seen.has(key)) { seen.add(key); items.push({ jibun, road, bldNm, x: doc.x || '', y: doc.y || '', type: '장소' }); }
       }
     }
 
@@ -2503,7 +2531,10 @@ async function doAddrSearch() {
         return;
       }
 
-      const pnu       = kakao.pnu;
+      /* coord2address PNU 우선 사용 (address.json PNU 보다 정확) */
+      const pnu       = (window._selectedPnu && window._selectedPnu.length === 19)
+                          ? (window._selectedPnu) : kakao.pnu;
+      window._selectedPnu = null; // 소비 후 초기화
       const bldNm     = kakao.bldNm;
       const addrLabel = kakao.roadAddr || kakao.jibunAddr || addr;
       const dongNm    = (document.getElementById('addrDong')?.value || '').trim();
