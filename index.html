@@ -2590,8 +2590,11 @@ async function doAddrSearch() {
           </div>
         </div>
         <div style="padding:14px;font-size:12px;color:#6b7280;text-align:center">
-          조회된 공시가격 데이터가 없습니다.<br>
-          ${pnu ? `<div style="font-size:10px;color:#d1d5db;margin:4px 0">검색 PNU: ${pnu}</div>` : ''}
+          공시가격 데이터를 찾지 못했습니다.<br>
+          <div style="font-size:10px;color:#9ca3af;margin:4px 0">
+            ※ 소규모 빌라·신축 건물은 DB 미등재 또는 필지번호 불일치로 조회 안 될 수 있습니다.
+          </div>
+          ${pnu ? `<div style="font-size:10px;color:#d1d5db;margin:2px 0">조회 PNU: ${pnu}</div>` : ''}
           ${noDataLink}
         </div>`;
       return;
@@ -2770,12 +2773,23 @@ async function doAddrSearch() {
           rows = years.map(yr => ({ year: yr, val: null, extra: null }));
         }
       } else {
-        // 아파트·빌라/다세대·단독 → ① 공동주택 공시가격, ② 개별주택 공시가격
+        // 아파트·빌라/다세대·단독 → ① 공동주택, ② 개별주택, ③ 부번 제거 후 재시도
         priceTypeName = '공동주택 공시가격';
         rows = await _fetchRows(_fetchAptPrice, vworldKey, pnu, years, dongNm, hoNm);
         if (!rows.some(r => r.val != null)) {
           priceTypeName = '개별주택 공시가격';
           rows = await _fetchRows(_fetchIndvdPrice, vworldKey, pnu, years);
+        }
+        // ③ 부번(subNo)이 있는 경우 부번 제거 후 재시도 (892-38 → 892)
+        if (!rows.some(r => r.val != null) && pnu.length === 19 && pnu.slice(15) !== '0000') {
+          const mainPnu = pnu.slice(0, 15) + '0000';
+          console.log('[fallback] 부번 제거 PNU 시도:', mainPnu);
+          priceTypeName = '공동주택 공시가격';
+          rows = await _fetchRows(_fetchAptPrice, vworldKey, mainPnu, years, dongNm, hoNm);
+          if (!rows.some(r => r.val != null)) {
+            priceTypeName = '개별주택 공시가격';
+            rows = await _fetchRows(_fetchIndvdPrice, vworldKey, mainPnu, years);
+          }
         }
       }
 
