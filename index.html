@@ -2365,6 +2365,150 @@ async function doAddrSearch() {
     return rows;
   }
 
+  /* ── 손택스 오피스텔 기준시가 조회 ───────────────────────── */
+
+  /* PNU 파싱 → ldCd / bunj */
+  function _parsePnu(pnu) {
+    if (!pnu || pnu.length !== 19) return null;
+    const ldCd   = pnu.slice(0, 10);
+    const mainNo = parseInt(pnu.slice(11, 15), 10);
+    const subNo  = parseInt(pnu.slice(15, 19), 10);
+    const bunj   = subNo ? mainNo + '-' + subNo : String(mainNo);
+    return { ldCd, mainNo, subNo, bunj };
+  }
+
+  /* POST 방식 프록시 fetch — corsproxy.io 사용 */
+  async function _hometaxPost(actionId, params) {
+    const base = 'https://mob.tbht.hometax.go.kr/jsonAction.do';
+    const bodyStr = new URLSearchParams({ actionId, ...params }).toString();
+    const headers = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json, text/plain, */*'
+    };
+
+    // 1) corsproxy.io (POST 지원)
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 12000);
+      const r = await fetch('https://corsproxy.io/?' + encodeURIComponent(base), {
+        method: 'POST', headers, body: bodyStr, signal: ctrl.signal
+      });
+      clearTimeout(t);
+      if (r.ok) {
+        const txt = await r.text();
+        console.log(`[손택스 ${actionId}] corsproxy 응답:`, txt.slice(0, 400));
+        return JSON.parse(txt);
+      }
+    } catch (_) {}
+
+    // 2) allorigins (raw POST)
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 12000);
+      const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(base), {
+        method: 'POST', headers, body: bodyStr, signal: ctrl.signal
+      });
+      clearTimeout(t);
+      if (r.ok) {
+        const txt = await r.text();
+        console.log(`[손택스 ${actionId}] allorigins 응답:`, txt.slice(0, 400));
+        return JSON.parse(txt);
+      }
+    } catch (_) {}
+
+    // 3) thingproxy (GET 방식 POST 불가 → 폼 인코딩 시도)
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 12000);
+      const r = await fetch('https://thingproxy.freeboard.io/fetch/' + base, {
+        method: 'POST', headers, body: bodyStr, signal: ctrl.signal
+      });
+      clearTimeout(t);
+      if (r.ok) {
+        const txt = await r.text();
+        console.log(`[손택스 ${actionId}] thingproxy 응답:`, txt.slice(0, 400));
+        return JSON.parse(txt);
+      }
+    } catch (_) {}
+
+    return null;
+  }
+
+  /* 건물 목록 조회 (ATESFAAA023R01) → kabSctrBldNo 반환 */
+  async function _hometaxGetBldNo(pnu) {
+    const parsed = _parsePnu(pnu);
+    if (!parsed) return null;
+    const data = await _hometaxPost('ATESFAAA023R01', {
+      ldCd: parsed.ldCd,
+      bunj: parsed.bunj,
+      inqrCl: '1'  // 1=오피스텔
+    });
+    if (!data) return null;
+    // 응답 구조 유연하게 처리
+    const list = data.list || data.data?.list || data.bldList || data.resultList || [];
+    if (!Array.isArray(list) || !list.length) {
+      console.log('[손택스] 건물 목록 없음:', JSON.stringify(data).slice(0, 200));
+      return null;
+    }
+    console.log('[손택스] 건물 목록:', JSON.stringify(list).slice(0, 300));
+    // 첫 번째 건물 kabSctrBldNo 반환 (복수일 경우 전체 반환)
+    const key = 'kabSctrBldNo';
+    return list.map(it => it[key] || it.kabSctrBldno || it.bldNo).filter(Boolean);
+  }
+
+  /* 기준시가 조회 (ATESFAAA023R05) */
+  async function _hometaxGetPrice(kabSctrBldNo, year, hoNm) {
+    const data = await _hometaxPost('ATESFAAA023R05', {
+      kabSctrBldNo,
+      notcDt: String(year)
+    });
+    if (!data) return null;
+    const list = data.list || data.data?.list || data.priceList || data.resultList || [];
+    if (!Array.isArray(list) || !list.length) return null;
+    console.log(`[손택스 가격 ${year}]`, JSON.stringify(list).slice(0, 400));
+
+    // 호수 필터 (hoNm이 있으면)
+    let items = list;
+    if (hoNm) {
+      const filtered = list.filter(it => {
+        const h = (it.hoNm || it.hoNo || it.unitNm || '').replace(/\s/g, '');
+        return h.includes(hoNm.replace(/\s/g, ''));
+      });
+      if (filtered.length) items = filtered;
+    }
+
+    // 가격 필드 — 다양한 필드명 시도
+    const prices = items
+      .map(it => it.bscPc || it.stdPc || it.aplcPc || it.pblntfPc || it.kbncPc || it.price)
+      .filter(Boolean)
+      .map(v => parseInt(String(v).replace(/[^0-9]/g, ''), 10))
+      .filter(n => !isNaN(n) && n > 0)
+      .sort((a, b) => a - b);
+
+    if (!prices.length) return null;
+    const mid = Math.floor(prices.length / 2);
+    return { median: prices[mid], min: prices[0], max: prices[prices.length - 1], count: prices.length };
+  }
+
+  /* 손택스 오피스텔 기준시가 연도별 rows 조회 */
+  async function _fetchHometaxOfficetelRows(pnu, years, hoNm) {
+    const bldNos = await _hometaxGetBldNo(pnu);
+    if (!bldNos || !bldNos.length) return null;
+
+    const rows = [];
+    for (const yr of years) {
+      let merged = null;
+      for (const bldNo of bldNos) {
+        try {
+          const r = await _hometaxGetPrice(bldNo, yr, hoNm);
+          if (r) { merged = r; break; }
+        } catch (_) {}
+      }
+      rows.push({ year: yr, val: merged ? merged.median : null, extra: merged || null });
+    }
+    return rows;
+  }
+
   /* 키 입력 UI */
   function _showKeyForm(panel) {
     panel.style.display = '';
@@ -2409,8 +2553,8 @@ async function doAddrSearch() {
 
     if (!hasData) {
       const noDataLink = isNonresi
-        ? `<div style="margin-top:6px;font-size:11px;color:#6b7280">오피스텔·상가의 기준시가는 홈택스에서 조회할 수 있습니다.</div>
-           <a href="https://www.hometax.go.kr/websquare/websquare.html?w2xPath=/ui/ab/a/b/UTALABB99M.xml" target="_blank" style="color:#1d4ed8;font-size:11px">🏠 홈택스 기준시가 조회 ↗</a>`
+        ? `<div style="margin-top:6px;font-size:11px;color:#6b7280">자동 조회(공시가격·홈택스)에서 데이터를 찾지 못했습니다.<br>동·호수를 정확히 입력하셨는지 확인 후 재조회하거나, 홈택스에서 직접 조회해주세요.</div>
+           <a href="https://www.hometax.go.kr/websquare/websquare.html?w2xPath=/ui/ab/a/b/UTALABB99M.xml" target="_blank" style="color:#1d4ed8;font-size:11px;display:inline-block;margin-top:4px">🏠 홈택스 기준시가 조회 ↗</a>`
         : `<a href="https://www.realtyprice.kr" target="_blank" style="color:#1d4ed8;font-size:11px">🏛 부동산공시가격알리미에서 직접 조회 ↗</a>`;
       panel.innerHTML = `
         <div class="op-head">
@@ -2487,7 +2631,7 @@ async function doAddrSearch() {
       </div>
       <div style="padding:5px 12px 8px;font-size:10px;color:#9ca3af">
         ※ 공동주택 공시가격 = 시가표준액 (동일) · 복수 호 조회 시 중간값 표시
-        &nbsp;|&nbsp; 출처: 국토교통부 vworld Open API
+        &nbsp;|&nbsp; 출처: 국토교통부 vworld Open API · 국세청 홈택스
       </div>`;
   }
 
@@ -2579,12 +2723,25 @@ async function doAddrSearch() {
       let rows, priceTypeName;
 
       if (isNonresi) {
-        // 오피스텔·상가 → 비주거용 먼저, 없으면 공동주택 시도
+        // 오피스텔·상가 → ① vworld 비주거용, ② vworld 공동주택, ③ 손택스 기준시가 순서
         priceTypeName = '비주거용 집합부동산 공시가격';
         rows = await _fetchRows(_fetchNonresiPrice, vworldKey, pnu, years, dongNm, hoNm);
         if (!rows.some(r => r.val != null)) {
           priceTypeName = '공동주택 공시가격';
           rows = await _fetchRows(_fetchAptPrice, vworldKey, pnu, years, dongNm, hoNm);
+        }
+        if (!rows.some(r => r.val != null)) {
+          // ③ 손택스 오피스텔 기준시가 자동 조회
+          panel.innerHTML = `
+            <div class="op-head"><span class="op-head-title">🏛 공시가격 · 시가표준액</span></div>
+            <div style="padding:16px;text-align:center;color:#6b7280;font-size:12px">📊 홈택스 기준시가 조회 중...<br><small style="color:#9ca3af">${addrLabel}</small></div>`;
+          try {
+            const htRows = await _fetchHometaxOfficetelRows(pnu, years, hoNm);
+            if (htRows && htRows.some(r => r.val != null)) {
+              priceTypeName = '오피스텔 기준시가 (홈택스)';
+              rows = htRows;
+            }
+          } catch (_) {}
         }
       } else {
         // 아파트·빌라 → 공동주택 먼저, 없으면 비주거용 시도
