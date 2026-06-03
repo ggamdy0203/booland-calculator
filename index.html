@@ -585,12 +585,9 @@
               <button onclick="fetchOfficialPrice()" title="공시지가·시가표준액 연도별 조회"
                 style="padding:5px 10px;background:#6d28d9;color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit">🏛 공시가격</button>
             </div>
-            <div class="form-input-wrap" style="gap:6px">
-              <input type="text" id="addrDong" style="width:90px;flex:none" placeholder="동 (예: 101)">
-              <span style="font-size:11px;color:#9ca3af;align-self:center">동</span>
-              <input type="text" id="addrHo" style="width:90px;flex:none" placeholder="호 (예: 1303)">
-              <span style="font-size:11px;color:#9ca3af;align-self:center">호 &nbsp;— 공시가격 정확도 향상 (선택)</span>
-            </div>
+            <!-- 동·호수는 주소검색 모달(2단계)에서 입력 → 숨김 필드로 값 보관 -->
+            <input type="hidden" id="addrDong">
+            <input type="hidden" id="addrHo">
           </div>
         </div>
         <div class="form-row">
