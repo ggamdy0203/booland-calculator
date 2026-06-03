@@ -2444,6 +2444,20 @@ async function doAddrSearch() {
       inqrCl: '1'  // 1=오피스텔
     });
     if (!data) return null;
+
+    // 업무시간 외 서비스 중지 감지 (RESULT.result === 'F' + 서비스 중지 메시지)
+    const resultObj = data.RESULT || data.result || {};
+    if (resultObj.result === 'F' || data.transactionState === 'F') {
+      const msg = resultObj.msg || '';
+      const e = new Error(
+        msg.includes('서비스 중지') || msg.includes('중지 시간')
+          ? '⏰ 홈택스 기준시가는 평일 업무시간(9시~18시)에만 자동 조회됩니다.'
+          : `홈택스 오류: ${msg || '알 수 없는 오류'}`
+      );
+      e.isBusinessHours = msg.includes('서비스 중지') || msg.includes('중지 시간');
+      throw e;
+    }
+
     // 응답 구조 유연하게 처리
     const list = data.list || data.data?.list || data.bldList || data.resultList || [];
     if (!Array.isArray(list) || !list.length) {
@@ -2547,15 +2561,28 @@ async function doAddrSearch() {
   };
 
   /* 결과 렌더링 */
-  function _renderResult(panel, rows, priceType, addrLabel, bldNm, isNonresi, pnu) {
+  function _renderResult(panel, rows, priceType, addrLabel, bldNm, isNonresi, pnu, htError) {
     const fmtN = n => n != null ? Math.round(n).toLocaleString('ko-KR') : null;
     const hasData = rows.some(r => r.val != null);
 
     if (!hasData) {
-      const noDataLink = isNonresi
-        ? `<div style="margin-top:6px;font-size:11px;color:#6b7280">자동 조회(공시가격·홈택스)에서 데이터를 찾지 못했습니다.<br>동·호수를 정확히 입력하셨는지 확인 후 재조회하거나, 홈택스에서 직접 조회해주세요.</div>
-           <a href="https://www.hometax.go.kr/websquare/websquare.html?w2xPath=/ui/ab/a/b/UTALABB99M.xml" target="_blank" style="color:#1d4ed8;font-size:11px;display:inline-block;margin-top:4px">🏠 홈택스 기준시가 조회 ↗</a>`
-        : `<a href="https://www.realtyprice.kr" target="_blank" style="color:#1d4ed8;font-size:11px">🏛 부동산공시가격알리미에서 직접 조회 ↗</a>`;
+      let noDataLink;
+      if (isNonresi) {
+        if (htError?.isBusinessHours) {
+          noDataLink = `
+            <div style="margin:8px 0 4px;padding:8px 10px;background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;font-size:11px;color:#92400e;text-align:left">
+              ⏰ <b>홈택스 기준시가 자동 조회는 평일 업무시간(9시~18시)에만 가능합니다.</b><br>
+              평일 낮에 재조회하시거나, 지금은 아래 링크에서 직접 확인해주세요.
+            </div>
+            <a href="https://www.hometax.go.kr/websquare/websquare.html?w2xPath=/ui/ab/a/b/UTALABB99M.xml" target="_blank" style="color:#1d4ed8;font-size:11px;display:inline-block;margin-top:4px">🏠 홈택스 기준시가 조회 ↗</a>`;
+        } else {
+          noDataLink = `
+            <div style="margin-top:6px;font-size:11px;color:#6b7280">자동 조회(공시가격·홈택스)에서 데이터를 찾지 못했습니다.<br>동·호수를 정확히 입력하셨는지 확인 후 재조회하거나, 홈택스에서 직접 조회해주세요.</div>
+            <a href="https://www.hometax.go.kr/websquare/websquare.html?w2xPath=/ui/ab/a/b/UTALABB99M.xml" target="_blank" style="color:#1d4ed8;font-size:11px;display:inline-block;margin-top:4px">🏠 홈택스 기준시가 조회 ↗</a>`;
+        }
+      } else {
+        noDataLink = `<a href="https://www.realtyprice.kr" target="_blank" style="color:#1d4ed8;font-size:11px">🏛 부동산공시가격알리미에서 직접 조회 ↗</a>`;
+      }
       panel.innerHTML = `
         <div class="op-head">
           <span class="op-head-title">🏛 공시가격 · 시가표준액</span>
@@ -2730,6 +2757,7 @@ async function doAddrSearch() {
           priceTypeName = '공동주택 공시가격';
           rows = await _fetchRows(_fetchAptPrice, vworldKey, pnu, years, dongNm, hoNm);
         }
+        let htError = null;
         if (!rows.some(r => r.val != null)) {
           // ③ 손택스 오피스텔 기준시가 자동 조회
           panel.innerHTML = `
@@ -2741,7 +2769,7 @@ async function doAddrSearch() {
               priceTypeName = '오피스텔 기준시가 (홈택스)';
               rows = htRows;
             }
-          } catch (_) {}
+          } catch (e) { htError = e; }
         }
       } else {
         // 아파트·빌라 → 공동주택 먼저, 없으면 비주거용 시도
@@ -2753,7 +2781,7 @@ async function doAddrSearch() {
         }
       }
 
-      _renderResult(panel, rows, priceTypeName, addrLabel, bldNm, isNonresi, pnu);
+      _renderResult(panel, rows, priceTypeName, addrLabel, bldNm, isNonresi, pnu, htError);
 
     } catch (err) {
       console.error('공시가격 조회 오류:', err);
