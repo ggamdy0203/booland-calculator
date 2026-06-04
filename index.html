@@ -2624,22 +2624,27 @@ async function doAddrSearch() {
     if (!pnu || pnu.length !== 19) return null;
     const isOfficetel = propType === '오피스텔';
     const curYear = new Date().getFullYear();
+    const tryYears = [curYear, curYear - 1, curYear - 2]; // 연도 순차 시도
 
     if (isOfficetel) {
       // 오피스텔: 홈택스 ATESFAAA023R05 → 호 목록
       try {
         const bldNos = await _hometaxGetBldNo(pnu);
         if (!bldNos?.length) return null;
-        for (const bldNo of bldNos) {
-          const data = await _hometaxPost('ATESFAAA023R05', { kabSctrBldNo: bldNo, notcDt: String(curYear) });
-          if (!data) continue;
-          const list = data.list || data.data?.list || data.priceList || data.resultList || [];
-          if (!Array.isArray(list) || !list.length) continue;
-          const units = list.map(it => ({
-            dong: (it.flrNo || it.floorNo || '').replace(/\s/g, ''),
-            ho:   (it.hoNm  || it.hoNo   || it.unitNm || '').replace(/\s/g, '')
-          })).filter(u => u.ho);
-          if (units.length) return units;
+        for (const yr of tryYears) {
+          for (const bldNo of bldNos) {
+            try {
+              const data = await _hometaxPost('ATESFAAA023R05', { kabSctrBldNo: bldNo, notcDt: String(yr) });
+              if (!data) continue;
+              const list = data.list || data.data?.list || data.priceList || data.resultList || [];
+              if (!Array.isArray(list) || !list.length) continue;
+              const units = list.map(it => ({
+                dong: (it.flrNo || it.floorNo || '').replace(/\s/g, ''),
+                ho:   (it.hoNm  || it.hoNo   || it.unitNm || '').replace(/\s/g, '')
+              })).filter(u => u.ho);
+              if (units.length) return units;
+            } catch (_) {}
+          }
         }
       } catch (_) {}
       return null;
@@ -2647,19 +2652,27 @@ async function doAddrSearch() {
       // 아파트·빌라·단독: vworld getApartHousingPriceAttr → 동·호 목록
       const vworldKey = _getVworldKey();
       if (!vworldKey) return null;
-      try {
-        const url = `https://api.vworld.kr/ned/data/getApartHousingPriceAttr` +
-          `?pnu=${encodeURIComponent(pnu)}&stdrYear=${curYear}&format=json&numOfRows=200` +
-          `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
-        const res = await _vworldFetch(url);
-        let data;
-        try { data = await res.json(); } catch (_) { return null; }
-        const units = (data?.apartHousingPrices?.apartHousingPrice || []).map(it => ({
-          dong: (it.dongNm || '').replace(/\s/g, ''),
-          ho:   (it.hoNm   || '').replace(/\s/g, '')
-        })).filter(u => u.ho);
-        return units.length ? units : null;
-      } catch (_) { return null; }
+      for (const yr of tryYears) {
+        try {
+          const url = `https://api.vworld.kr/ned/data/getApartHousingPriceAttr` +
+            `?pnu=${encodeURIComponent(pnu)}&stdrYear=${yr}&format=json&numOfRows=200` +
+            `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
+          const res = await _vworldFetch(url);
+          let data;
+          try { data = await res.json(); } catch (_) { continue; }
+          const raw = data?.apartHousingPrices?.apartHousingPrice;
+          const arr = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+          console.log(`[동호목록] ${yr}년 vworld 응답:`, arr.length, '건');
+          const units = arr.map(it => ({
+            dong: (it.dongNm || '').replace(/\s/g, ''),
+            ho:   (it.hoNm   || '').replace(/\s/g, '')
+          })).filter(u => u.ho);
+          if (units.length) return units;
+        } catch (e) {
+          console.warn('[동호목록] vworld 오류:', e.message);
+        }
+      }
+      return null;
     }
   };
 
