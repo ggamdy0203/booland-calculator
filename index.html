@@ -2630,29 +2630,38 @@ async function doAddrSearch() {
       } catch (_) {}
       return null;
     } else {
-      // 아파트·빌라·단독: vworld getApartHousingPriceAttr → 동·호 목록
+      // 아파트·빌라·단독: vworld getApartHousingPriceAttr → 동·호 목록 (페이지네이션)
       const vworldKey = _getVworldKey();
       if (!vworldKey) return null;
       for (const yr of tryYears) {
         try {
-          const url = `https://api.vworld.kr/ned/data/getApartHousingPriceAttr` +
-            `?pnu=${encodeURIComponent(pnu)}&stdrYear=${yr}&format=json&numOfRows=100` +
-            `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
-          const res = await _vworldFetch(url);
-          let data;
-          try { data = await res.json(); } catch (_) { continue; }
-          console.log(`[동호목록] ${yr}년 raw:`, JSON.stringify(data).slice(0, 300));
-          if (data?.error) { console.warn('[동호목록] API error:', data.error); continue; }
-          const raw = data?.apartHousingPrices?.apartHousingPrice;
-          const arr = Array.isArray(raw) ? raw : (raw ? [raw] : []);
-          console.log(`[동호목록] ${yr}년 vworld 응답:`, arr.length, '건');
-          const units = arr.map(it => ({
-            dong: (it.dongNm || '').replace(/\s/g, ''),
-            ho:   (it.hoNm   || '').replace(/\s/g, '')
-          })).filter(u => u.ho);
-          if (units.length) return units;
+          const allUnits = [];
+          for (let page = 1; page <= 10; page++) {
+            const url = `https://api.vworld.kr/ned/data/getApartHousingPriceAttr` +
+              `?pnu=${encodeURIComponent(pnu)}&stdrYear=${yr}&format=json&numOfRows=100&pageNo=${page}` +
+              `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
+            const res = await _vworldFetch(url);
+            let data;
+            try { data = await res.json(); } catch (_) { break; }
+            if (data?.error) break;
+            const prices = data?.apartHousingPrices;
+            let arr = [];
+            if (prices?.apartHousingPrice) {
+              arr = Array.isArray(prices.apartHousingPrice) ? prices.apartHousingPrice : [prices.apartHousingPrice];
+            } else if (prices?.hoNm) {
+              arr = [prices];
+            }
+            const pageUnits = arr.map(it => ({
+              dong: (it.dongNm || '').replace(/\s/g, ''),
+              ho:   (it.hoNm   || '').replace(/\s/g, '')
+            })).filter(u => u.ho);
+            allUnits.push(...pageUnits);
+            if (arr.length < 100) break; // 마지막 페이지
+          }
+          console.log(`[동호목록] ${yr}년 총:`, allUnits.length, '건');
+          if (allUnits.length) return allUnits;
         } catch (e) {
-          if (e.isApiError) return null; // 프록시 전체 실패 → 재시도 무의미
+          if (e.isApiError) return null;
           console.warn('[동호목록] vworld 오류:', e.message);
         }
       }
