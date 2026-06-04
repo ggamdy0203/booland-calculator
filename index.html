@@ -2642,8 +2642,9 @@ async function doAddrSearch() {
               `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
             const res = await _vworldFetch(url);
             let data;
-            try { data = await res.json(); } catch (_) { break; }
-            if (data?.error) break;
+            try { data = await res.json(); } catch (parseErr) { console.warn('[동호목록] JSON파싱실패:', parseErr.message); break; }
+            console.log(`[동호목록] ${yr}p${page} raw:`, JSON.stringify(data).slice(0, 200));
+            if (data?.error) { console.warn('[동호목록] API에러:', data.error); break; }
             const prices = data?.apartHousingPrices;
             let arr = [];
             if (prices?.apartHousingPrice) {
