@@ -904,6 +904,14 @@
           </div>
           <div class="form-note">자기자본 − 보증금</div>
         </div>
+        <div class="form-row">
+          <div class="form-label" style="color:var(--blue);font-weight:700">임대수입 연ROE ★</div>
+          <div class="form-input-wrap">
+            <input type="text" class="pct input-calc" id="rentRoeAnn" readonly="">
+            <span class="input-unit">%</span>
+          </div>
+          <div class="form-note">월순수익×12 ÷ 실투자금</div>
+        </div>
       </div>
     </div>
 
@@ -1738,6 +1746,7 @@ function computeAll() {
   const monthlyLoanInterest = loan * (loanRateP / 100) / 12;
   const monthlyNet  = monthly - monthlyLoanInterest;
   const realInvest  = equity - jeonse;
+  const rentRoeAnn  = realInvest > 0 ? monthlyNet * 12 / realInvest * 100 : null;
   const netProfit  = capGain - saleExpTotal;
   const holdRent   = annualRent * holdYear;
   const totalReturn= netProfit + holdRent;
@@ -1746,7 +1755,7 @@ function computeAll() {
 
   return {
     loan, loanByBid, loanByAppraisal, dep, bal, acqRate, ruralRate, eduRate, acqTax, ruralTax, eduTax, taxTotal, miscTotal, equity,
-    annualRent, rentYield, monthlyNet, monthlyLoanInterest, realInvest, agentR, loanInterest, capGain, capGainTax, capGainBasicDed,
+    annualRent, rentYield, monthlyNet, monthlyLoanInterest, realInvest, rentRoeAnn, agentR, loanInterest, capGain, capGainTax, capGainBasicDed,
     prepayFee, agentFee, saleExpTotal, netProfit, holdRent, totalReturn,
     roe, roeAnn, holdYear, bid, saleP
   };
@@ -1779,6 +1788,7 @@ function calc() {
   setFmt('monthlyLoanIntB', v.monthlyLoanInterest);
   $('loanRateDisp').value = $('loanRate').value;
   setFmt('realInvest',      v.realInvest);
+  $('rentRoeAnn').value = v.rentRoeAnn != null ? v.rentRoeAnn.toFixed(1) : '';
   $('agentRate').value  = (v.agentR * 100).toFixed(2);
   setFmt('loanInterest', v.loanInterest);
   setFmt('capGainTax',   v.capGainTax);
@@ -3328,6 +3338,7 @@ function exportExcel() {
   dataRow('임대 수익률',     v.rentYield.toFixed(2) + '%', '연 임대 / 총투자금', true, false);
   dataRow('월 순수익',           v.monthlyNet,  '월세 − 월 대출이자', true);
   dataRow('임대사업용 실투자금', v.realInvest,  '자기자본 − 보증금', true);
+  if (v.rentRoeAnn != null) dataRow('임대수입 연ROE', v.rentRoeAnn.toFixed(1) + '%', '월순수익×12 ÷ 실투자금', true, false);
   emptyRow();
 
   // 매도 수익 분석
@@ -3528,7 +3539,7 @@ function _buildEntry(v) {
     agentFeeMode:$('agentFeeMode').value, agentFeeManual:$('agentFee').value,
     capGainMethod:$('capGainMethod').value, customCapGainRate:$('customCapGainRate').value,
     bid:v.bid, roe:v.roe, roeAnn:v.roeAnn, netProfit:v.netProfit, equity:v.equity,
-    monthlyNet:v.monthlyNet, realInvest:v.realInvest,
+    monthlyNet:v.monthlyNet, realInvest:v.realInvest, rentRoeAnn:v.rentRoeAnn,
     bidDate: $('bidDate').value || ''
   };
 }
@@ -3817,6 +3828,7 @@ function _renderSaveItem(s, folders) {
   const memoHtml = s.memo ? s.memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
   const monthlyNetVal = s.monthlyNet !== undefined ? s.monthlyNet : null;
   const realInvestVal = s.realInvest !== undefined ? s.realInvest : null;
+  const rentRoeAnnVal = s.rentRoeAnn !== undefined && s.rentRoeAnn !== null ? s.rentRoeAnn : null;
   const bidDateStr = fmtDate(s.bidDate);
   const inFolder = folders.find(f => f.itemIds.includes(s.id));
 
@@ -3824,7 +3836,8 @@ function _renderSaveItem(s, folders) {
     &nbsp;|&nbsp; 연환산 ROE: <strong>${fmtP(s.roeAnn)}/년</strong>
     &nbsp;|&nbsp; 순이익: <span style="color:var(--red);font-weight:700">${fmt(s.netProfit)}</span>
     ${realInvestVal !== null ? `&nbsp;|&nbsp; 실투자금: <span style="color:var(--green);font-weight:700">${fmt(realInvestVal)}</span>` : ''}
-    ${monthlyNetVal !== null ? `&nbsp;|&nbsp; 월순수익: <span style="color:var(--red);font-weight:700">${fmt(monthlyNetVal)}</span>` : ''}`;
+    ${monthlyNetVal !== null ? `&nbsp;|&nbsp; 월순수익: <span style="color:var(--red);font-weight:700">${fmt(monthlyNetVal)}</span>` : ''}
+    ${rentRoeAnnVal !== null ? `&nbsp;|&nbsp; 임대ROE: <span style="color:#1d4ed8;font-weight:700">${fmtP(rentRoeAnnVal)}/년</span>` : ''}`;
 
   const memoBlock = memoHtml
     ? `<div class="save-item-memo">${memoHtml.split('\n').map(l=>`<div class="save-item-memo-line">${l||'&nbsp;'}</div>`).join('')}</div>`
