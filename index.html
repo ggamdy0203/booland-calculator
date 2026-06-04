@@ -3828,8 +3828,9 @@ function _renderSaveItem(s, folders) {
   const fmtDate= d => d ? d.replace(/-/g, '.') : null;
   const title  = [s.caseNo, s.addr].filter(Boolean).join(' · ') || '(제목 없음)';
   const memoHtml = s.memo ? s.memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
-  // 전세/보증금·월임대료 모두 0이면 임대 미입력 → 표시값 0 처리
-  const _savedHasRental = (s.jeonse || 0) > 0 || (s.monthlyRent || 0) > 0;
+  // 저장값이 문자열("25,000,000")이므로 숫자 파싱 후 비교
+  const _pN = v => parseInt(String(v||'').replace(/[^0-9]/g,''),10)||0;
+  const _savedHasRental = _pN(s.jeonse) > 0 || _pN(s.monthlyRent) > 0;
   const monthlyNetVal = s.monthlyNet !== undefined && s.monthlyNet !== null
     ? (_savedHasRental ? s.monthlyNet : 0) : null;
   const realInvestVal = s.realInvest !== undefined && s.realInvest !== null ? s.realInvest : null;
@@ -3846,8 +3847,8 @@ function _renderSaveItem(s, folders) {
   const rentalBlock = hasRental ? `
     &nbsp;&nbsp;<span style="color:#9ca3af;font-size:11px;font-weight:600">임대</span>&nbsp;
     ${realInvestVal !== null ? `실투자금: <span style="color:var(--green);font-weight:700">${fmt(realInvestVal)}</span>&nbsp;|&nbsp;` : ''}
-    ${monthlyNetVal !== null ? `월순수익: <span style="color:${monthlyNetVal>=0?'var(--green)':'var(--red)'};font-weight:700">${fmt(monthlyNetVal)}</span>&nbsp;|&nbsp;` : ''}
-    ${annualNetVal  !== null ? `연수익: <span style="color:${annualNetVal>=0?'#059669':'#5b21b6'};font-weight:700">${fmt(annualNetVal)}</span>&nbsp;|&nbsp;` : ''}
+    ${monthlyNetVal !== null ? `월순수익: <span style="color:var(--red);font-weight:700">${fmt(monthlyNetVal)}</span>&nbsp;|&nbsp;` : ''}
+    ${annualNetVal  !== null ? `연수익: <span style="color:#5b21b6;font-weight:700">${fmt(annualNetVal)}</span>&nbsp;|&nbsp;` : ''}
     ${rentRoeAnnVal !== null ? `연ROE: <span style="color:#1d4ed8;font-weight:700">${fmtP(rentRoeAnnVal)}/년</span>` : ''}` : '';
 
   const metaHtml = saleBlock + rentalBlock;
