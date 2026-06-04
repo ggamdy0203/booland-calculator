@@ -2021,6 +2021,68 @@ function closeAddrSearchModal() {
   window._selectedAddr = null;
 }
 
+/* ── 동·호 드롭다운 헬퍼 ── */
+function _renderDongHoDropdowns(units) {
+  const ctrl = document.getElementById('dongHoControls');
+  if (!ctrl) return;
+  window._buildingUnits = units;
+
+  const dongs = [...new Set(units.map(u => u.dong))].sort((a, b) => a.localeCompare(b, 'ko'));
+  const hasDong = dongs.some(d => d !== '');
+
+  const dongHtml = hasDong
+    ? `<div>
+        <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:4px">동 <span style="color:#9ca3af;font-weight:400">(선택)</span></label>
+        <select id="modalDongSel" onchange="window._onDongChange()"
+          style="width:100%;padding:8px 10px;border:1.5px solid #0e9f6e;border-radius:6px;font-size:13px;font-family:inherit;background:#f0fdf4">
+          <option value="">— 동 선택 —</option>
+          ${dongs.map(d => `<option value="${d}">${d}</option>`).join('')}
+        </select>
+      </div>`
+    : `<div><label style="font-size:11px;font-weight:700;color:#9ca3af">동 없음</label></div>`;
+
+  ctrl.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      ${dongHtml}
+      <div>
+        <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:4px">호수 <span style="color:#9ca3af;font-weight:400">(선택)</span></label>
+        <select id="modalHoSel"
+          style="width:100%;padding:8px 10px;border:1.5px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;background:#f0fdf4">
+          <option value="">${hasDong ? '— 동 먼저 선택 —' : '— 호수 선택 —'}</option>
+        </select>
+      </div>
+    </div>
+    <div style="font-size:10px;color:#6b7280;text-align:center">✅ 목록에서 선택하세요 · 선택 후 아래 [선택 완료] 클릭</div>`;
+
+  if (!hasDong) {
+    window._onDongChange();
+  } else if (dongs.length === 1) {
+    const sel = document.getElementById('modalDongSel');
+    if (sel) { sel.value = dongs[0]; window._onDongChange(); }
+  }
+}
+
+function _renderTextFallback(msg) {
+  const ctrl = document.getElementById('dongHoControls');
+  if (!ctrl) return;
+  ctrl.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div>
+        <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:4px">동 <span style="color:#9ca3af;font-weight:400">(선택)</span></label>
+        <input id="modalDongInput" type="text" placeholder="예) 101"
+          style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:4px">호수 <span style="color:#9ca3af;font-weight:400">(선택)</span></label>
+        <input id="modalHoInput" type="text" placeholder="예) 1303"
+          style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box"
+          onkeydown="if(event.key==='Enter')confirmAddrSelection()">
+      </div>
+    </div>
+    <div style="font-size:10px;color:#dc2626;text-align:center">${msg || '동·호수를 직접 입력하세요'}</div>`;
+  setTimeout(() => document.getElementById('modalDongInput')?.focus(), 50);
+}
+
 function selectAddrByIdx(i) {
   const it = (window._addrItems || [])[i];
   if (!it) return;
@@ -2028,21 +2090,18 @@ function selectAddrByIdx(i) {
 
   const titleEl = document.querySelector('#addrSearchModal [data-modal-title]');
   if (titleEl) titleEl.textContent = '동 · 호수를 선택해주세요';
-  const searchBar = document.getElementById('addrSearchBar');
-  if (searchBar) searchBar.style.display = 'none';
+  document.getElementById('addrSearchBar').style.display = 'none';
   const addr = it.road || it.jibun;
 
-  // 2단계 기본 UI (로딩 상태)
-  const box = document.getElementById('addrSearchResults');
-  box.innerHTML = `
-    <div style="padding:14px 16px" id="dongHoStep">
+  document.getElementById('addrSearchResults').innerHTML = `
+    <div style="padding:14px 16px">
       <div style="margin-bottom:12px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px">
         <div style="font-size:13px;font-weight:700;color:#065f46">${it.bldNm || addr}</div>
         ${it.road  ? `<div style="font-size:11px;color:#374151;margin-top:2px">[도로명] ${it.road}</div>` : ''}
         ${it.jibun ? `<div style="font-size:11px;color:#9ca3af">[지번] ${it.jibun}</div>` : ''}
       </div>
-      <div id="dongHoControls">
-        <div style="text-align:center;padding:16px;color:#6b7280;font-size:12px">⏳ 동·호 목록 조회 중...</div>
+      <div id="dongHoControls" style="min-height:80px">
+        <div style="text-align:center;padding:20px;color:#6b7280;font-size:12px">⏳ 동·호 목록 불러오는 중...</div>
       </div>
       <div style="display:flex;gap:8px;margin-top:12px">
         <button onclick="goBackToAddrSearch()"
@@ -2052,129 +2111,51 @@ function selectAddrByIdx(i) {
       </div>
     </div>`;
 
-  // 비동기로 PNU 조회 후 동·호 목록 로드
   (async () => {
     try {
-      const kakaoKey = localStorage.getItem('kakaoApiKey') || '';
-      let pnu = null;
-      if (kakaoKey) {
-        const searchAddr = it.road || it.jibun;
-        const url = `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(searchAddr)}&analyze_type=similar&page=1&size=1`;
-        const res = await fetch(url, { headers: { Authorization: `KakaoAK ${kakaoKey}` } });
-        if (res.ok) {
-          const data = await res.json();
-          const doc = data?.documents?.[0];
-          if (doc?.address) {
-            const bCode  = doc.address.b_code || '';
-            const mainNo = (doc.address.main_address_no || '0').padStart(4, '0');
-            const subNo  = (doc.address.sub_address_no  || '0').padStart(4, '0');
-            const mtnYn  = doc.address.mountain_yn === 'Y' ? '2' : '1';
-            pnu = bCode + mtnYn + mainNo + subNo;
-            window._selectedPnu = pnu;
-          }
-        }
+      // 1. PNU 조회 (_kakaoSearchPnu 는 IIFE 내부 _kakaoSearch 노출)
+      const kakaoResult = await (window._kakaoSearchPnu ? window._kakaoSearchPnu(addr) : null);
+      const pnu = kakaoResult?.pnu || null;
+      if (pnu) window._selectedPnu = pnu;
+      console.log('[동호목록] PNU:', pnu);
+
+      if (!pnu) {
+        _renderTextFallback('주소 PNU 조회 실패 — 동·호수를 직접 입력하세요');
+        return;
       }
 
       const propType = (document.getElementById('propType')?.value || '').trim();
-      const units = pnu ? await window._fetchBuildingUnits(pnu, propType) : null;
-      const ctrl = document.getElementById('dongHoControls');
-      if (!ctrl) return;
+      const units = await window._fetchBuildingUnits(pnu, propType);
+      console.log('[동호목록] units:', units ? units.length : 'null');
 
       if (units && units.length) {
-        // 드롭다운 방식
-        const dongs = [...new Set(units.map(u => u.dong))].sort((a, b) => a.localeCompare(b, 'ko'));
-        const hasDong = dongs.some(d => d !== '');
-
-        const dongHtml = hasDong
-          ? `<div>
-              <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:4px">동 <span style="color:#9ca3af;font-weight:400">(선택)</span></label>
-              <select id="modalDongSel" onchange="window._onDongChange()" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;background:#f0fdf4">
-                <option value="">— 선택하세요 —</option>
-                ${dongs.map(d => `<option value="${d}">${d || '동없음'}</option>`).join('')}
-              </select>
-            </div>`
-          : `<div>
-              <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:4px">동 <span style="color:#9ca3af;font-weight:400">(선택)</span></label>
-              <input id="modalDongInput" type="text" placeholder="예) 101"
-                style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box">
-            </div>`;
-
-        ctrl.innerHTML = `
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-            ${dongHtml}
-            <div>
-              <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:4px">호수 <span style="color:#9ca3af;font-weight:400">(선택)</span></label>
-              <select id="modalHoSel" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;background:#f0fdf4">
-                <option value="">— 동 먼저 선택 —</option>
-              </select>
-            </div>
-          </div>
-          <div style="font-size:10px;color:#9ca3af;text-align:center">호실 선택 시 해당 호실의 정확한 공시가격을 조회합니다</div>`;
-
-        // 동·호 데이터를 전역 저장
-        window._buildingUnits = units;
-
-        // 동이 1개뿐이면 자동 선택
-        if (hasDong && dongs.length === 1) {
-          const sel = document.getElementById('modalDongSel');
-          if (sel) { sel.value = dongs[0]; window._onDongChange(); }
-        } else if (!hasDong) {
-          // 동 없는 구조면 전체 호 바로 표시
-          window._onDongChange();
-        }
+        _renderDongHoDropdowns(units);
       } else {
-        // API 실패 → 텍스트 입력 폴백
-        ctrl.innerHTML = `
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-            <div>
-              <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:4px">동 <span style="color:#9ca3af;font-weight:400">(선택)</span></label>
-              <input id="modalDongInput" type="text" placeholder="예) 101"
-                style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box">
-            </div>
-            <div>
-              <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:4px">호수 <span style="color:#9ca3af;font-weight:400">(선택)</span></label>
-              <input id="modalHoInput" type="text" placeholder="예) 1303"
-                style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box"
-                onkeydown="if(event.key==='Enter')confirmAddrSelection()">
-            </div>
-          </div>
-          <div style="font-size:10px;color:#9ca3af;text-align:center">동·호수를 직접 입력하세요</div>`;
-        setTimeout(() => document.getElementById('modalDongInput')?.focus(), 50);
+        _renderTextFallback('목록 조회 실패 — 동·호수를 직접 입력하세요');
       }
-    } catch (_) {
-      const ctrl = document.getElementById('dongHoControls');
-      if (ctrl) ctrl.innerHTML = `
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-          <div>
-            <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:4px">동</label>
-            <input id="modalDongInput" type="text" placeholder="예) 101"
-              style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box">
-          </div>
-          <div>
-            <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:4px">호수</label>
-            <input id="modalHoInput" type="text" placeholder="예) 1303"
-              style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box">
-          </div>
-        </div>`;
+    } catch (e) {
+      console.error('[동호목록] 오류:', e);
+      _renderTextFallback('오류 발생 — 동·호수를 직접 입력하세요');
     }
   })();
 }
 
-// 동 선택 시 해당 동의 호 목록 업데이트
+// 동 선택 시 호 목록 업데이트
 window._onDongChange = function() {
   const dongVal = (document.getElementById('modalDongSel')?.value || '').trim();
   const units = window._buildingUnits || [];
   const hoSel = document.getElementById('modalHoSel');
   if (!hoSel) return;
-  const filtered = dongVal
-    ? units.filter(u => u.dong === dongVal)
-    : units;
+  const filtered = dongVal ? units.filter(u => u.dong === dongVal) : units;
   const hos = [...new Set(filtered.map(u => u.ho))].filter(Boolean)
     .sort((a, b) => {
       const na = parseInt(a), nb = parseInt(b);
       return (!isNaN(na) && !isNaN(nb)) ? na - nb : a.localeCompare(b, 'ko');
     });
-  hoSel.innerHTML = `<option value="">— 선택하세요 —</option>` +
+  const dongSel = document.getElementById('modalDongSel');
+  if (dongSel) dongSel.style.border = '1.5px solid #0e9f6e';
+  hoSel.style.border = '1.5px solid #0e9f6e';
+  hoSel.innerHTML = `<option value="">— 호수 선택 —</option>` +
     hos.map(h => `<option value="${h}">${h}</option>`).join('');
 };
 
@@ -2907,6 +2888,7 @@ async function doAddrSearch() {
   }
 
   window._opShowKeyForm = _showKeyForm;
+  window._kakaoSearchPnu = _kakaoSearch; // 주소검색 모달에서 PNU 조회용
 
   /* 메인 조회 함수 */
   window.fetchOfficialPrice = async function () {
