@@ -2175,8 +2175,12 @@ async function confirmAddrSelection() {
   // 드롭다운 우선, 없으면 텍스트 입력
   const dong = (document.getElementById('modalDongSel')?.value  || document.getElementById('modalDongInput')?.value || '').trim();
   const ho   = (document.getElementById('modalHoSel')?.value    || document.getElementById('modalHoInput')?.value  || '').trim();
+  // 동·호수를 주소에 포함
+  let fullWithUnit = full;
+  if (dong) fullWithUnit += ' ' + dong + '동';
+  if (ho)   fullWithUnit += ' ' + ho + '호';
   const addrInp = document.getElementById('addr');
-  if (addrInp) { addrInp.value = full; }
+  if (addrInp) { addrInp.value = fullWithUnit; }
   const dongInp = document.getElementById('addrDong');
   const hoInp   = document.getElementById('addrHo');
   if (dongInp) dongInp.value = dong;
@@ -2793,7 +2797,7 @@ async function doAddrSearch() {
   };
 
   /* 결과 렌더링 */
-  function _renderResult(panel, rows, priceType, addrLabel, bldNm, isNonresi, pnu, htError) {
+  function _renderResult(panel, rows, priceType, addrLabel, bldNm, isNonresi, pnu, htError, dongNm, hoNm) {
     const fmtN = n => n != null ? Math.round(n).toLocaleString('ko-KR') : null;
     const hasData = rows.some(r => r.val != null);
 
@@ -2876,7 +2880,7 @@ async function doAddrSearch() {
       <div class="op-head">
         <div>
           <span class="op-head-title">🏛 공시가격 · 시가표준액</span>
-          ${bldNm ? `<span style="font-size:11px;color:#6b7280;margin-left:6px">${bldNm}</span>` : ''}
+          ${bldNm ? `<span style="font-size:11px;color:#6b7280;margin-left:6px">${bldNm}${dongNm ? ' ' + dongNm + '동' : ''}${hoNm ? ' ' + hoNm + '호' : ''}</span>` : ''}
           <div style="font-size:10px;color:#9ca3af;margin-top:1px">${addrLabel}</div>
         </div>
         <div style="display:flex;gap:5px;flex-shrink:0">
@@ -3056,7 +3060,7 @@ async function doAddrSearch() {
         }
       }
 
-      _renderResult(panel, rows, priceTypeName, addrLabel, bldNm, isNonresi, pnu, htError);
+      _renderResult(panel, rows, priceTypeName, addrLabel, bldNm, isNonresi, pnu, htError, dongNm, hoNm);
 
     } catch (err) {
       console.error('공시가격 조회 오류:', err);
