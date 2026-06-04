@@ -3826,18 +3826,26 @@ function _renderSaveItem(s, folders) {
   const fmtDate= d => d ? d.replace(/-/g, '.') : null;
   const title  = [s.caseNo, s.addr].filter(Boolean).join(' · ') || '(제목 없음)';
   const memoHtml = s.memo ? s.memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
-  const monthlyNetVal = s.monthlyNet !== undefined ? s.monthlyNet : null;
-  const realInvestVal = s.realInvest !== undefined ? s.realInvest : null;
+  const monthlyNetVal = s.monthlyNet !== undefined && s.monthlyNet !== null ? s.monthlyNet : null;
+  const realInvestVal = s.realInvest !== undefined && s.realInvest !== null ? s.realInvest : null;
   const rentRoeAnnVal = s.rentRoeAnn !== undefined && s.rentRoeAnn !== null ? s.rentRoeAnn : null;
+  const annualNetVal  = monthlyNetVal !== null ? monthlyNetVal * 12 : null;
+  const hasRental     = monthlyNetVal !== null || realInvestVal !== null;
   const bidDateStr = fmtDate(s.bidDate);
   const inFolder = folders.find(f => f.itemIds.includes(s.id));
 
-  const metaHtml = `낙찰가: <span style="color:var(--blue);font-weight:700">${fmt(s.bid)}</span>
-    &nbsp;|&nbsp; 연환산 ROE: <strong>${fmtP(s.roeAnn)}/년</strong>
-    &nbsp;|&nbsp; 순이익: <span style="color:var(--red);font-weight:700">${fmt(s.netProfit)}</span>
-    ${realInvestVal !== null ? `&nbsp;|&nbsp; 실투자금: <span style="color:var(--green);font-weight:700">${fmt(realInvestVal)}</span>` : ''}
-    ${monthlyNetVal !== null ? `&nbsp;|&nbsp; 월순수익: <span style="color:var(--red);font-weight:700">${fmt(monthlyNetVal)}</span>` : ''}
-    ${rentRoeAnnVal !== null ? `&nbsp;|&nbsp; 임대ROE: <span style="color:#1d4ed8;font-weight:700">${fmtP(rentRoeAnnVal)}/년</span>` : ''}`;
+  const saleBlock = `낙찰가: <span style="color:var(--blue);font-weight:700">${fmt(s.bid)}</span>
+    &nbsp;|&nbsp; <span style="color:#9ca3af;font-size:11px;font-weight:600">매도</span>&nbsp;
+    순이익: <span style="color:var(--red);font-weight:700">${fmt(s.netProfit)}</span>`;
+
+  const rentalBlock = hasRental ? `
+    &nbsp;&nbsp;<span style="color:#9ca3af;font-size:11px;font-weight:600">임대</span>&nbsp;
+    ${realInvestVal !== null ? `실투자금: <span style="color:var(--green);font-weight:700">${fmt(realInvestVal)}</span>&nbsp;|&nbsp;` : ''}
+    ${monthlyNetVal !== null ? `월순수익: <span style="color:var(--red);font-weight:700">${fmt(monthlyNetVal)}</span>&nbsp;|&nbsp;` : ''}
+    ${annualNetVal  !== null ? `연수익: <span style="color:#5b21b6;font-weight:700">${fmt(annualNetVal)}</span>&nbsp;|&nbsp;` : ''}
+    ${rentRoeAnnVal !== null ? `연ROE: <span style="color:#1d4ed8;font-weight:700">${fmtP(rentRoeAnnVal)}/년</span>` : ''}` : '';
+
+  const metaHtml = saleBlock + rentalBlock;
 
   const memoBlock = memoHtml
     ? `<div class="save-item-memo">${memoHtml.split('\n').map(l=>`<div class="save-item-memo-line">${l||'&nbsp;'}</div>`).join('')}</div>`
