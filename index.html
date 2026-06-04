@@ -2636,11 +2636,13 @@ async function doAddrSearch() {
       for (const yr of tryYears) {
         try {
           const url = `https://api.vworld.kr/ned/data/getApartHousingPriceAttr` +
-            `?pnu=${encodeURIComponent(pnu)}&stdrYear=${yr}&format=json&numOfRows=200` +
+            `?pnu=${encodeURIComponent(pnu)}&stdrYear=${yr}&format=json&numOfRows=100` +
             `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
           const res = await _vworldFetch(url);
           let data;
           try { data = await res.json(); } catch (_) { continue; }
+          console.log(`[동호목록] ${yr}년 raw:`, JSON.stringify(data).slice(0, 300));
+          if (data?.error) { console.warn('[동호목록] API error:', data.error); continue; }
           const raw = data?.apartHousingPrices?.apartHousingPrice;
           const arr = Array.isArray(raw) ? raw : (raw ? [raw] : []);
           console.log(`[동호목록] ${yr}년 vworld 응답:`, arr.length, '건');
@@ -2650,6 +2652,7 @@ async function doAddrSearch() {
           })).filter(u => u.ho);
           if (units.length) return units;
         } catch (e) {
+          if (e.isApiError) return null; // 프록시 전체 실패 → 재시도 무의미
           console.warn('[동호목록] vworld 오류:', e.message);
         }
       }
