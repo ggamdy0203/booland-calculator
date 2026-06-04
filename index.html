@@ -2649,6 +2649,8 @@ async function doAddrSearch() {
             let arr = [];
             if (prices?.apartHousingPrice) {
               arr = Array.isArray(prices.apartHousingPrice) ? prices.apartHousingPrice : [prices.apartHousingPrice];
+            } else if (Array.isArray(prices?.field)) {
+              arr = prices.field; // pageNo 사용 시 데이터가 field 배열에 위치
             } else if (prices?.hoNm) {
               arr = [prices];
             }
