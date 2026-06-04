@@ -2184,11 +2184,13 @@ async function doAddrSearch() {
 
 // ── 공시가격·시가표준액 조회 ──────────────────────────────
 (function () {
-  /* 키 관리 — 카카오 REST API 키 + vworld 인증키 */
-  function _getKakaoKey()  { return localStorage.getItem('kakaoApiKey')  || ''; }
-  function _getVworldKey() { return localStorage.getItem('vworldApiKey') || ''; }
+  /* 키 관리 — 카카오 REST API 키 + vworld 인증키 + 공공데이터포털 키 */
+  function _getKakaoKey()   { return localStorage.getItem('kakaoApiKey')   || ''; }
+  function _getVworldKey()  { return localStorage.getItem('vworldApiKey')  || ''; }
+  function _getDataGoKey()  { return localStorage.getItem('dataGoApiKey')  || ''; }
   window._setKakaoKey  = k => localStorage.setItem('kakaoApiKey',  k);
   window._setVworldKey = k => localStorage.setItem('vworldApiKey', k);
+  window._setDataGoKey = k => localStorage.setItem('dataGoApiKey', k);
 
   /* 최초 실행 시 vworld 기본 키 자동 설정 */
   if (!_getVworldKey()) window._setVworldKey('68E62C9C-9CDD-3A7A-AC25-4574AA4AA17F');
@@ -2521,6 +2523,61 @@ async function doAddrSearch() {
     return rows;
   }
 
+  /* ── 공공데이터포털 오피스텔 기준시가 조회 (data.go.kr) ───── */
+  async function _fetchOfficetelDataGo(dataGoKey, pnu, years, bldNm, hoNm) {
+    const ldCd = pnu.slice(0, 10); // 법정동코드 10자리
+    const rows = [];
+
+    for (const yr of years) {
+      try {
+        const params = new URLSearchParams({
+          serviceKey: dataGoKey,
+          numOfRows: '100',
+          pageNo: '1',
+          type: 'json',
+          ldCd,
+          notcYr: String(yr)
+        });
+        const url = `https://apis.data.go.kr/1741000/StdAssPrcHtxSvc/getListStdAssPrcHtx?${params}`;
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 12000);
+        const res = await fetch(url, { signal: ctrl.signal });
+        clearTimeout(t);
+        if (!res.ok) { rows.push({ year: yr, val: null, extra: null }); continue; }
+        const json = await res.json();
+        const items = json?.response?.body?.items?.item || [];
+        const list = Array.isArray(items) ? items : [items];
+
+        // 건물명으로 필터 (없으면 전체)
+        let filtered = list;
+        if (bldNm) {
+          const bn = bldNm.replace(/\s/g, '').toLowerCase();
+          const byName = list.filter(it => (it.bldNm || '').replace(/\s/g, '').toLowerCase().includes(bn));
+          if (byName.length) filtered = byName;
+        }
+        // 호명으로 2차 필터
+        if (hoNm && filtered.length > 1) {
+          const hn = hoNm.replace(/\s/g, '').toLowerCase();
+          const byHo = filtered.filter(it => (it.hoNm || '').replace(/\s/g, '').toLowerCase().includes(hn));
+          if (byHo.length) filtered = byHo;
+        }
+
+        const prices = filtered
+          .map(it => Number((it.stdAssPrc || '').replace(/,/g, '')))
+          .filter(n => n > 0)
+          .sort((a, b) => a - b);
+
+        if (!prices.length) { rows.push({ year: yr, val: null, extra: null }); continue; }
+        const mid = Math.floor(prices.length / 2);
+        const extra = { median: prices[mid], min: prices[0], max: prices[prices.length - 1], count: prices.length };
+        rows.push({ year: yr, val: extra.median, extra });
+      } catch (_) {
+        rows.push({ year: yr, val: null, extra: null });
+      }
+    }
+    return rows;
+  }
+
   /* 키 입력 UI */
   function _showKeyForm(panel) {
     panel.style.display = '';
@@ -2529,13 +2586,16 @@ async function doAddrSearch() {
         <span class="op-head-title">🏛 공시가격 · 시가표준액 — API 키 설정</span>
       </div>
       <div class="op-key-box">
-        ⚠️ 연도별 공시가격 조회를 위해 무료 API 키 2종이 필요합니다.<br>
+        ⚠️ 연도별 공시가격 조회를 위해 무료 API 키가 필요합니다.<br>
         <b>① 카카오 REST API 키</b> (영구 무료 · 만료 없음)<br>
         &nbsp;&nbsp;<a href="https://developers.kakao.com/console/app" target="_blank" style="color:#1d4ed8">developers.kakao.com</a>
         → 애플리케이션 추가 → <b>REST API 키</b> 복사<br>
         <b>② vworld 인증키</b> (개발키 6개월 · 운영키 2년)<br>
         &nbsp;&nbsp;<a href="https://www.vworld.kr" target="_blank" style="color:#1d4ed8">vworld.kr</a>
-        → 마이포털 → 나의 오픈API → 인증키 관리에서 발급
+        → 마이포털 → 나의 오픈API → 인증키 관리에서 발급<br>
+        <b>③ 공공데이터포털 API 키</b> (오피스텔·상가 기준시가용 · 무료)<br>
+        &nbsp;&nbsp;<a href="https://www.data.go.kr/tcs/dss/selectApiDataDetailView.do?publicDataPk=15126156" target="_blank" style="color:#1d4ed8">data.go.kr</a>
+        → 로그인 → 활용신청 → <b>일반 인증키(Encoding)</b> 복사
       </div>
       <div style="padding:0 12px 12px;display:grid;gap:8px">
         <div>
@@ -2546,6 +2606,10 @@ async function doAddrSearch() {
           <label style="font-size:11px;font-weight:700;color:#374151">② vworld 인증키</label>
           <input id="op-govKey" class="op-key-input" type="text" value="${_getVworldKey()}" placeholder="vworld.kr 마이포털에서 발급받은 인증키">
         </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#059669">③ 공공데이터포털 API 키 (오피스텔 기준시가)</label>
+          <input id="op-dataGoKey" class="op-key-input" type="text" value="${_getDataGoKey()}" placeholder="data.go.kr 에서 발급한 일반 인증키(Encoding)">
+        </div>
         <button onclick="window._opSaveKeys()" style="padding:7px;background:#6d28d9;color:white;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">💾 저장 후 조회</button>
       </div>`;
   }
@@ -2553,8 +2617,10 @@ async function doAddrSearch() {
   window._opSaveKeys = function () {
     const k = document.getElementById('op-kakaoKey')?.value?.trim();
     const g = document.getElementById('op-govKey')?.value?.trim();
+    const d = document.getElementById('op-dataGoKey')?.value?.trim();
     if (k) window._setKakaoKey(k);
     if (g) window._setVworldKey(g);
+    if (d) window._setDataGoKey(d);
     window.fetchOfficialPrice();
   };
 
@@ -2573,9 +2639,14 @@ async function doAddrSearch() {
               평일 낮에 재조회하시거나, 지금은 아래 링크에서 직접 확인해주세요.
             </div>
             <a href="https://www.hometax.go.kr/websquare/websquare.html?w2xPath=/ui/ab/a/b/UTALABB99M.xml" target="_blank" style="color:#1d4ed8;font-size:11px;display:inline-block;margin-top:4px">🏠 홈택스 기준시가 조회 ↗</a>`;
+        } else if (!_getDataGoKey()) {
+          noDataLink = `
+            <div style="margin-top:6px;font-size:11px;color:#6b7280">자동 조회(홈택스 프록시)에서 데이터를 찾지 못했습니다.<br>
+            <b style="color:#059669">🔑 공공데이터포털 API 키</b>를 등록하면 안정적으로 조회할 수 있습니다.</div>
+            <button onclick="window._opShowKeyForm(document.getElementById('opPanel'))" style="margin-top:6px;padding:5px 12px;background:#059669;color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">🔑 API 키 등록하기</button>`;
         } else {
           noDataLink = `
-            <div style="margin-top:6px;font-size:11px;color:#6b7280">자동 조회(공시가격·홈택스)에서 데이터를 찾지 못했습니다.<br>동·호수를 정확히 입력하셨는지 확인 후 재조회하거나, 홈택스에서 직접 조회해주세요.</div>
+            <div style="margin-top:6px;font-size:11px;color:#6b7280">데이터를 찾지 못했습니다. 동·호수를 정확히 입력하셨는지 확인 후 재조회하거나, 법정동코드 범위 밖의 주소일 수 있습니다.</div>
             <a href="https://www.hometax.go.kr/websquare/websquare.html?w2xPath=/ui/ab/a/b/UTALABB99M.xml" target="_blank" style="color:#1d4ed8;font-size:11px;display:inline-block;margin-top:4px">🏠 홈택스 기준시가 조회 ↗</a>`;
         }
       } else {
@@ -2753,24 +2824,47 @@ async function doAddrSearch() {
       let htError = null;
 
       if (isNonresi) {
-        // 오피스텔·상가 → 손택스 기준시가 자동 조회 (vworld는 오피스텔 미지원)
-        panel.innerHTML = `
-          <div class="op-head"><span class="op-head-title">🏛 공시가격 · 시가표준액</span></div>
-          <div style="padding:16px;text-align:center;color:#6b7280;font-size:12px">📊 홈택스 기준시가 조회 중...<br><small style="color:#9ca3af">${addrLabel}</small></div>`;
-        rows = [];
-        try {
-          const htRows = await _fetchHometaxOfficetelRows(pnu, years, hoNm);
-          if (htRows && htRows.some(r => r.val != null)) {
-            priceTypeName = '오피스텔 기준시가 (홈택스)';
-            rows = htRows;
-          } else {
+        // 오피스텔·상가 → ① data.go.kr API (키 있을 때), ② 홈택스 프록시 (폴백)
+        const dataGoKey = _getDataGoKey();
+        if (dataGoKey) {
+          panel.innerHTML = `
+            <div class="op-head"><span class="op-head-title">🏛 공시가격 · 시가표준액</span></div>
+            <div style="padding:16px;text-align:center;color:#6b7280;font-size:12px">📊 오피스텔 기준시가 조회 중...<br><small style="color:#9ca3af">${addrLabel}</small></div>`;
+          rows = [];
+          try {
+            const dgRows = await _fetchOfficetelDataGo(dataGoKey, pnu, years, bldNm, hoNm);
+            if (dgRows && dgRows.some(r => r.val != null)) {
+              priceTypeName = '오피스텔 기준시가 (공공데이터포털)';
+              rows = dgRows;
+            } else {
+              priceTypeName = '오피스텔 기준시가';
+              rows = dgRows || years.map(yr => ({ year: yr, val: null, extra: null }));
+            }
+          } catch (e) {
+            htError = e;
             priceTypeName = '오피스텔 기준시가';
-            rows = htRows || years.map(yr => ({ year: yr, val: null, extra: null }));
+            rows = years.map(yr => ({ year: yr, val: null, extra: null }));
           }
-        } catch (e) {
-          htError = e;
-          priceTypeName = '오피스텔 기준시가';
-          rows = years.map(yr => ({ year: yr, val: null, extra: null }));
+        } else {
+          // data.go.kr 키 없으면 홈택스 프록시 시도
+          panel.innerHTML = `
+            <div class="op-head"><span class="op-head-title">🏛 공시가격 · 시가표준액</span></div>
+            <div style="padding:16px;text-align:center;color:#6b7280;font-size:12px">📊 홈택스 기준시가 조회 중...<br><small style="color:#9ca3af">${addrLabel}</small></div>`;
+          rows = [];
+          try {
+            const htRows = await _fetchHometaxOfficetelRows(pnu, years, hoNm);
+            if (htRows && htRows.some(r => r.val != null)) {
+              priceTypeName = '오피스텔 기준시가 (홈택스)';
+              rows = htRows;
+            } else {
+              priceTypeName = '오피스텔 기준시가';
+              rows = htRows || years.map(yr => ({ year: yr, val: null, extra: null }));
+            }
+          } catch (e) {
+            htError = e;
+            priceTypeName = '오피스텔 기준시가';
+            rows = years.map(yr => ({ year: yr, val: null, extra: null }));
+          }
         }
       } else {
         // 아파트·빌라/다세대·단독 → ① 공동주택, ② 개별주택, ③ 부번 제거 후 재시도
