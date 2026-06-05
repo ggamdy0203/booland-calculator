@@ -910,7 +910,7 @@
             <input type="text" class="pct input-calc" id="rentRoeAnn" readonly="">
             <span class="input-unit">%</span>
           </div>
-          <div class="form-note">월순수익×12 ÷ 낙찰가</div>
+          <div class="form-note">월순수익×12 ÷ 실투자금</div>
         </div>
       </div>
     </div>
@@ -1748,7 +1748,7 @@ function computeAll() {
   const hasRentalInput = jeonse > 0 || monthly > 0;
   const monthlyNet  = hasRentalInput ? monthly - monthlyLoanInterest : 0;
   const realInvest  = equity - jeonse;
-  const rentRoeAnn  = (hasRentalInput && bid > 0) ? monthlyNet * 12 / bid * 100 : null;
+  const rentRoeAnn  = (hasRentalInput && realInvest > 0) ? monthlyNet * 12 / realInvest * 100 : null;
   const netProfit  = capGain - saleExpTotal;
   const holdRent   = annualRent * holdYear;
   const totalReturn= netProfit + holdRent;
@@ -3340,7 +3340,7 @@ function exportExcel() {
   dataRow('임대 수익률',     v.rentYield.toFixed(2) + '%', '연 임대 / 총투자금', true, false);
   dataRow('월 순수익',           v.monthlyNet,  '월세 − 월 대출이자', true);
   dataRow('임대사업용 실투자금', v.realInvest,  '자기자본 − 보증금', true);
-  if (v.rentRoeAnn != null) dataRow('임대수입 연ROE', v.rentRoeAnn.toFixed(1) + '%', '월순수익×12 ÷ 낙찰가', true, false);
+  if (v.rentRoeAnn != null) dataRow('임대수입 연ROE', v.rentRoeAnn.toFixed(1) + '%', '월순수익×12 ÷ 실투자금', true, false);
   emptyRow();
 
   // 매도 수익 분석
@@ -4400,8 +4400,8 @@ async function saveInvestEntry() {
     entry.curMarket = ivNum('iv-curMarket');
     const hasIvRental = dep > 0 || rent > 0;
     entry.monthlyNet = hasIvRental ? rent - loan : 0;
-    const ivBid = entry.bidPrice || 0;
-    entry.rentRoeAnn = (hasIvRental && ivBid > 0) ? entry.monthlyNet * 12 / ivBid * 100 : null;
+    const ivRealInvest = eq - dep;
+    entry.rentRoeAnn = (hasIvRental && ivRealInvest > 0) ? entry.monthlyNet * 12 / ivRealInvest * 100 : null;
     entry.holdingMonths = _calcHoldingMonths(entry.bidDate, null);
   }
   try {
