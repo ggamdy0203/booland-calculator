@@ -1426,7 +1426,7 @@
           <div id="apiKeyInputWrap">
             <div class="key-row">
               <input type="text" id="apiKeyInput" placeholder="Encoding 키 입력...">
-              <button onclick="saveApiKey()">저장</button>
+              <button type="button" onclick="(function(){var v=document.getElementById('apiKeyInput').value.trim();if(!v)return;localStorage.setItem('re_api_key',v);try{apiKey=v;}catch(e){}var st=document.getElementById('apiKeyStatus');if(st){st.textContent='✅ 저장됨';st.className='key-status ok';}var sr=document.getElementById('apiKeySavedRow');if(sr)sr.style.display='flex';var iw=document.getElementById('apiKeyInputWrap');if(iw)iw.style.display='none';})()">저장</button>
             </div>
             <div class="key-status" id="apiKeyStatus"></div>
           </div>
@@ -1442,7 +1442,7 @@
           <div id="kakaoKeyInputWrap">
             <div class="key-row">
               <input type="text" id="kakaoKeyInput" placeholder="발급받기 ↗">
-              <button onclick="saveKakaoKey()">저장</button>
+              <button type="button" onclick="(function(){var v=document.getElementById('kakaoKeyInput').value.trim();if(!v)return;localStorage.setItem('re_kakao_key',v);try{kakaoKey=v;}catch(e){}var st=document.getElementById('kakaoKeyStatus');if(st){st.textContent='✅ 저장됨';st.className='key-status ok';}var sr=document.getElementById('kakaoKeySavedRow');if(sr)sr.style.display='flex';var iw=document.getElementById('kakaoKeyInputWrap');if(iw)iw.style.display='none';})()">저장</button>
             </div>
             <div class="key-status" id="kakaoKeyStatus"></div>
           </div>
