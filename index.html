@@ -1329,7 +1329,7 @@
         <!-- 건물 유형 -->
         <div class="sb-row">
           <div class="sb-label">건물 유형</div>
-          <button class="all-btn" onclick="toggleAll('btype')">모두선택</button>
+          <button class="all-btn" id="toggleBtype">모두선택</button>
           <div class="cb-wrap" id="btype-group">
             <label><input type="checkbox" name="btype" value="offi" checked> 오피스텔</label>
             <label><input type="checkbox" name="btype" value="villa" checked> 연립다세대</label>
@@ -1341,7 +1341,7 @@
         <!-- 거래 유형 -->
         <div class="sb-row">
           <div class="sb-label">거래 유형</div>
-          <button class="all-btn" onclick="toggleAll('dtype')">모두선택</button>
+          <button class="all-btn" id="toggleDtype">모두선택</button>
           <div class="cb-wrap" id="dtype-group">
             <label><input type="checkbox" name="dtype" value="sale" checked> 매매</label>
             <label><input type="checkbox" name="dtype" value="jeonse" checked> 전세</label>
@@ -1353,11 +1353,9 @@
         <div class="sb-row">
           <div class="sb-label">지역 선택</div>
           <div style="display:flex;flex-direction:column;gap:5px;">
-            <select id="sidoSel" onchange="onSidoChange()"><option value="">시·도</option></select>
-            <select id="sigunguSel" onchange="onSigunguChange()"><option value="">시·군·구</option></select>
-            <select id="dongSel" onchange="onDongChange()">
-              <option value="">읍·면·동 전체</option>
-            </select>
+            <select id="sidoSel"><option value="">시·도</option></select>
+            <select id="sigunguSel"><option value="">시·군·구</option></select>
+            <select id="dongSel"><option value="">읍·면·동 전체</option></select>
           </div>
         </div>
 
@@ -1375,8 +1373,8 @@
         <div class="sb-row">
           <div class="sb-label">전용면적</div>
           <div class="unit-toggle">
-            <button class="unit-btn active" id="unitM2" onclick="setUnit('m2')">㎡</button>
-            <button class="unit-btn" id="unitPy" onclick="setUnit('py')">평</button>
+            <button class="unit-btn active" id="unitM2">㎡</button>
+            <button class="unit-btn" id="unitPy">평</button>
           </div>
           <div class="range-row">
             <input type="number" id="areaMin" placeholder="최소" style="width:80px;">
@@ -1390,8 +1388,8 @@
         <div class="sb-row">
           <div class="sb-label">거래 기간</div>
           <div class="period-opts">
-            <label><input type="radio" name="periodMode" value="recent" checked onchange="onPeriodMode()"> 최근</label>
-            <label><input type="radio" name="periodMode" value="custom" onchange="onPeriodMode()"> 기간 설정</label>
+            <label><input type="radio" name="periodMode" value="recent" checked> 최근</label>
+            <label><input type="radio" name="periodMode" value="custom"> 기간 설정</label>
           </div>
           <div id="recentPanel">
             <select id="recentSel">
@@ -1409,29 +1407,33 @@
 
         <!-- 조회/초기화 -->
         <div style="display:flex;flex-direction:column;gap:6px;">
-          <button class="btn-search" id="searchBtn" onclick="doSearch()">🔍 조회</button>
-          <button class="btn-reset" onclick="resetFilters()">초기화</button>
+          <button class="btn-search" id="searchBtn">🔍 조회</button>
+          <button class="btn-reset" id="resetBtn">초기화</button>
         </div>
 
         <!-- API 키 (초기화 버튼 아래) -->
         <hr style="border:none;border-top:1px solid var(--re-border);margin:2px 0;">
 
         <div class="sb-row">
-          <div class="sb-label">🔑 공공데이터 API 키</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <div class="sb-label" style="margin-bottom:0;">🔑 공공데이터 API 키</div>
+            <span class="key-status" id="apiKeyStatus"></span>
+          </div>
           <div class="key-row">
             <input type="text" id="apiKeyInput" placeholder="Encoding 키 입력...">
-            <button type="button" onclick="(function(){var v=document.getElementById('apiKeyInput').value.trim();if(!v)return;localStorage.setItem('re_api_key',v);try{apiKey=v;}catch(e){}var st=document.getElementById('apiKeyStatus');if(st){st.textContent='✅ 저장됨';st.className='key-status ok';}})()">저장</button>
+            <button type="button" id="apiKeySaveBtn">저장</button>
           </div>
-          <div class="key-status" id="apiKeyStatus"></div>
         </div>
 
         <div class="sb-row">
-          <div class="sb-label">카카오 REST API 키</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <div class="sb-label" style="margin-bottom:0;">카카오 REST API 키</div>
+            <span class="key-status" id="kakaoKeyStatus"></span>
+          </div>
           <div class="key-row">
             <input type="text" id="kakaoKeyInput" placeholder="발급받기 ↗">
-            <button type="button" onclick="(function(){var v=document.getElementById('kakaoKeyInput').value.trim();if(!v)return;localStorage.setItem('re_kakao_key',v);try{kakaoKey=v;}catch(e){}var st=document.getElementById('kakaoKeyStatus');if(st){st.textContent='✅ 저장됨';st.className='key-status ok';}})()">저장</button>
+            <button type="button" id="kakaoKeySaveBtn">저장</button>
           </div>
-          <div class="key-status" id="kakaoKeyStatus"></div>
         </div>
 
         <!-- Progress -->
@@ -1445,8 +1447,8 @@
       <!-- ── Main ── -->
       <div class="main">
         <div class="tab-bar">
-          <button class="tab-btn active" id="tabMapBtn" onclick="switchTab('map')">🗺 지도</button>
-          <button class="tab-btn" id="tabDataBtn" onclick="switchTab('data')">📋 데이터</button>
+          <button class="tab-btn active" id="tabMapBtn">🗺 지도</button>
+          <button class="tab-btn" id="tabDataBtn">📋 데이터</button>
         </div>
 
         <!-- Map pane -->
@@ -1455,8 +1457,8 @@
 
           <!-- 구역 선택 컨트롤 -->
           <div class="area-ctrl" id="areaCtrl" style="display:none;">
-            <button class="area-btn" id="areaBtnDraw" onclick="toggleAreaDraw()">📐 구역 선택</button>
-            <button class="area-btn clear-btn" id="areaBtnClear" onclick="clearAreaFilter()" style="display:none;">✕ 구역 해제 <span id="areaCount"></span></button>
+            <button class="area-btn" id="areaBtnDraw">📐 구역 선택</button>
+            <button class="area-btn clear-btn" id="areaBtnClear" style="display:none;">✕ 구역 해제 <span id="areaCount"></span></button>
           </div>
 
           <div class="map-legend" id="mapLegend">
@@ -1487,8 +1489,8 @@
               <div style="flex:0 0 auto;padding-right:16px;">
                 <div class="bname-hdr" style="margin-bottom:5px;">
                   <span class="title">📦 건물유형</span>
-                  <button class="all-btn" onclick="btypeAll(true)">모두선택</button>
-                  <button class="all-btn" onclick="btypeAll(false)">모두해제</button>
+                  <button class="all-btn" id="btypeAllOn">모두선택</button>
+                  <button class="all-btn" id="btypeAllOff">모두해제</button>
                 </div>
                 <div class="bname-chips" id="btypeChips"></div>
               </div>
@@ -1496,8 +1498,8 @@
               <div style="flex:0 0 auto;padding-left:8px;">
                 <div class="bname-hdr" style="margin-bottom:5px;">
                   <span class="title">💰 거래유형</span>
-                  <button class="all-btn" onclick="dtypeAll(true)">모두선택</button>
-                  <button class="all-btn" onclick="dtypeAll(false)">모두해제</button>
+                  <button class="all-btn" id="dtypeAllOn">모두선택</button>
+                  <button class="all-btn" id="dtypeAllOff">모두해제</button>
                 </div>
                 <div class="bname-chips" id="dtypeChips"></div>
               </div>
@@ -1507,9 +1509,9 @@
             <!-- 건물명 필터 -->
             <div class="bname-hdr">
               <span class="title">🏢 건물명</span>
-              <button class="all-btn" onclick="bnameAll(true)">모두선택</button>
-              <button class="all-btn" onclick="bnameAll(false)">모두해제</button>
-              <input class="bname-search-inp" type="text" id="bnameSearchInp" placeholder="건물명 검색..." oninput="renderBnameChips()">
+              <button class="all-btn" id="bnameAllOn">모두선택</button>
+              <button class="all-btn" id="bnameAllOff">모두해제</button>
+              <input class="bname-search-inp" type="text" id="bnameSearchInp" placeholder="건물명 검색...">
             </div>
             <div class="bname-chips" id="bnameChips"></div>
           </div>
@@ -1519,12 +1521,12 @@
             <span class="auc-label">🏷 경매 분석</span>
             <div class="auc-inp-row">
               <span>면적</span>
-              <input type="number" id="aucArea" placeholder="예) 45" oninput="calcAuction()">
+              <input type="number" id="aucArea" placeholder="예) 45">
               <span>㎡</span>
             </div>
             <div class="auc-inp-row">
               <span>보증금</span>
-              <input type="number" id="aucDeposit" placeholder="예) 1000" oninput="calcAuction()">
+              <input type="number" id="aucDeposit" placeholder="예) 1000">
               <span>만원</span>
             </div>
             <div class="auc-divider"></div>
@@ -1538,7 +1540,7 @@
           <div id="tableSection" style="display:none;">
             <div class="toolbar" style="margin-bottom:8px;">
               <span class="cnt-badge">총 <b id="totalCnt">0</b>건 (필터 후 <b id="filtCnt">0</b>건)</span>
-              <button class="btn-excel" onclick="dlExcel()">📥 엑셀 다운로드</button>
+              <button class="btn-excel" id="dlExcelBtn">📥 엑셀 다운로드</button>
             </div>
             <div class="tbl-wrap">
               <table><thead id="tHead"></thead><tbody id="tBody"></tbody></table>
@@ -5260,6 +5262,50 @@ let mapRows=[]; // 지도용: 칩 필터만 적용 (구역 필터 없음)
   });
   document.getElementById('fromMonth').value=(()=>{const d=new Date(now.getFullYear(),now.getMonth()-11,1);return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0');})();
   document.getElementById('toMonth').value=now.getFullYear()+String(now.getMonth()+1).padStart(2,'0');
+
+  // ── 이벤트 리스너 직접 연결 (onchange/onclick 어트리뷰트 대체) ──
+  document.getElementById('sidoSel').addEventListener('change', onSidoChange);
+  document.getElementById('sigunguSel').addEventListener('change', onSigunguChange);
+  document.getElementById('dongSel').addEventListener('change', onDongChange);
+  document.getElementById('searchBtn').addEventListener('click', doSearch);
+  document.getElementById('resetBtn').addEventListener('click', resetFilters);
+  document.querySelectorAll('input[name=periodMode]').forEach(r=>r.addEventListener('change', onPeriodMode));
+  document.getElementById('tabMapBtn').addEventListener('click', ()=>switchTab('map'));
+  document.getElementById('tabDataBtn').addEventListener('click', ()=>switchTab('data'));
+  document.getElementById('areaBtnDraw').addEventListener('click', toggleAreaDraw);
+  document.getElementById('areaBtnClear').addEventListener('click', clearAreaFilter);
+  document.getElementById('btypeAllOn').addEventListener('click', ()=>btypeAll(true));
+  document.getElementById('btypeAllOff').addEventListener('click', ()=>btypeAll(false));
+  document.getElementById('dtypeAllOn').addEventListener('click', ()=>dtypeAll(true));
+  document.getElementById('dtypeAllOff').addEventListener('click', ()=>dtypeAll(false));
+  document.getElementById('bnameAllOn').addEventListener('click', ()=>bnameAll(true));
+  document.getElementById('bnameAllOff').addEventListener('click', ()=>bnameAll(false));
+  document.getElementById('bnameSearchInp').addEventListener('input', renderBnameChips);
+  document.getElementById('aucArea').addEventListener('input', calcAuction);
+  document.getElementById('aucDeposit').addEventListener('input', calcAuction);
+  document.getElementById('dlExcelBtn').addEventListener('click', dlExcel);
+  document.getElementById('toggleBtype').addEventListener('click', ()=>toggleAll('btype'));
+  document.getElementById('toggleDtype').addEventListener('click', ()=>toggleAll('dtype'));
+  document.getElementById('unitM2').addEventListener('click', ()=>setUnit('m2'));
+  document.getElementById('unitPy').addEventListener('click', ()=>setUnit('py'));
+
+  // API 키 저장
+  document.getElementById('apiKeySaveBtn').addEventListener('click', function(){
+    var v=document.getElementById('apiKeyInput').value.trim();
+    if(!v)return;
+    localStorage.setItem('re_api_key',v);
+    apiKey=v;
+    var st=document.getElementById('apiKeyStatus');
+    if(st){st.textContent='✅ 저장됨';st.className='key-status ok';}
+  });
+  document.getElementById('kakaoKeySaveBtn').addEventListener('click', function(){
+    var v=document.getElementById('kakaoKeyInput').value.trim();
+    if(!v)return;
+    localStorage.setItem('re_kakao_key',v);
+    kakaoKey=v;
+    var st=document.getElementById('kakaoKeyStatus');
+    if(st){st.textContent='✅ 저장됨';st.className='key-status ok';}
+  });
 
   initMap();
 })();
