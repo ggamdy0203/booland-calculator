@@ -5242,67 +5242,68 @@ let mapRows=[]; // 지도용: 칩 필터만 적용 (구역 필터 없음)
 
 /* ══ 초기화 ══ */
 (function init(){
+  // 안전한 이벤트 리스너 연결 헬퍼
+  function on(id,ev,fn){var el=document.getElementById(id);if(el)el.addEventListener(ev,fn);}
+
+  // API 키
   apiKey=localStorage.getItem('re_api_key')||DEFAULT_API_KEY;
   kakaoKey=localStorage.getItem('re_kakao_key')||DEFAULT_KAKAO_KEY;
-  document.getElementById('apiKeyInput').value=apiKey;
-  document.getElementById('kakaoKeyInput').value=kakaoKey;
+  var ki=document.getElementById('apiKeyInput'); if(ki)ki.value=apiKey;
+  var kk=document.getElementById('kakaoKeyInput'); if(kk)kk.value=kakaoKey;
 
-  const sidoSel=document.getElementById('sidoSel');
-  SIDO_LIST.forEach(s=>{const o=new Option(s.n,s.c);sidoSel.add(o);});
+  // 시도 목록
+  var sidoSel=document.getElementById('sidoSel');
+  if(sidoSel) SIDO_LIST.forEach(function(s){sidoSel.add(new Option(s.n,s.c));});
 
   // 기간 옵션
-  const now=new Date();
-  ['fromMonth','toMonth'].forEach(id=>{
-    const sel=document.getElementById(id);
-    for(let i=35;i>=0;i--){
-      const d=new Date(now.getFullYear(),now.getMonth()-i,1);
-      const v=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0');
+  var now=new Date();
+  ['fromMonth','toMonth'].forEach(function(id){
+    var sel=document.getElementById(id); if(!sel)return;
+    for(var i=35;i>=0;i--){
+      var d=new Date(now.getFullYear(),now.getMonth()-i,1);
+      var v=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0');
       sel.add(new Option(d.getFullYear()+'년 '+(d.getMonth()+1)+'월',v));
     }
   });
-  document.getElementById('fromMonth').value=(()=>{const d=new Date(now.getFullYear(),now.getMonth()-11,1);return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0');})();
-  document.getElementById('toMonth').value=now.getFullYear()+String(now.getMonth()+1).padStart(2,'0');
+  var fm=document.getElementById('fromMonth');
+  if(fm){var d0=new Date(now.getFullYear(),now.getMonth()-11,1);fm.value=d0.getFullYear()+String(d0.getMonth()+1).padStart(2,'0');}
+  var tm=document.getElementById('toMonth');
+  if(tm) tm.value=now.getFullYear()+String(now.getMonth()+1).padStart(2,'0');
 
-  // ── 이벤트 리스너 직접 연결 (onchange/onclick 어트리뷰트 대체) ──
-  document.getElementById('sidoSel').addEventListener('change', onSidoChange);
-  document.getElementById('sigunguSel').addEventListener('change', onSigunguChange);
-  document.getElementById('dongSel').addEventListener('change', onDongChange);
-  document.getElementById('searchBtn').addEventListener('click', doSearch);
-  document.getElementById('resetBtn').addEventListener('click', resetFilters);
-  document.querySelectorAll('input[name=periodMode]').forEach(r=>r.addEventListener('change', onPeriodMode));
-  document.getElementById('tabMapBtn').addEventListener('click', ()=>switchTab('map'));
-  document.getElementById('tabDataBtn').addEventListener('click', ()=>switchTab('data'));
-  document.getElementById('areaBtnDraw').addEventListener('click', toggleAreaDraw);
-  document.getElementById('areaBtnClear').addEventListener('click', clearAreaFilter);
-  document.getElementById('btypeAllOn').addEventListener('click', ()=>btypeAll(true));
-  document.getElementById('btypeAllOff').addEventListener('click', ()=>btypeAll(false));
-  document.getElementById('dtypeAllOn').addEventListener('click', ()=>dtypeAll(true));
-  document.getElementById('dtypeAllOff').addEventListener('click', ()=>dtypeAll(false));
-  document.getElementById('bnameAllOn').addEventListener('click', ()=>bnameAll(true));
-  document.getElementById('bnameAllOff').addEventListener('click', ()=>bnameAll(false));
-  document.getElementById('bnameSearchInp').addEventListener('input', renderBnameChips);
-  document.getElementById('aucArea').addEventListener('input', calcAuction);
-  document.getElementById('aucDeposit').addEventListener('input', calcAuction);
-  document.getElementById('dlExcelBtn').addEventListener('click', dlExcel);
-  document.getElementById('toggleBtype').addEventListener('click', ()=>toggleAll('btype'));
-  document.getElementById('toggleDtype').addEventListener('click', ()=>toggleAll('dtype'));
-  document.getElementById('unitM2').addEventListener('click', ()=>setUnit('m2'));
-  document.getElementById('unitPy').addEventListener('click', ()=>setUnit('py'));
-
-  // API 키 저장
-  document.getElementById('apiKeySaveBtn').addEventListener('click', function(){
-    var v=document.getElementById('apiKeyInput').value.trim();
-    if(!v)return;
-    localStorage.setItem('re_api_key',v);
-    apiKey=v;
+  // 이벤트 리스너
+  on('sidoSel','change',onSidoChange);
+  on('sigunguSel','change',onSigunguChange);
+  on('dongSel','change',onDongChange);
+  on('searchBtn','click',doSearch);
+  on('resetBtn','click',resetFilters);
+  on('tabMapBtn','click',function(){switchTab('map');});
+  on('tabDataBtn','click',function(){switchTab('data');});
+  on('areaBtnDraw','click',toggleAreaDraw);
+  on('areaBtnClear','click',clearAreaFilter);
+  on('btypeAllOn','click',function(){btypeAll(true);});
+  on('btypeAllOff','click',function(){btypeAll(false);});
+  on('dtypeAllOn','click',function(){dtypeAll(true);});
+  on('dtypeAllOff','click',function(){dtypeAll(false);});
+  on('bnameAllOn','click',function(){bnameAll(true);});
+  on('bnameAllOff','click',function(){bnameAll(false);});
+  on('bnameSearchInp','input',renderBnameChips);
+  on('aucArea','input',calcAuction);
+  on('aucDeposit','input',calcAuction);
+  on('dlExcelBtn','click',dlExcel);
+  on('toggleBtype','click',function(){toggleAll('btype');});
+  on('toggleDtype','click',function(){toggleAll('dtype');});
+  on('unitM2','click',function(){setUnit('m2');});
+  on('unitPy','click',function(){setUnit('py');});
+  document.querySelectorAll('input[name=periodMode]').forEach(function(r){r.addEventListener('change',onPeriodMode);});
+  on('apiKeySaveBtn','click',function(){
+    var v=document.getElementById('apiKeyInput').value.trim(); if(!v)return;
+    localStorage.setItem('re_api_key',v); apiKey=v;
     var st=document.getElementById('apiKeyStatus');
     if(st){st.textContent='✅ 저장됨';st.className='key-status ok';}
   });
-  document.getElementById('kakaoKeySaveBtn').addEventListener('click', function(){
-    var v=document.getElementById('kakaoKeyInput').value.trim();
-    if(!v)return;
-    localStorage.setItem('re_kakao_key',v);
-    kakaoKey=v;
+  on('kakaoKeySaveBtn','click',function(){
+    var v=document.getElementById('kakaoKeyInput').value.trim(); if(!v)return;
+    localStorage.setItem('re_kakao_key',v); kakaoKey=v;
     var st=document.getElementById('kakaoKeyStatus');
     if(st){st.textContent='✅ 저장됨';st.className='key-status ok';}
   });
