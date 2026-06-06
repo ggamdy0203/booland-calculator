@@ -1417,35 +1417,21 @@
         <hr style="border:none;border-top:1px solid var(--re-border);margin:2px 0;">
 
         <div class="sb-row">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-            <div class="sb-label" style="margin-bottom:0;">🔑 공공데이터 API 키</div>
-            <div class="key-saved-row" id="apiKeySavedRow" style="display:none;">
-              ✅ 저장됨 <button class="key-edit-btn" onclick="toggleKeyInput('api')">수정 ▾</button>
-            </div>
+          <div class="sb-label">🔑 공공데이터 API 키</div>
+          <div class="key-row">
+            <input type="text" id="apiKeyInput" placeholder="Encoding 키 입력...">
+            <button type="button" onclick="(function(){var v=document.getElementById('apiKeyInput').value.trim();if(!v)return;localStorage.setItem('re_api_key',v);try{apiKey=v;}catch(e){}var st=document.getElementById('apiKeyStatus');if(st){st.textContent='✅ 저장됨';st.className='key-status ok';setTimeout(function(){st.textContent='';},2000);}})()">저장</button>
           </div>
-          <div id="apiKeyInputWrap">
-            <div class="key-row">
-              <input type="text" id="apiKeyInput" placeholder="Encoding 키 입력...">
-              <button type="button" onclick="(function(){var v=document.getElementById('apiKeyInput').value.trim();if(!v)return;localStorage.setItem('re_api_key',v);try{apiKey=v;}catch(e){}var st=document.getElementById('apiKeyStatus');if(st){st.textContent='✅ 저장됨';st.className='key-status ok';}var sr=document.getElementById('apiKeySavedRow');if(sr)sr.style.display='flex';var iw=document.getElementById('apiKeyInputWrap');if(iw)iw.style.display='none';})()">저장</button>
-            </div>
-            <div class="key-status" id="apiKeyStatus"></div>
-          </div>
+          <div class="key-status" id="apiKeyStatus"></div>
         </div>
 
         <div class="sb-row">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-            <div class="sb-label" style="margin-bottom:0;">카카오 REST API 키</div>
-            <div class="key-saved-row" id="kakaoKeySavedRow" style="display:none;">
-              ✅ 저장됨 <button class="key-edit-btn" onclick="toggleKeyInput('kakao')">수정 ▾</button>
-            </div>
+          <div class="sb-label">카카오 REST API 키</div>
+          <div class="key-row">
+            <input type="text" id="kakaoKeyInput" placeholder="발급받기 ↗">
+            <button type="button" onclick="(function(){var v=document.getElementById('kakaoKeyInput').value.trim();if(!v)return;localStorage.setItem('re_kakao_key',v);try{kakaoKey=v;}catch(e){}var st=document.getElementById('kakaoKeyStatus');if(st){st.textContent='✅ 저장됨';st.className='key-status ok';setTimeout(function(){st.textContent='';},2000);}})()">저장</button>
           </div>
-          <div id="kakaoKeyInputWrap">
-            <div class="key-row">
-              <input type="text" id="kakaoKeyInput" placeholder="발급받기 ↗">
-              <button type="button" onclick="(function(){var v=document.getElementById('kakaoKeyInput').value.trim();if(!v)return;localStorage.setItem('re_kakao_key',v);try{kakaoKey=v;}catch(e){}var st=document.getElementById('kakaoKeyStatus');if(st){st.textContent='✅ 저장됨';st.className='key-status ok';}var sr=document.getElementById('kakaoKeySavedRow');if(sr)sr.style.display='flex';var iw=document.getElementById('kakaoKeyInputWrap');if(iw)iw.style.display='none';})()">저장</button>
-            </div>
-            <div class="key-status" id="kakaoKeyStatus"></div>
-          </div>
+          <div class="key-status" id="kakaoKeyStatus"></div>
         </div>
 
         <!-- Progress -->
@@ -5254,18 +5240,8 @@ let mapRows=[]; // 지도용: 칩 필터만 적용 (구역 필터 없음)
 (function init(){
   apiKey=localStorage.getItem('re_api_key')||'';
   kakaoKey=localStorage.getItem('re_kakao_key')||'';
-  if(apiKey){
-    document.getElementById('apiKeyInput').value=apiKey;
-    setStatus('apiKeyStatus','✅ 저장됨',true);
-    document.getElementById('apiKeySavedRow').style.display='flex';
-    document.getElementById('apiKeyInputWrap').style.display='none';
-  }
-  if(kakaoKey){
-    document.getElementById('kakaoKeyInput').value=kakaoKey;
-    setStatus('kakaoKeyStatus','✅ 저장됨',true);
-    document.getElementById('kakaoKeySavedRow').style.display='flex';
-    document.getElementById('kakaoKeyInputWrap').style.display='none';
-  }
+  if(apiKey) document.getElementById('apiKeyInput').value=apiKey;
+  if(kakaoKey) document.getElementById('kakaoKeyInput').value=kakaoKey;
 
   const sidoSel=document.getElementById('sidoSel');
   SIDO_LIST.forEach(s=>{const o=new Option(s.n,s.c);sidoSel.add(o);});
