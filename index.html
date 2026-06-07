@@ -2704,37 +2704,49 @@ async function doAddrSearch() {
       `&platGbCd=${platGbCd}&bun=${bun}&ji=${ji}` +
       `&numOfRows=1000&pageNo=1`;
 
-    // 직접 fetch 시도 후 CORS 실패 시 프록시로 재시도
-    const tryUrls = [
-      base,
-      'https://corsproxy.io/?' + encodeURIComponent(base),
-      'https://api.allorigins.win/raw?url=' + encodeURIComponent(base),
-    ];
-    for (const url of tryUrls) {
-      try {
-        const ctrl = new AbortController();
-        const t = setTimeout(() => ctrl.abort(), 10000);
-        const r = await fetch(url, { signal: ctrl.signal });
-        clearTimeout(t);
-        if (!r.ok) continue;
-        const txt = await r.text();
-        console.log('[건축물대장 동호]', txt.slice(0, 300));
-        if (txt.includes('<resultCode>00</resultCode>') || txt.includes('<item>')) {
-          const parser = new DOMParser();
-          const xml = parser.parseFromString(txt, 'text/xml');
-          const items = [...xml.querySelectorAll('item')];
-          const seen = new Set();
-          const units = [];
-          for (const item of items) {
-            const dong = item.querySelector('dongNm')?.textContent?.trim() || '';
-            const ho   = item.querySelector('hoNm')?.textContent?.trim()   || '';
-            const key  = `${dong}|${ho}`;
-            if (ho && !seen.has(key)) { seen.add(key); units.push({ dong, ho }); }
-          }
-          if (units.length) return units;
-        }
-      } catch (_) {}
-    }
+    // XML 파싱 헬퍼
+    const parseXmlUnits = txt => {
+      if (!txt || (!txt.includes('<item>') && !txt.includes('resultCode'))) return null;
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(txt, 'text/xml');
+      const items = [...xml.querySelectorAll('item')];
+      const seen = new Set(); const units = [];
+      for (const item of items) {
+        const dong = item.querySelector('dongNm')?.textContent?.trim() || '';
+        const ho   = item.querySelector('hoNm')?.textContent?.trim()   || '';
+        const key  = `${dong}|${ho}`;
+        if (ho && !seen.has(key)) { seen.add(key); units.push({ dong, ho }); }
+      }
+      return units.length ? units : null;
+    };
+
+    // 1) 직접 fetch (CORS 허용 시)
+    try {
+      const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(),10000);
+      const r = await fetch(base, { signal: ctrl.signal }); clearTimeout(t);
+      if (r.ok) { const u = parseXmlUnits(await r.text()); if (u) { console.log('[건축물대장] 직접 성공'); return u; } }
+    } catch (_) {}
+
+    // 2) allorigins /get (CORS 헤더 추가, JSON 래퍼 응답)
+    try {
+      const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(),12000);
+      const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(base), { signal: ctrl.signal });
+      clearTimeout(t);
+      if (r.ok) {
+        const j = await r.json(); const txt = j.contents || '';
+        console.log('[건축물대장] allorigins/get:', txt.slice(0,200));
+        const u = parseXmlUnits(txt); if (u) return u;
+      }
+    } catch (_) {}
+
+    // 3) corsproxy.io
+    try {
+      const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(),12000);
+      const r = await fetch('https://corsproxy.io/?' + encodeURIComponent(base), { signal: ctrl.signal });
+      clearTimeout(t);
+      if (r.ok) { const u = parseXmlUnits(await r.text()); if (u) { console.log('[건축물대장] corsproxy 성공'); return u; } }
+    } catch (_) {}
+
     return null;
   }
 
