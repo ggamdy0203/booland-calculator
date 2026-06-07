@@ -344,7 +344,7 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowr
       <!-- 구역 선택 컨트롤 -->
       <div class="area-ctrl" id="areaCtrl" style="display:none;">
         <button class="area-btn" id="areaBtnDraw" onclick="toggleAreaDraw()">📐 구역 선택</button>
-        <button class="area-btn clear-btn" id="areaBtnClear" onclick="clearAreaFilter()" style="display:none;">✕ 구역 해제 <span id="areaCount"></span></button>
+        <button class="area-btn clear-btn" id="areaBtnClear" onclick="clearAreaFilter()" style="display:none;">✕ 전체 해제 <span id="areaCount"></span></button>
       </div>
 
       <div class="map-legend" id="mapLegend">
@@ -617,17 +617,7 @@ function initMap(){
     let added=false;
     if(bounds.isValid()&&bounds.getNorthEast().distanceTo(bounds.getSouthWest())>30){
       areaBoundsList.push(bounds);
-      // 구역마다 번호 표시
-      const idx=areaBoundsList.length;
-      const rect=L.rectangle(bounds,{color:'#2563eb',weight:2,fillOpacity:0.08,dashArray:'6,4',interactive:false}).addTo(map);
-      // 번호 라벨
-      const center=bounds.getCenter();
-      const label=L.divIcon({
-        html:`<div style="background:#2563eb;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.4);">${idx}</div>`,
-        className:'',iconSize:[20,20],iconAnchor:[10,10]
-      });
-      const labelMarker=L.marker(center,{icon:label,interactive:false}).addTo(map);
-      areaRects.push({rect,labelMarker});
+      rebuildAreaRects();
       document.getElementById('areaBtnClear').style.display='inline-flex';
       updateChipsForArea();
       added=true;
@@ -660,6 +650,41 @@ function toggleAreaDraw(){
     if(areaTempRect){map.removeLayer(areaTempRect);areaTempRect=null;}
     areaStart=null;
   }
+}
+/* 구역 전체를 areaBoundsList 기준으로 다시 그림 (번호 재정렬 포함) */
+function rebuildAreaRects(){
+  areaRects.forEach(({rect,labelMarker})=>{map.removeLayer(rect);map.removeLayer(labelMarker);});
+  areaRects=[];
+  areaBoundsList.forEach((bounds,i)=>{
+    const idx=i+1;
+    const rect=L.rectangle(bounds,{color:'#2563eb',weight:2,fillOpacity:0.08,dashArray:'6,4',interactive:false}).addTo(map);
+    const center=bounds.getCenter();
+    const label=L.divIcon({
+      html:`<div style="position:relative;display:inline-block;">
+        <div style="background:#2563eb;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.4);">${idx}</div>
+        <div onclick="removeArea(${i})" title="이 구역 삭제" style="position:absolute;top:-5px;right:-5px;background:#dc2626;color:#fff;border-radius:50%;width:13px;height:13px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.5);">×</div>
+      </div>`,
+      className:'',iconSize:[26,26],iconAnchor:[10,10]
+    });
+    const labelMarker=L.marker(center,{icon:label,interactive:true}).addTo(map);
+    areaRects.push({rect,labelMarker});
+  });
+}
+/* 특정 구역 개별 삭제 */
+function removeArea(i){
+  areaBoundsList.splice(i,1);
+  rebuildAreaRects();
+  const btn=document.getElementById('areaBtnDraw');
+  if(areaBoundsList.length===0){
+    document.getElementById('areaBtnClear').style.display='none';
+    document.getElementById('areaCount').textContent='';
+    btn.textContent='📐 구역 선택';
+    resetChipsAll();
+  } else {
+    btn.textContent='📐 구역 추가 ('+areaBoundsList.length+'개)';
+  }
+  updateChipsForArea();
+  applyBname();
 }
 function clearAreaFilter(){
   areaBoundsList=[];
