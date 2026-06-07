@@ -601,7 +601,6 @@ function initMap(){
     L.DomEvent.stop(e.originalEvent);
     areaStart=e.latlng;
     if(areaTempRect){map.removeLayer(areaTempRect);areaTempRect=null;}
-    if(areaRect){map.removeLayer(areaRect);areaRect=null;}
   });
   map.on('mousemove',function(e){
     if(!areaDrawMode||!areaStart)return;
