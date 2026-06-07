@@ -2358,7 +2358,8 @@ async function doAddrSearch() {
   /* 키 관리 — 카카오 REST API 키 + vworld 인증키 + 공공데이터포털 키 */
   function _getKakaoKey()   { return localStorage.getItem('kakaoApiKey')   || ''; }
   function _getVworldKey()  { return localStorage.getItem('vworldApiKey')  || ''; }
-  function _getDataGoKey()  { return localStorage.getItem('dataGoApiKey')  || ''; }
+  // re_api_key = index260606.html 공유 키, dataGoApiKey = index.html 전용 키
+  function _getDataGoKey()  { return localStorage.getItem('dataGoApiKey') || localStorage.getItem('re_api_key') || ''; }
   window._setKakaoKey  = k => localStorage.setItem('kakaoApiKey',  k);
   window._setVworldKey = k => localStorage.setItem('vworldApiKey', k);
   window._setDataGoKey = k => localStorage.setItem('dataGoApiKey', k);
@@ -2690,37 +2691,51 @@ async function doAddrSearch() {
     return { median: prices[mid], min: prices[0], max: prices[prices.length - 1], count: prices.length };
   }
 
-  /* ── 건축물대장 전유공용면적정보 API → 동·호 목록 (가장 신뢰할 수 있는 방법) ── */
+  /* ── 건축물대장 전유공용면적정보 API → 동·호 목록 ── */
   async function _fetchBrUnits(pnu, dataGoKey) {
     const sigunguCd = pnu.slice(0, 5);
     const bjdongCd  = pnu.slice(5, 10);
     const platGbCd  = pnu.slice(10, 11);
     const bun       = pnu.slice(11, 15);
     const ji        = pnu.slice(15, 19);
-    const url = `https://apis.data.go.kr/1613000/BldRgstHubService/getBrExposPubuseAreaInfo` +
+    const base = `https://apis.data.go.kr/1613000/BldRgstHubService/getBrExposPubuseAreaInfo` +
       `?serviceKey=${dataGoKey}` +
       `&sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}` +
       `&platGbCd=${platGbCd}&bun=${bun}&ji=${ji}` +
       `&numOfRows=1000&pageNo=1`;
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 10000);
-    const r = await fetch(url, { signal: ctrl.signal });
-    clearTimeout(t);
-    if (!r.ok) return null;
-    const txt = await r.text();
-    console.log('[건축물대장 동호]', txt.slice(0, 300));
-    const parser = new DOMParser();
-    const xml = parser.parseFromString(txt, 'text/xml');
-    const items = [...xml.querySelectorAll('item')];
-    const seen = new Set();
-    const units = [];
-    for (const item of items) {
-      const dong = item.querySelector('dongNm')?.textContent?.trim() || '';
-      const ho   = item.querySelector('hoNm')?.textContent?.trim()   || '';
-      const key  = `${dong}|${ho}`;
-      if (ho && !seen.has(key)) { seen.add(key); units.push({ dong, ho }); }
+
+    // 직접 fetch 시도 후 CORS 실패 시 프록시로 재시도
+    const tryUrls = [
+      base,
+      'https://corsproxy.io/?' + encodeURIComponent(base),
+      'https://api.allorigins.win/raw?url=' + encodeURIComponent(base),
+    ];
+    for (const url of tryUrls) {
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 10000);
+        const r = await fetch(url, { signal: ctrl.signal });
+        clearTimeout(t);
+        if (!r.ok) continue;
+        const txt = await r.text();
+        console.log('[건축물대장 동호]', txt.slice(0, 300));
+        if (txt.includes('<resultCode>00</resultCode>') || txt.includes('<item>')) {
+          const parser = new DOMParser();
+          const xml = parser.parseFromString(txt, 'text/xml');
+          const items = [...xml.querySelectorAll('item')];
+          const seen = new Set();
+          const units = [];
+          for (const item of items) {
+            const dong = item.querySelector('dongNm')?.textContent?.trim() || '';
+            const ho   = item.querySelector('hoNm')?.textContent?.trim()   || '';
+            const key  = `${dong}|${ho}`;
+            if (ho && !seen.has(key)) { seen.add(key); units.push({ dong, ho }); }
+          }
+          if (units.length) return units;
+        }
+      } catch (_) {}
     }
-    return units.length ? units : null;
+    return null;
   }
 
   /* 건물 동·호 목록 조회 (주소검색 모달 2단계 드롭다운용)
@@ -2745,34 +2760,41 @@ async function doAddrSearch() {
     // ── 2순위: vworld 공시가격 API ──
     const vworldKey = _getVworldKey();
     if (vworldKey) {
-      const endpoint = isOfficetel ? 'getOffiHousingPriceAttr' : 'getApartHousingPriceAttr';
-      const pricesKey = isOfficetel ? 'offiHousingPrices'       : 'apartHousingPrices';
-      const itemKey   = isOfficetel ? 'offiHousingPrice'         : 'apartHousingPrice';
-      for (const yr of tryYears) {
-        try {
-          const allUnits = [];
-          for (let page = 1; page <= 10; page++) {
-            const url = `https://api.vworld.kr/ned/data/${endpoint}` +
-              `?pnu=${encodeURIComponent(pnu)}&stdrYear=${yr}&format=json&numOfRows=100&pageNo=${page}` +
-              `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
-            const res = await _vworldFetch(url);
-            let data;
-            try { data = await res.json(); } catch { break; }
-            if (data?.error) break;
-            const prices = data?.[pricesKey];
-            let arr = [];
-            if (prices?.[itemKey]) arr = Array.isArray(prices[itemKey]) ? prices[itemKey] : [prices[itemKey]];
-            else if (Array.isArray(prices?.field)) arr = prices.field;
-            else if (prices?.hoNm) arr = [prices];
-            const pageUnits = arr.map(it => ({
-              dong: (it.dongNm || '').replace(/\s/g, ''),
-              ho:   (it.hoNm   || '').replace(/\s/g, '')
-            })).filter(u => u.ho);
-            allUnits.push(...pageUnits);
-            if (arr.length < 100) break;
-          }
-          if (allUnits.length) { console.log('[동호] vworld 성공:', allUnits.length); return allUnits; }
-        } catch (e) { if (e.isApiError) return null; }
+      // 오피스텔은 offiHousingPriceAttr 먼저, 없으면 apartHousingPriceAttr도 시도
+      const endpointList = isOfficetel
+        ? ['getOffiHousingPriceAttr', 'getApartHousingPriceAttr']
+        : ['getApartHousingPriceAttr'];
+
+      for (const endpoint of endpointList) {
+        const isApart   = endpoint === 'getApartHousingPriceAttr';
+        const pricesKey = isApart ? 'apartHousingPrices' : 'offiHousingPrices';
+        const itemKey   = isApart ? 'apartHousingPrice'  : 'offiHousingPrice';
+        for (const yr of tryYears) {
+          try {
+            const allUnits = [];
+            for (let page = 1; page <= 10; page++) {
+              const url = `https://api.vworld.kr/ned/data/${endpoint}` +
+                `?pnu=${encodeURIComponent(pnu)}&stdrYear=${yr}&format=json&numOfRows=100&pageNo=${page}` +
+                `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
+              const res = await _vworldFetch(url);
+              let data;
+              try { data = await res.json(); } catch { break; }
+              if (data?.error) break;
+              const prices = data?.[pricesKey];
+              let arr = [];
+              if (prices?.[itemKey]) arr = Array.isArray(prices[itemKey]) ? prices[itemKey] : [prices[itemKey]];
+              else if (Array.isArray(prices?.field)) arr = prices.field;
+              else if (prices?.hoNm) arr = [prices];
+              const pageUnits = arr.map(it => ({
+                dong: (it.dongNm || '').replace(/\s/g, ''),
+                ho:   (it.hoNm   || '').replace(/\s/g, '')
+              })).filter(u => u.ho);
+              allUnits.push(...pageUnits);
+              if (arr.length < 100) break;
+            }
+            if (allUnits.length) { console.log('[동호] vworld 성공:', endpoint, allUnits.length); return allUnits; }
+          } catch (e) { if (e.isApiError) return null; }
+        }
       }
     }
 
