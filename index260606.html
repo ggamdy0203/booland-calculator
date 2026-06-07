@@ -1214,9 +1214,12 @@ function makeSummary(){
   const avgPm2=sales.length?sales.reduce((s,r)=>s+(r.price/r.area),0)/sales.length:null;
   const avgDep=jeonses.length?jeonses.reduce((s,r)=>s+r.deposit,0)/jeonses.length:null;
   const avgMon=monthys.length?monthys.reduce((s,r)=>s+r.monthly,0)/monthys.length:null;
-  // 전세 환산월세 (전세금×연4%÷12)
-  const convRate=0.04/12;
-  const allRent=[...jeonses.map(r=>r.deposit*convRate/10000),...monthys.map(r=>r.monthly)];
+  // 전세/반전세 환산월세 (보증금×연6%÷12 + 실월세) — 1,000만원당 5만원 시장 기준
+  const convRate=0.06/12;
+  const allRent=[
+    ...jeonses.map(r=>r.deposit*convRate/10000),                          // 전세: 보증금 전액 환산
+    ...monthys.map(r=>r.monthly+(r.deposit||0)*convRate/10000)            // 월세: 실월세 + 보증금 이자 (반전세 포함)
+  ];
   const avgConv=allRent.length?allRent.reduce((a,b)=>a+b,0)/allRent.length:null;
   const avgDepPm2=jeonses.length&&jeonses.some(r=>r.area>0)?fmtShort(jeonses.reduce((s,r)=>s+r.deposit/r.area,0)/jeonses.length)+'/㎡':'-';
   return[
