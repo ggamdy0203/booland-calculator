@@ -613,9 +613,9 @@ function initMap(){
     if(areaTempRect){map.removeLayer(areaTempRect);areaTempRect=null;}
     const bounds=L.latLngBounds(areaStart,e.latlng);
     areaStart=null;
-    // 너무 작은 드래그는 무시
+    // 너무 작은 드래그는 무시 (30m 이상이면 허용)
     let added=false;
-    if(bounds.isValid()&&bounds.getNorthEast().distanceTo(bounds.getSouthWest())>200){
+    if(bounds.isValid()&&bounds.getNorthEast().distanceTo(bounds.getSouthWest())>30){
       areaBoundsList.push(bounds);
       // 구역마다 번호 표시
       const idx=areaBoundsList.length;
