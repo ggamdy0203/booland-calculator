@@ -1117,7 +1117,7 @@
   <div id="opPanel" class="op-panel" style="display:none;"></div>
 
   <!-- 주소 검색 모달 -->
-  <div id="addrSearchModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;" onclick="if(event.target===this)closeAddrSearchModal()">
+  <div id="addrSearchModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;" onmousedown="window._addrBdDown=(event.target===this)" onclick="if(event.target===this&&window._addrBdDown)closeAddrSearchModal()">
     <div style="background:white;border-radius:14px;width:min(480px,95vw);max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">
       <div style="padding:18px 20px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
         <span data-modal-title style="font-size:15px;font-weight:700;color:#111827">🔍 주소를 검색해주세요</span>
