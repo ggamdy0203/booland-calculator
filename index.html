@@ -2583,7 +2583,7 @@ async function doAddrSearch() {
       }
     } catch (_) {}
 
-    // 3) thingproxy (GET 방식 POST 불가 → 폼 인코딩 시도)
+    // 3) thingproxy
     try {
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 12000);
@@ -2594,6 +2594,21 @@ async function doAddrSearch() {
       if (r.ok) {
         const txt = await r.text();
         console.log(`[손택스 ${actionId}] thingproxy 응답:`, txt.slice(0, 400));
+        return JSON.parse(txt);
+      }
+    } catch (_) {}
+
+    // 4) corsproxy.org (corsproxy.io 와 다른 서비스)
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 12000);
+      const r = await fetch('https://corsproxy.org/?' + encodeURIComponent(base), {
+        method: 'POST', headers, body: bodyStr, signal: ctrl.signal
+      });
+      clearTimeout(t);
+      if (r.ok) {
+        const txt = await r.text();
+        console.log(`[손택스 ${actionId}] corsproxy.org 응답:`, txt.slice(0, 400));
         return JSON.parse(txt);
       }
     } catch (_) {}
@@ -2679,7 +2694,41 @@ async function doAddrSearch() {
     const tryYears = [curYear, curYear - 1, curYear - 2]; // 연도 순차 시도
 
     if (isOfficetel) {
-      // 오피스텔: 홈택스 ATESFAAA023R05 → 호 목록
+      // 오피스텔 1순위: vworld getOffiHousingPriceAttr (CORS 불필요, 안정적)
+      const vworldKey = _getVworldKey();
+      if (vworldKey) {
+        for (const yr of tryYears) {
+          try {
+            const allUnits = [];
+            for (let page = 1; page <= 10; page++) {
+              const url = `https://api.vworld.kr/ned/data/getOffiHousingPriceAttr` +
+                `?pnu=${encodeURIComponent(pnu)}&stdrYear=${yr}&format=json&numOfRows=100&pageNo=${page}` +
+                `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
+              const res = await _vworldFetch(url);
+              let data;
+              try { data = await res.json(); } catch { break; }
+              console.log(`[오피스텔동호] vworld ${yr}p${page}:`, JSON.stringify(data).slice(0, 200));
+              if (data?.error) { break; }
+              const prices = data?.offiHousingPrices;
+              let arr = [];
+              if (prices?.offiHousingPrice) {
+                arr = Array.isArray(prices.offiHousingPrice) ? prices.offiHousingPrice : [prices.offiHousingPrice];
+              } else if (Array.isArray(prices?.field)) {
+                arr = prices.field;
+              }
+              const pageUnits = arr.map(it => ({
+                dong: (it.dongNm || '').replace(/\s/g, ''),
+                ho:   (it.hoNm   || '').replace(/\s/g, '')
+              })).filter(u => u.ho);
+              allUnits.push(...pageUnits);
+              if (arr.length < 100) break;
+            }
+            console.log(`[오피스텔동호] vworld ${yr}년 총:`, allUnits.length);
+            if (allUnits.length) return allUnits;
+          } catch (e) { if (e.isApiError) return null; }
+        }
+      }
+      // 오피스텔 2순위: 홈택스 CORS 프록시 fallback
       try {
         const bldNos = await _hometaxGetBldNo(pnu);
         if (!bldNos?.length) return null;
