@@ -2588,7 +2588,7 @@ async function doAddrSearch() {
       }
     } catch (_) {}
 
-    // 4) corsproxy.org (corsproxy.io 와 다른 서비스)
+    // 4) corsproxy.org
     try {
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 12000);
@@ -2599,6 +2599,21 @@ async function doAddrSearch() {
       if (r.ok) {
         const txt = await r.text();
         console.log(`[손택스 ${actionId}] corsproxy.org 응답:`, txt.slice(0, 400));
+        return JSON.parse(txt);
+      }
+    } catch (_) {}
+
+    // 5) cors.eu.org
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 12000);
+      const r = await fetch('https://cors.eu.org/' + base, {
+        method: 'POST', headers, body: bodyStr, signal: ctrl.signal
+      });
+      clearTimeout(t);
+      if (r.ok) {
+        const txt = await r.text();
+        console.log(`[손택스 ${actionId}] cors.eu.org 응답:`, txt.slice(0, 400));
         return JSON.parse(txt);
       }
     } catch (_) {}
@@ -2742,13 +2757,10 @@ async function doAddrSearch() {
       } catch (e) { console.warn('[건축물대장 오류]', e.message); }
     }
 
-    // ── 2순위: vworld 공시가격 API ──
+    // ── 2순위: vworld 공시가격 API (물건종류 무관하게 두 엔드포인트 모두 시도) ──
     const vworldKey = _getVworldKey();
     if (vworldKey) {
-      // 오피스텔은 offiHousingPriceAttr 먼저, 없으면 apartHousingPriceAttr도 시도
-      const endpointList = isOfficetel
-        ? ['getOffiHousingPriceAttr', 'getApartHousingPriceAttr']
-        : ['getApartHousingPriceAttr'];
+      const endpointList = ['getApartHousingPriceAttr', 'getOffiHousingPriceAttr'];
 
       for (const endpoint of endpointList) {
         const isApart   = endpoint === 'getApartHousingPriceAttr';
@@ -2783,8 +2795,8 @@ async function doAddrSearch() {
       }
     }
 
-    // ── 3순위: 홈택스 CORS 프록시 (오피스텔만) ──
-    if (isOfficetel) {
+    // ── 3순위: 홈택스 CORS 프록시 (물건종류 무관하게 항상 시도) ──
+    {
       try {
         const bldNos = await _hometaxGetBldNo(pnu);
         if (bldNos?.length) {
