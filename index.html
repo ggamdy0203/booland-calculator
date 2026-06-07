@@ -1764,58 +1764,42 @@ function computeAll() {
   };
 }
 
-/* ── 수익률 분석 초기화 ── */
-function resetCalc() {
-  if (!confirm('입력값을 초기화하시겠습니까?\n(기본 설정값은 유지됩니다)')) return;
+/* ── 수익률 분석 기본값 적용 (confirm 없이) ── */
+function _applyCalcDefaults() {
+  const setVal = (id, val) => { const el = $(id); if (el) el.value = val; };
+  const fmtSet = (id, val) => { const el = $(id); if (el) el.value = val ? Number(val).toLocaleString('ko-KR') : ''; };
 
-  // ── 비워지는 필드 (가격 입력값) ──
-  const setVal = (id, val) => { const el = $(id); if (el) { el.value = val; } };
-  const fmtSet = (id, val) => { const el = $(id); if (el) { el.value = val ? Number(val).toLocaleString('ko-KR') : '0'; } };
+  // 주요 가격 입력 → 빈값
+  ['appraised','minBid','bidPrice','salePrice','seniorDeposit',
+   'jeonse','monthlyRent','extraFee','unpaidMgmtFee'].forEach(id => fmtSet(id, 0));
 
-  // 주요 가격 입력 → 0
-  fmtSet('appraised',    0);
-  fmtSet('minBid',       0);
-  fmtSet('bidPrice',     0);
-  fmtSet('salePrice',    0);
-  fmtSet('seniorDeposit',0);
-  fmtSet('jeonse',       0);
-  fmtSet('monthlyRent',  0);
-  fmtSet('extraFee',     0);
-  fmtSet('unpaidMgmtFee',0);
+  // 텍스트 필드 → 빈값
+  ['caseNo','addr','addrDong','addrHo','bidDate','memo'].forEach(id => setVal(id, ''));
 
-  // 텍스트 필드
-  setVal('caseNo',  '');
-  setVal('addr',    '');
-  setVal('addrDong','');
-  setVal('addrHo',  '');
-  setVal('bidDate', '');
-  setVal('memo',    '');
-
-  // ── 기본값 유지 필드 (설정값) ──
-  setVal('loanRatio',         '0.8');   // 낙찰가 기준 비율 80%
-  setVal('appraisalLoanRatio','0.6');   // 감정가 기준 비율 60%
-  setVal('depositRatio',      '0.1');   // 입찰 보증금 10%
-  setVal('houseCount',        '1');     // 1주택 이하
-  setVal('minBidRatio',       '');      // 최저입찰가 직접입력
+  // 기본 설정값
+  setVal('loanRatio',         '0.8');
+  setVal('appraisalLoanRatio','0.6');
+  setVal('depositRatio',      '0.1');
+  setVal('houseCount',        '1');
+  setVal('minBidRatio',       '');
   setVal('propType',          '아파트');
   setVal('smallArea',         'Y');
-  setVal('holdMonth',         '12');    // 보유기간 12개월
-  setVal('loanRate',          '5');     // 대출금리 5%
-  setVal('prepayRate',        '1');     // 중도상환수수료 1%
-
-  // 기타 비용 기본값
-  fmtSet('legalFee',   300000);  // 법무비 30만
-  fmtSet('repairFee',  0);       // 수리비 0
-  fmtSet('evictFee',   0);       // 명도비 0
-
-  // 양도소득세 방식 → 누진세율 자동
+  setVal('holdMonth',         '12');
+  setVal('loanRate',          '5');
+  setVal('prepayRate',        '1');
+  fmtSet('legalFee',  300000);
+  fmtSet('repairFee', 0);
+  fmtSet('evictFee',  0);
   setVal('capGainMethod', 'auto');
   if (typeof onCapGainMethodChange === 'function') onCapGainMethodChange();
-
-  // window 전역 상태 초기화
   window._selectedPnu = null;
-
   calc();
+}
+
+/* ── 수익률 분석 초기화 버튼 ── */
+function resetCalc() {
+  if (!confirm('입력값을 초기화하시겠습니까?\n(기본 설정값은 유지됩니다)')) return;
+  _applyCalcDefaults();
 }
 
 function calc() {
@@ -2056,9 +2040,10 @@ function printAnalysis() {
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupBidDateMask);
+    document.addEventListener('DOMContentLoaded', () => { setupBidDateMask(); _applyCalcDefaults(); });
   } else {
     setupBidDateMask();
+    _applyCalcDefaults();
   }
 })();
 
