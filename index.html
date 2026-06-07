@@ -2645,9 +2645,12 @@ async function doAddrSearch() {
       throw e;
     }
 
-    // 응답 구조 유연하게 처리
-    const list = data.list || data.data?.list || data.bldList || data.resultList || [];
+    // 응답 구조 유연하게 처리 (carcTsvCwchlnqrDVOList 등 다양한 필드명 지원)
+    const list = data.list || data.data?.list || data.bldList || data.resultList
+               || data.carcTsvCwchlnqrDVOList || [];
     if (!Array.isArray(list) || !list.length) {
+      // kabSctrBldNo가 직접 최상위에 있는 경우 (단일 건물 응답)
+      if (data.kabSctrBldNo) { console.log('[손택스] 단일 건물:', data.kabSctrBldNo); return [data.kabSctrBldNo]; }
       console.log('[손택스] 건물 목록 없음:', JSON.stringify(data).slice(0, 200));
       return null;
     }
@@ -2704,8 +2707,13 @@ async function doAddrSearch() {
       `&platGbCd=${platGbCd}&bun=${bun}&ji=${ji}` +
       `&numOfRows=1000&pageNo=1`;
 
-    // XML 파싱 헬퍼
-    const parseXmlUnits = txt => {
+    // XML 파싱 헬퍼 (allorigins가 base64 data URL로 응답하는 경우도 처리)
+    const parseXmlUnits = rawTxt => {
+      let txt = rawTxt || '';
+      // allorigins가 "data:...;base64,XXX" 형식으로 줄 때 디코딩
+      if (txt.startsWith('data:') && txt.includes('base64,')) {
+        try { txt = atob(txt.split('base64,')[1]); } catch(_) {}
+      }
       if (!txt || (!txt.includes('<item>') && !txt.includes('resultCode'))) return null;
       const parser = new DOMParser();
       const xml = parser.parseFromString(txt, 'text/xml');
@@ -2727,15 +2735,15 @@ async function doAddrSearch() {
       if (r.ok) { const u = parseXmlUnits(await r.text()); if (u) { console.log('[건축물대장] 직접 성공'); return u; } }
     } catch (_) {}
 
-    // 2) allorigins /get (CORS 헤더 추가, JSON 래퍼 응답)
+    // 2) allorigins /get (CORS 헤더 추가, JSON 래퍼 응답, base64 data URL 자동 디코딩)
     try {
       const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(),12000);
       const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(base), { signal: ctrl.signal });
       clearTimeout(t);
       if (r.ok) {
-        const j = await r.json(); const txt = j.contents || '';
-        console.log('[건축물대장] allorigins/get:', txt.slice(0,200));
-        const u = parseXmlUnits(txt); if (u) return u;
+        const j = await r.json(); const raw = j.contents || '';
+        console.log('[건축물대장] allorigins/get 원본(앞200):', raw.slice(0,200));
+        const u = parseXmlUnits(raw); if (u) { console.log('[건축물대장] allorigins/get 성공:', u.length); return u; }
       }
     } catch (_) {}
 
