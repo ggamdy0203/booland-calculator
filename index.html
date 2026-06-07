@@ -626,10 +626,10 @@
           <div class="form-label">특이사항 / 메모</div>
           <textarea id="memo" placeholder="낙찰 조건, 권리관계, 세입자 현황, 기타 특이사항을 메모하세요..." style="width:100%;min-height:216px;resize:vertical;border:1.5px solid var(--border);border-radius:6px;padding:10px;font-size:12px;font-family:inherit;color:var(--text);background:var(--blue-light);line-height:1.6"></textarea>
           <div style="display:flex;gap:6px;margin-top:8px;">
-            <button onclick="saveCurrent()" style="flex:1;padding:10px;background:#1e40af;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
+            <button onclick="saveCurrent()" style="flex:1;padding:10px;background:#1e40af;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px">
               💾 이 분석 저장
             </button>
-            <button onclick="resetCalc()" title="입력값 초기화" style="padding:10px 14px;background:#f1f5f9;color:#64748b;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;" onmouseover="this.style.background='#fee2e2';this.style.color='#dc2626';this.style.borderColor='#fca5a5'" onmouseout="this.style.background='#f1f5f9';this.style.color='#64748b';this.style.borderColor='#e2e8f0'">
+            <button onclick="resetCalc()" title="입력값 초기화" style="flex:1;padding:10px;background:#f1f5f9;color:#64748b;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;" onmouseover="this.style.background='#fee2e2';this.style.color='#dc2626';this.style.borderColor='#fca5a5'" onmouseout="this.style.background='#f1f5f9';this.style.color='#64748b';this.style.borderColor='#e2e8f0'">
               🔄 초기화
             </button>
           </div>
@@ -1802,9 +1802,13 @@ function resetCalc() {
   setVal('prepayRate',        '1');     // 중도상환수수료 1%
 
   // 기타 비용 기본값
-  fmtSet('legalFee',   300000);   // 법무비 30만
-  fmtSet('repairFee',  1000000);  // 수리비 100만
-  fmtSet('evictFee',   1000000);  // 명도비 100만
+  fmtSet('legalFee',   300000);  // 법무비 30만
+  fmtSet('repairFee',  0);       // 수리비 0
+  fmtSet('evictFee',   0);       // 명도비 0
+
+  // 양도소득세 방식 → 누진세율 자동
+  setVal('capGainMethod', 'auto');
+  if (typeof onCapGainMethodChange === 'function') onCapGainMethodChange();
 
   // window 전역 상태 초기화
   window._selectedPnu = null;
