@@ -1302,9 +1302,10 @@ function updateAucStats(){
   aucStats.salePm2   =sales.length   ?sales.reduce((s,r)=>s+r.price/r.area,0)/sales.length:0;
   aucStats.jeonsePm2 =jeonses.length ?jeonses.reduce((s,r)=>s+r.deposit/r.area,0)/jeonses.length:0;
 
-  // 환산월세 per ㎡ : 월세액 + 보증금×4%/12 (반전세 포함 정확한 환산)
+  // 환산월세 per ㎡ : 월세액 + 보증금×6%/12 (반전세 포함 정확한 환산)
   // 전세: 보증금 전액 이자환산, 월세: 실월세 + 보증금 이자 (반전세 보정)
-  const convRate=0.04/12;
+  // 전월세 전환율 6% = 1,000만원당 5만원/월 (시장 기준)
+  const convRate=0.06/12;
   const allConv=[
     ...jeonses.map(r=>r.deposit*convRate/r.area/10000),
     ...monthys.map(r=>(r.monthly+(r.deposit||0)*convRate/10000)/r.area)
@@ -1323,7 +1324,8 @@ function calcAuction(){
   const sale   =aucStats.salePm2   *area;          // 만원
   const jeonse =aucStats.jeonsePm2 *area;          // 만원
   const conv   =aucStats.convPm2   *area;          // 만원/월 (환산월세)
-  const netMon =conv - deposit*0.04/12;            // 보증금 이자 차감 후 월세
+  const netMon =conv - deposit*0.06/12;            // 보증금 이자 차감 후 월세 (전환율 6%)
+
 
   const $=id=>document.getElementById(id);
   // salePm2, jeonsePm2 는 원/㎡ 단위 → × area = 원 → fmtP(원)
