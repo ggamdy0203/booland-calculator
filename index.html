@@ -2198,7 +2198,11 @@ function selectAddrByIdx(i) {
       if (units && units.length) {
         _renderDongHoDropdowns(units);
       } else {
-        _renderTextFallback('목록 조회 실패 — 동·호수를 직접 입력하세요');
+        const hasDataGoKey = !!localStorage.getItem('dataGoApiKey');
+        const msg = hasDataGoKey
+          ? '목록 조회 실패 — 동·호수를 직접 입력하세요'
+          : '⚠️ 공공데이터 API 키 미설정 — 공시가격 버튼 옆 설정에서 입력하면 자동 선택 가능';
+        _renderTextFallback(msg);
       }
     } catch (e) {
       console.error('[동호목록] 오류:', e);
@@ -2686,110 +2690,117 @@ async function doAddrSearch() {
     return { median: prices[mid], min: prices[0], max: prices[prices.length - 1], count: prices.length };
   }
 
-  /* 건물 동·호 목록 조회 (주소검색 모달 2단계 드롭다운용) */
+  /* ── 건축물대장 전유공용면적정보 API → 동·호 목록 (가장 신뢰할 수 있는 방법) ── */
+  async function _fetchBrUnits(pnu, dataGoKey) {
+    const sigunguCd = pnu.slice(0, 5);
+    const bjdongCd  = pnu.slice(5, 10);
+    const platGbCd  = pnu.slice(10, 11);
+    const bun       = pnu.slice(11, 15);
+    const ji        = pnu.slice(15, 19);
+    const url = `https://apis.data.go.kr/1613000/BldRgstHubService/getBrExposPubuseAreaInfo` +
+      `?serviceKey=${dataGoKey}` +
+      `&sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}` +
+      `&platGbCd=${platGbCd}&bun=${bun}&ji=${ji}` +
+      `&numOfRows=1000&pageNo=1`;
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 10000);
+    const r = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!r.ok) return null;
+    const txt = await r.text();
+    console.log('[건축물대장 동호]', txt.slice(0, 300));
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(txt, 'text/xml');
+    const items = [...xml.querySelectorAll('item')];
+    const seen = new Set();
+    const units = [];
+    for (const item of items) {
+      const dong = item.querySelector('dongNm')?.textContent?.trim() || '';
+      const ho   = item.querySelector('hoNm')?.textContent?.trim()   || '';
+      const key  = `${dong}|${ho}`;
+      if (ho && !seen.has(key)) { seen.add(key); units.push({ dong, ho }); }
+    }
+    return units.length ? units : null;
+  }
+
+  /* 건물 동·호 목록 조회 (주소검색 모달 2단계 드롭다운용)
+     1순위: 건축물대장 API (data.go.kr, CORS 직접 가능, 모든 건물유형)
+     2순위: vworld 공시가격 API (아파트/오피스텔)
+     3순위: 홈택스 CORS 프록시 fallback (오피스텔, 불안정) */
   window._fetchBuildingUnits = async function(pnu, propType) {
     if (!pnu || pnu.length !== 19) return null;
     const isOfficetel = propType === '오피스텔';
     const curYear = new Date().getFullYear();
-    const tryYears = [curYear, curYear - 1, curYear - 2]; // 연도 순차 시도
+    const tryYears = [curYear, curYear - 1, curYear - 2];
 
-    if (isOfficetel) {
-      // 오피스텔 1순위: vworld getOffiHousingPriceAttr (CORS 불필요, 안정적)
-      const vworldKey = _getVworldKey();
-      if (vworldKey) {
-        for (const yr of tryYears) {
-          try {
-            const allUnits = [];
-            for (let page = 1; page <= 10; page++) {
-              const url = `https://api.vworld.kr/ned/data/getOffiHousingPriceAttr` +
-                `?pnu=${encodeURIComponent(pnu)}&stdrYear=${yr}&format=json&numOfRows=100&pageNo=${page}` +
-                `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
-              const res = await _vworldFetch(url);
-              let data;
-              try { data = await res.json(); } catch { break; }
-              console.log(`[오피스텔동호] vworld ${yr}p${page}:`, JSON.stringify(data).slice(0, 200));
-              if (data?.error) { break; }
-              const prices = data?.offiHousingPrices;
-              let arr = [];
-              if (prices?.offiHousingPrice) {
-                arr = Array.isArray(prices.offiHousingPrice) ? prices.offiHousingPrice : [prices.offiHousingPrice];
-              } else if (Array.isArray(prices?.field)) {
-                arr = prices.field;
-              }
-              const pageUnits = arr.map(it => ({
-                dong: (it.dongNm || '').replace(/\s/g, ''),
-                ho:   (it.hoNm   || '').replace(/\s/g, '')
-              })).filter(u => u.ho);
-              allUnits.push(...pageUnits);
-              if (arr.length < 100) break;
-            }
-            console.log(`[오피스텔동호] vworld ${yr}년 총:`, allUnits.length);
-            if (allUnits.length) return allUnits;
-          } catch (e) { if (e.isApiError) return null; }
-        }
-      }
-      // 오피스텔 2순위: 홈택스 CORS 프록시 fallback
+    // ── 1순위: 건축물대장 API ──
+    const dataGoKey = _getDataGoKey();
+    if (dataGoKey) {
       try {
-        const bldNos = await _hometaxGetBldNo(pnu);
-        if (!bldNos?.length) return null;
-        for (const yr of tryYears) {
-          for (const bldNo of bldNos) {
-            try {
-              const data = await _hometaxPost('ATESFAAA023R05', { kabSctrBldNo: bldNo, notcDt: String(yr) });
-              if (!data) continue;
-              const list = data.list || data.data?.list || data.priceList || data.resultList || [];
-              if (!Array.isArray(list) || !list.length) continue;
-              const units = list.map(it => ({
-                dong: (it.flrNo || it.floorNo || '').replace(/\s/g, ''),
-                ho:   (it.hoNm  || it.hoNo   || it.unitNm || '').replace(/\s/g, '')
-              })).filter(u => u.ho);
-              if (units.length) return units;
-            } catch (_) {}
-          }
-        }
-      } catch (_) {}
-      return null;
-    } else {
-      // 아파트·빌라·단독: vworld getApartHousingPriceAttr → 동·호 목록 (페이지네이션)
-      const vworldKey = _getVworldKey();
-      if (!vworldKey) return null;
+        const units = await _fetchBrUnits(pnu, dataGoKey);
+        if (units?.length) { console.log('[동호] 건축물대장 성공:', units.length); return units; }
+      } catch (e) { console.warn('[건축물대장 오류]', e.message); }
+    }
+
+    // ── 2순위: vworld 공시가격 API ──
+    const vworldKey = _getVworldKey();
+    if (vworldKey) {
+      const endpoint = isOfficetel ? 'getOffiHousingPriceAttr' : 'getApartHousingPriceAttr';
+      const pricesKey = isOfficetel ? 'offiHousingPrices'       : 'apartHousingPrices';
+      const itemKey   = isOfficetel ? 'offiHousingPrice'         : 'apartHousingPrice';
       for (const yr of tryYears) {
         try {
           const allUnits = [];
           for (let page = 1; page <= 10; page++) {
-            const url = `https://api.vworld.kr/ned/data/getApartHousingPriceAttr` +
+            const url = `https://api.vworld.kr/ned/data/${endpoint}` +
               `?pnu=${encodeURIComponent(pnu)}&stdrYear=${yr}&format=json&numOfRows=100&pageNo=${page}` +
               `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
             const res = await _vworldFetch(url);
             let data;
-            try { data = await res.json(); } catch (parseErr) { console.warn('[동호목록] JSON파싱실패:', parseErr.message); break; }
-            console.log(`[동호목록] ${yr}p${page} raw:`, JSON.stringify(data).slice(0, 200));
-            if (data?.error) { console.warn('[동호목록] API에러:', data.error); break; }
-            const prices = data?.apartHousingPrices;
+            try { data = await res.json(); } catch { break; }
+            if (data?.error) break;
+            const prices = data?.[pricesKey];
             let arr = [];
-            if (prices?.apartHousingPrice) {
-              arr = Array.isArray(prices.apartHousingPrice) ? prices.apartHousingPrice : [prices.apartHousingPrice];
-            } else if (Array.isArray(prices?.field)) {
-              arr = prices.field; // pageNo 사용 시 데이터가 field 배열에 위치
-            } else if (prices?.hoNm) {
-              arr = [prices];
-            }
+            if (prices?.[itemKey]) arr = Array.isArray(prices[itemKey]) ? prices[itemKey] : [prices[itemKey]];
+            else if (Array.isArray(prices?.field)) arr = prices.field;
+            else if (prices?.hoNm) arr = [prices];
             const pageUnits = arr.map(it => ({
               dong: (it.dongNm || '').replace(/\s/g, ''),
               ho:   (it.hoNm   || '').replace(/\s/g, '')
             })).filter(u => u.ho);
             allUnits.push(...pageUnits);
-            if (arr.length < 100) break; // 마지막 페이지
+            if (arr.length < 100) break;
           }
-          console.log(`[동호목록] ${yr}년 총:`, allUnits.length, '건');
-          if (allUnits.length) return allUnits;
-        } catch (e) {
-          if (e.isApiError) return null;
-          console.warn('[동호목록] vworld 오류:', e.message);
-        }
+          if (allUnits.length) { console.log('[동호] vworld 성공:', allUnits.length); return allUnits; }
+        } catch (e) { if (e.isApiError) return null; }
       }
-      return null;
     }
+
+    // ── 3순위: 홈택스 CORS 프록시 (오피스텔만) ──
+    if (isOfficetel) {
+      try {
+        const bldNos = await _hometaxGetBldNo(pnu);
+        if (bldNos?.length) {
+          for (const yr of tryYears) {
+            for (const bldNo of bldNos) {
+              try {
+                const data = await _hometaxPost('ATESFAAA023R05', { kabSctrBldNo: bldNo, notcDt: String(yr) });
+                if (!data) continue;
+                const list = data.list || data.data?.list || data.priceList || data.resultList || [];
+                if (!Array.isArray(list) || !list.length) continue;
+                const units = list.map(it => ({
+                  dong: (it.flrNo || it.floorNo || '').replace(/\s/g, ''),
+                  ho:   (it.hoNm  || it.hoNo   || it.unitNm || '').replace(/\s/g, '')
+                })).filter(u => u.ho);
+                if (units.length) { console.log('[동호] 홈택스 성공:', units.length); return units; }
+              } catch (_) {}
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    return null;
   };
 
   /* 손택스 오피스텔 기준시가 연도별 rows 조회 */
