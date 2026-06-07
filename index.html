@@ -625,9 +625,14 @@
         <div class="form-row" style="flex-direction:column;align-items:flex-start;gap:6px;padding-bottom:8px">
           <div class="form-label">특이사항 / 메모</div>
           <textarea id="memo" placeholder="낙찰 조건, 권리관계, 세입자 현황, 기타 특이사항을 메모하세요..." style="width:100%;min-height:216px;resize:vertical;border:1.5px solid var(--border);border-radius:6px;padding:10px;font-size:12px;font-family:inherit;color:var(--text);background:var(--blue-light);line-height:1.6"></textarea>
-          <button onclick="saveCurrent()" style="width:100%;margin-top:8px;padding:10px;background:#1e40af;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
-            💾 이 분석 저장
-          </button>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <button onclick="saveCurrent()" style="flex:1;padding:10px;background:#1e40af;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
+              💾 이 분석 저장
+            </button>
+            <button onclick="resetCalc()" title="입력값 초기화" style="padding:10px 14px;background:#f1f5f9;color:#64748b;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;" onmouseover="this.style.background='#fee2e2';this.style.color='#dc2626';this.style.borderColor='#fca5a5'" onmouseout="this.style.background='#f1f5f9';this.style.color='#64748b';this.style.borderColor='#e2e8f0'">
+              🔄 초기화
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1755,6 +1760,56 @@ function computeAll() {
     prepayFee, agentFee, saleExpTotal, netProfit, holdRent, totalReturn,
     roe, roeAnn, holdYear, bid, saleP
   };
+}
+
+/* ── 수익률 분석 초기화 ── */
+function resetCalc() {
+  if (!confirm('입력값을 초기화하시겠습니까?\n(기본 설정값은 유지됩니다)')) return;
+
+  // ── 비워지는 필드 (가격 입력값) ──
+  const setVal = (id, val) => { const el = $(id); if (el) { el.value = val; } };
+  const fmtSet = (id, val) => { const el = $(id); if (el) { el.value = val ? Number(val).toLocaleString('ko-KR') : '0'; } };
+
+  // 주요 가격 입력 → 0
+  fmtSet('appraised',    0);
+  fmtSet('minBid',       0);
+  fmtSet('bidPrice',     0);
+  fmtSet('salePrice',    0);
+  fmtSet('seniorDeposit',0);
+  fmtSet('jeonse',       0);
+  fmtSet('monthlyRent',  0);
+  fmtSet('extraFee',     0);
+  fmtSet('unpaidMgmtFee',0);
+
+  // 텍스트 필드
+  setVal('caseNo',  '');
+  setVal('addr',    '');
+  setVal('addrDong','');
+  setVal('addrHo',  '');
+  setVal('bidDate', '');
+  setVal('memo',    '');
+
+  // ── 기본값 유지 필드 (설정값) ──
+  setVal('loanRatio',         '0.8');   // 낙찰가 기준 비율 80%
+  setVal('appraisalLoanRatio','0.6');   // 감정가 기준 비율 60%
+  setVal('depositRatio',      '0.1');   // 입찰 보증금 10%
+  setVal('houseCount',        '1');     // 1주택 이하
+  setVal('minBidRatio',       '');      // 최저입찰가 직접입력
+  setVal('propType',          '아파트');
+  setVal('smallArea',         'Y');
+  setVal('holdMonth',         '12');    // 보유기간 12개월
+  setVal('loanRate',          '5');     // 대출금리 5%
+  setVal('prepayRate',        '1');     // 중도상환수수료 1%
+
+  // 기타 비용 기본값
+  fmtSet('legalFee',   300000);   // 법무비 30만
+  fmtSet('repairFee',  1000000);  // 수리비 100만
+  fmtSet('evictFee',   1000000);  // 명도비 100만
+
+  // window 전역 상태 초기화
+  window._selectedPnu = null;
+
+  calc();
 }
 
 function calc() {
