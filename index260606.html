@@ -1213,7 +1213,7 @@ function makeSummary(){
   const monthys=filteredRows.filter(r=>r.dtype==='월세');
   const avgPm2=sales.length?sales.reduce((s,r)=>s+(r.price/r.area),0)/sales.length:null;
   const avgDep=jeonses.length?jeonses.reduce((s,r)=>s+r.deposit,0)/jeonses.length:null;
-  const avgMon=monthys.length?monthys.reduce((s,r)=>s+r.monthly,0)/monthys.length:null;
+  const avgMonDep=monthys.length?monthys.reduce((s,r)=>s+(r.deposit||0),0)/monthys.length:null;
   // 전세/반전세 환산월세 (보증금×연6%÷12 + 실월세) — 1,000만원당 5만원 시장 기준
   const convRate=0.06/12;
   const allRent=[
@@ -1234,7 +1234,7 @@ function makeSummary(){
     // 2열 하단
     {lbl:`전세 평균 (${jeonses.length}건)`,val:avgDep!=null?fmtShort(avgDep):'-',c:'#ea580c'},
     // 3열 하단
-    {lbl:`월세 평균 (${monthys.length}건)`,val:avgMon!=null?Math.round(avgMon)+'만원':'-',c:'#be123c'},
+    {lbl:`보증금 평균 - 월세 (${monthys.length}건)`,val:avgMonDep!=null?fmtShort(avgMonDep):'-',c:'#be123c'},
   ].map(c=>`<div class="sum-card"><div class="s-lbl">${c.lbl}</div><div class="s-val" style="color:${c.c}">${c.val}</div></div>`).join('');
 }
 
