@@ -746,16 +746,31 @@ async function setBidTarget() {
 
   document.getElementById('bidTargetStatus').textContent = '🔍 검색 중...';
   try {
-    const res = await fetch(
+    // 1) 주소 검색 시도
+    let doc = null;
+    const r1 = await fetch(
       `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(addr)}&size=1`,
       { headers: { Authorization: `KakaoAK ${kakaoKey}` } }
     );
-    const data = await res.json();
-    if (!data.documents?.length) {
-      document.getElementById('bidTargetStatus').textContent = '❌ 주소를 찾을 수 없습니다';
+    const d1 = await r1.json();
+    if (d1.documents?.length) {
+      doc = d1.documents[0];
+    } else {
+      // 2) 주소 검색 실패 → 키워드(건물명) 검색 폴백
+      const r2 = await fetch(
+        `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(addr)}&size=1`,
+        { headers: { Authorization: `KakaoAK ${kakaoKey}` } }
+      );
+      const d2 = await r2.json();
+      if (d2.documents?.length) {
+        doc = { y: d2.documents[0].y, x: d2.documents[0].x,
+                address_name: d2.documents[0].road_address_name || d2.documents[0].address_name || d2.documents[0].place_name };
+      }
+    }
+    if (!doc) {
+      document.getElementById('bidTargetStatus').textContent = '❌ 주소/건물명을 찾을 수 없습니다';
       return;
     }
-    const doc = data.documents[0];
     const lat = parseFloat(doc.y), lng = parseFloat(doc.x);
     const fullAddr = doc.address_name || addr;
 
