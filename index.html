@@ -670,8 +670,16 @@
         </div>
         <div class="form-row">
           <div class="form-label" style="color:var(--blue);font-weight:700">낙찰가 ★</div>
-          <div class="form-input-wrap">
-            <input type="text" inputmode="numeric" class="currency" id="bidPrice" value="150,000,000" oninput="fmtInp(this);calc()">
+          <div class="form-input-wrap" style="flex-wrap:wrap;gap:6px;align-items:center">
+            <div style="display:flex;align-items:center;gap:3px;flex:0 0 auto;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:3px 7px">
+              <span style="font-size:11px;color:#3b82f6;white-space:nowrap">감정가</span>
+              <input type="text" inputmode="decimal" id="bidRatioInput"
+                style="width:48px;font-size:13px;font-weight:700;color:#1d4ed8;border:none;background:transparent;text-align:right;outline:none;padding:0"
+                placeholder="75"
+                oninput="applyBidRatio()">
+              <span style="font-size:13px;font-weight:700;color:#1d4ed8">%</span>
+            </div>
+            <input type="text" inputmode="numeric" class="currency" id="bidPrice" value="150,000,000" oninput="fmtInp(this);syncBidRatio();calc()">
             <span class="input-unit">원</span>
           </div>
         </div>
@@ -1565,7 +1573,35 @@ function applyMinBidRatio() {
     const app = parseVal('appraised');
     if (app > 0) $('minBid').value = Math.round(app * ratio).toLocaleString('ko-KR');
   }
+  syncBidRatio(); // 감정가 변경 시 낙찰가 % 재계산
   calc();
+}
+
+/* 낙찰가 ← % 입력: 감정가 × % / 100 → 금액 자동계산 */
+function applyBidRatio() {
+  const raw = ($('bidRatioInput').value || '').replace(/[^0-9.]/g, '');
+  const pct = parseFloat(raw);
+  const app = parseVal('appraised');
+  if (!isNaN(pct) && pct > 0 && app > 0) {
+    $('bidPrice').value = Math.round(app * pct / 100).toLocaleString('ko-KR');
+  } else if (raw === '' || pct === 0) {
+    $('bidPrice').value = '';
+  }
+  calc();
+}
+
+/* 낙찰가 → % 역계산: 금액 입력 시 감정가 대비 % 표시 */
+function syncBidRatio() {
+  const bid = parseVal('bidPrice');
+  const app = parseVal('appraised');
+  const el = $('bidRatioInput');
+  if (!el) return;
+  if (app > 0 && bid > 0) {
+    const pct = bid / app * 100;
+    el.value = (pct % 1 === 0) ? pct.toFixed(0) : pct.toFixed(1);
+  } else {
+    el.value = '';
+  }
 }
 
 let costChartInst = null;
@@ -1782,6 +1818,7 @@ function _applyCalcDefaults() {
   setVal('depositRatio',      '0.1');
   setVal('houseCount',        '1');
   setVal('minBidRatio',       '');
+  setVal('bidRatioInput',     '');
   setVal('propType',          '아파트');
   setVal('smallArea',         'Y');
   setVal('holdMonth',         '12');
