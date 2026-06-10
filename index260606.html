@@ -287,6 +287,24 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowr
       <button class="btn-reset" onclick="resetFilters()">초기화</button>
     </div>
 
+    <!-- 입찰 물건 주소 핀 -->
+    <hr style="border:none;border-top:1px solid var(--border);margin:2px 0;">
+    <div class="sb-row">
+      <div class="sb-label" style="font-weight:700;color:#dc2626;">📍 입찰 물건 주소</div>
+      <div style="display:flex;gap:4px;">
+        <input type="text" id="bidTargetAddr"
+          placeholder="예) 부산 남구 대연동 892-38"
+          style="flex:1;font-size:12px;padding:5px 7px;border:1px solid #fca5a5;border-radius:6px;outline:none;"
+          onkeydown="if(event.key==='Enter')setBidTarget()"
+          oninput="if(!this.value.trim())clearBidTarget()">
+        <button onclick="setBidTarget()"
+          style="padding:5px 9px;background:#dc2626;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
+          📌 핀
+        </button>
+      </div>
+      <div id="bidTargetStatus" style="font-size:11px;color:#6b7280;margin-top:3px;"></div>
+    </div>
+
     <!-- API 키 (초기화 버튼 아래) -->
     <hr style="border:none;border-top:1px solid var(--border);margin:2px 0;">
 
@@ -348,6 +366,14 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowr
       </div>
 
       <div class="map-legend" id="mapLegend">
+        <div class="legend-item" id="legendBidTarget" style="display:none;padding-bottom:5px;margin-bottom:5px;border-bottom:1px solid #fecaca;">
+          <div style="width:20px;height:26px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <div style="width:18px;height:18px;background:#dc2626;border:2px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;">
+              <span style="transform:rotate(45deg);font-size:8px;line-height:1;">★</span>
+            </div>
+          </div>
+          <span style="color:#dc2626;font-weight:700;">입찰 물건</span>
+        </div>
         <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;outline:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.35);"></div> 오피스텔 매매</div>
         <div class="legend-item"><div class="legend-dot" style="background:#67e8f9;outline:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.35);"></div> 오피스텔 전/월세</div>
         <div class="legend-item"><div class="legend-dot" style="background:#4ade80;outline:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.35);"></div> 연립다세대 매매</div>
@@ -702,6 +728,71 @@ function clearAreaFilter(){
   // 칩 전체 선택으로 복원
   resetChipsAll();
   applyBname();
+}
+
+/* ══ 입찰 물건 핀 ══ */
+let bidTargetMarker = null;
+
+async function setBidTarget() {
+  const addr = (document.getElementById('bidTargetAddr').value || '').trim();
+  if (bidTargetMarker) { map.removeLayer(bidTargetMarker); bidTargetMarker = null; }
+  document.getElementById('legendBidTarget').style.display = 'none';
+
+  if (!addr) { document.getElementById('bidTargetStatus').textContent = ''; return; }
+  if (!kakaoKey) {
+    document.getElementById('bidTargetStatus').textContent = '⚠️ 카카오 API 키가 필요합니다';
+    return;
+  }
+
+  document.getElementById('bidTargetStatus').textContent = '🔍 검색 중...';
+  try {
+    const res = await fetch(
+      `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(addr)}&size=1`,
+      { headers: { Authorization: `KakaoAK ${kakaoKey}` } }
+    );
+    const data = await res.json();
+    if (!data.documents?.length) {
+      document.getElementById('bidTargetStatus').textContent = '❌ 주소를 찾을 수 없습니다';
+      return;
+    }
+    const doc = data.documents[0];
+    const lat = parseFloat(doc.y), lng = parseFloat(doc.x);
+    const fullAddr = doc.address_name || addr;
+
+    // 붉은 물방울 모양 핀 + 별표
+    const icon = L.divIcon({
+      html: `<div style="position:relative;width:34px;height:46px;display:flex;flex-direction:column;align-items:center;">
+        <div style="width:34px;height:34px;background:#dc2626;border:3px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 3px 10px rgba(220,38,38,.6);display:flex;align-items:center;justify-content:center;">
+          <span style="transform:rotate(45deg);font-size:16px;line-height:1;color:white;text-shadow:0 1px 2px rgba(0,0,0,.3);">★</span>
+        </div>
+        <div style="position:absolute;bottom:0;width:4px;height:12px;background:#dc2626;border-radius:0 0 2px 2px;box-shadow:0 2px 4px rgba(0,0,0,.3);"></div>
+      </div>`,
+      className: '',
+      iconSize: [34, 46],
+      iconAnchor: [17, 46],
+      popupAnchor: [0, -48]
+    });
+
+    bidTargetMarker = L.marker([lat, lng], { icon, zIndexOffset: 2000 });
+    bidTargetMarker.bindPopup(
+      `<div style="font-size:13px;font-weight:700;color:#dc2626;margin-bottom:4px;">📍 입찰 물건</div>
+       <div style="font-size:12px;color:#374151;">${fullAddr}</div>`,
+      { maxWidth: 280 }
+    );
+    bidTargetMarker.addTo(map);
+    bidTargetMarker.openPopup();
+    map.setView([lat, lng], Math.max(map.getZoom(), 16));
+    document.getElementById('bidTargetStatus').textContent = '✅ ' + fullAddr;
+    document.getElementById('legendBidTarget').style.display = 'flex';
+  } catch(e) {
+    document.getElementById('bidTargetStatus').textContent = '❌ 조회 실패';
+  }
+}
+
+function clearBidTarget() {
+  if (bidTargetMarker) { map.removeLayer(bidTargetMarker); bidTargetMarker = null; }
+  document.getElementById('bidTargetStatus').textContent = '';
+  document.getElementById('legendBidTarget').style.display = 'none';
 }
 
 /* ══ 탭 전환 ══ */
