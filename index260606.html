@@ -1115,9 +1115,9 @@ async function doSearch(){
   document.getElementById('areaBtnClear').style.display='none';
   document.getElementById('areaCount').textContent='';
   buildBname();applyBname();
-  document.getElementById('mapInitState').style.display='none';
-  document.getElementById('areaCtrl').style.display='flex';
-  document.getElementById('streetviewCtrl').style.display='flex';
+  const _mis=document.getElementById('mapInitState');if(_mis)_mis.style.display='none';
+  const _ac=document.getElementById('areaCtrl');if(_ac)_ac.style.display='flex';
+  const _sv=document.getElementById('streetviewCtrl');if(_sv)_sv.style.display='flex';
   document.getElementById('areaBtnDraw').textContent='📐 구역 선택';
   // 지도 중심 이동
   const ctr=SG_CENTER[lawd];
