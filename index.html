@@ -3292,9 +3292,11 @@ function addBidToCalendar() {
   if (!date) { alert('입찰일을 먼저 선택해주세요'); return; }
   const caseNo = $('caseNo').value.trim();
   const addr   = $('addr').value.trim();
-  const title  = encodeURIComponent('입찰: ' + (caseNo ? caseNo + (addr ? ' ' + addr : '') : addr || '경매물건'));
+  const title  = encodeURIComponent(caseNo ? caseNo + (addr ? ' ' + addr : '') : addr || '경매물건');
   const ds     = date.replace(/-/g, '');
-  window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${ds}T090000/${ds}T180000&details=${encodeURIComponent('Booland Calculator에서 등록')}`, '_blank');
+  const d1 = new Date(date + 'T00:00:00'); d1.setDate(d1.getDate() + 1);
+  const ds2 = d1.toISOString().slice(0,10).replace(/-/g,'');
+  window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${ds}/${ds2}&details=${encodeURIComponent('Booland Calculator에서 등록')}`, '_blank');
 }
 
 function onAgentFeeModeChange() {
