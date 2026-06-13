@@ -113,13 +113,22 @@ select:focus,input:focus{outline:2px solid var(--primary);outline-offset:1px;}
 .legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
 
 /* 구역 선택 컨트롤 */
-.area-ctrl{position:absolute;top:10px;right:10px;z-index:1000;display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+.area-ctrl{position:absolute;top:52px;right:10px;z-index:1000;display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
 .area-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:7px;border:1.5px solid #2563eb;background:#fff;color:#2563eb;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.15);white-space:nowrap;transition:background .15s,color .15s;}
 .area-btn:hover{background:#eff6ff;}
 .area-btn.drawing{background:#f59e0b;border-color:#d97706;color:#fff;}
 .area-btn.clear-btn{border-color:#ef4444;color:#ef4444;font-size:11px;padding:5px 10px;}
 .area-btn.clear-btn:hover{background:#fef2f2;}
 .area-info{background:rgba(37,99,235,.9);color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;white-space:nowrap;}
+
+/* 지도 레이어 토글 (네이버 스타일) */
+.map-layer-toggle{position:absolute;top:10px;right:10px;z-index:1001;display:flex;border-radius:7px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3);border:2px solid white;}
+.map-layer-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;width:54px;height:44px;border:none;cursor:pointer;font-size:10px;font-weight:700;gap:2px;transition:all .15s;}
+.map-layer-btn.active{outline:3px solid #2563eb;outline-offset:-1px;z-index:1;}
+.map-layer-btn .l-ico{font-size:16px;line-height:1;}
+
+/* 거리뷰 버튼 */
+.streetview-ctrl{position:absolute;bottom:44px;left:10px;z-index:1000;display:flex;flex-direction:column;gap:5px;}
 
 /* Data tab */
 #dataPane{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px;}
@@ -358,6 +367,33 @@ tbody td{padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowr
     <!-- Map pane -->
     <div id="mapPane" style="flex:1;position:relative;display:flex;flex-direction:column;">
       <div id="leafletMap" style="flex:1;"></div>
+
+      <!-- 지도 레이어 토글 (우상단 항상 표시) -->
+      <div class="map-layer-toggle">
+        <button class="map-layer-btn active" id="layerNormalBtn" onclick="setMapLayer('normal')" title="일반지도">
+          <span class="l-ico">🗺</span>
+          <span>일반</span>
+        </button>
+        <button class="map-layer-btn" id="layerSatelliteBtn" onclick="setMapLayer('satellite')" title="위성지도"
+          style="background:#1a1a2e;color:#e2e8f0;">
+          <span class="l-ico">🛰</span>
+          <span>위성</span>
+        </button>
+      </div>
+
+      <!-- 거리뷰 버튼 -->
+      <div class="streetview-ctrl" id="streetviewCtrl" style="display:none;">
+        <button onclick="openNaverStreetView()"
+          style="display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:7px;border:1.5px solid #03c75a;background:#fff;color:#03c75a;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.15);white-space:nowrap;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#03c75a"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+          네이버 거리뷰
+        </button>
+        <button onclick="openKakaoStreetView()"
+          style="display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:7px;border:1.5px solid #f9e000;background:#fff;color:#3c1e1e;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.15);white-space:nowrap;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#f9e000"><circle cx="12" cy="12" r="10"/></svg>
+          카카오 거리뷰
+        </button>
+      </div>
 
       <!-- 구역 선택 컨트롤 -->
       <div class="area-ctrl" id="areaCtrl" style="display:none;">
@@ -608,10 +644,41 @@ function toggleKeyInput(type){
   btn.textContent=isHidden?'닫기 ▴':'수정 ▾';
 }
 
+/* ══ 지도 레이어 ══ */
+let normalLayer, satelliteLayer;
+
+function setMapLayer(mode) {
+  if (mode === 'satellite') {
+    if (!map.hasLayer(satelliteLayer)) { map.addLayer(satelliteLayer); }
+    if (map.hasLayer(normalLayer))    { map.removeLayer(normalLayer); }
+    document.getElementById('layerNormalBtn').classList.remove('active');
+    document.getElementById('layerSatelliteBtn').classList.add('active');
+  } else {
+    if (!map.hasLayer(normalLayer))    { map.addLayer(normalLayer); }
+    if (map.hasLayer(satelliteLayer))  { map.removeLayer(satelliteLayer); }
+    document.getElementById('layerNormalBtn').classList.add('active');
+    document.getElementById('layerSatelliteBtn').classList.remove('active');
+  }
+}
+
+/* ══ 거리뷰 ══ */
+function openNaverStreetView() {
+  const c = map.getCenter();
+  const lat = c.lat.toFixed(7), lng = c.lng.toFixed(7);
+  window.open(`https://map.naver.com/v5/street?c=${lng},${lat},15,0,0,0,dh`, '_blank');
+}
+function openKakaoStreetView() {
+  const c = map.getCenter();
+  const lat = c.lat.toFixed(7), lng = c.lng.toFixed(7);
+  window.open(`https://map.kakao.com/link/roadview/${lat},${lng}`, '_blank');
+}
+
 /* ══ 지도 초기화 ══ */
 function initMap(){
   map=L.map('leafletMap',{zoomControl:true}).setView([36.5,127.8],7);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map);
+  normalLayer   = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19});
+  satelliteLayer= L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:19});
+  normalLayer.addTo(map);
   clusterGroup=L.markerClusterGroup({maxClusterRadius:60,showCoverageOnHover:false,
     iconCreateFunction:function(cluster){
       const n=cluster.getChildCount();
@@ -1050,6 +1117,7 @@ async function doSearch(){
   buildBname();applyBname();
   document.getElementById('mapInitState').style.display='none';
   document.getElementById('areaCtrl').style.display='flex';
+  document.getElementById('streetviewCtrl').style.display='flex';
   document.getElementById('areaBtnDraw').textContent='📐 구역 선택';
   // 지도 중심 이동
   const ctr=SG_CENTER[lawd];
