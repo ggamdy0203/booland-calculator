@@ -580,6 +580,7 @@ let curPage=1;
 const PAGE=50;
 let unitMode='m2'; // 'm2' | 'py'
 let map, clusterGroup;
+let normalLayer, satelliteLayer; // 지도 레이어 (IIFE 전에 선언 필수 — let TDZ 방지)
 let geocodeCache={}; // dong → {lat,lng}
 let selectedLawd='', selectedSido='';
 // ── 구역 선택 필터 (복수 구역) ──
@@ -645,8 +646,6 @@ function toggleKeyInput(type){
 }
 
 /* ══ 지도 레이어 ══ */
-let normalLayer, satelliteLayer;
-
 function setMapLayer(mode) {
   if (mode === 'satellite') {
     if (!map.hasLayer(satelliteLayer)) { map.addLayer(satelliteLayer); }
