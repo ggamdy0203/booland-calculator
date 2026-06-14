@@ -3322,79 +3322,87 @@ function exportExcel() {
   const fname  = (caseNo ? caseNo + '_' : '') + addr;
   const today  = new Date().toLocaleDateString('ko-KR');
 
-  const NAVY='1E3A5F', BL='2563EB', BL_L='DBEAFE', BL_BG='EFF6FF';
-  const GD='B45309', GD_BG='FFFBEB', GD_BD='FCD34D', GD_HBG='FEF3C7';
-  const GY='64748B', GY_L='F8FAFF', GY_BD='E2E8F0';
-  const WH='FFFFFF', TXT='1E293B', GR='065F46', RD='991B1B', SP='F1F5F9';
+  // ── 색상 팔레트 ──────────────────────────────
+  const NAVY='0D1F3C';                                     // 헤더 진네이비
+  const BL='1D4ED8', BL_L='93C5FD', BL_BG='BFDBFE';      // 파란계열
+  const GD='92400E', GD_BG='FEF3C7', GD_BD='F59E0B', GD_HBG='FDE68A';  // 금색계열
+  const GY='334155', GY_BD='CBD5E1';                       // 회색계열
+  const LBL_BG='DBEAFE';                                   // 라벨 배경 (연파랑)
+  const CAL_BG='EFF6FF';                                   // 계산값 배경
+  const WH='FFFFFF', TXT='0F172A', GR='065F46', RD='991B1B', SP='CBD5E1';
 
   const b   = (rgb) => ({ style:'thin', color:{rgb} });
   const brd = (c=GY_BD) => ({ top:b(c), bottom:b(c), left:b(c), right:b(c) });
+  const nb  = (rgb) => ({ style:'medium', color:{rgb} });  // medium border for emphasis
+  const nv  = {v:'',t:'s',s:{fill:{patternType:'solid',fgColor:{rgb:NAVY}}}};  // navy filler
 
+  // ── 스타일 정의 ──────────────────────────────
   const S = {
-    hdrL: { font:{bold:true,sz:13,color:{rgb:WH},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:NAVY}}, alignment:{horizontal:'left',vertical:'center',indent:1} },
-    hdrR: { font:{sz:9,color:{rgb:'BFDBFE'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:NAVY}}, alignment:{horizontal:'right',vertical:'center'} },
-    sec:  { font:{bold:true,sz:10,color:{rgb:WH},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:BL}}, alignment:{horizontal:'left',vertical:'center',indent:1}, border:brd(BL) },
-    secG: { font:{bold:true,sz:10,color:{rgb:WH},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:'92400E'}}, alignment:{horizontal:'left',vertical:'center',indent:1}, border:brd('92400E') },
-    lbl:  { font:{sz:9,color:{rgb:GY},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:GY_L}}, alignment:{horizontal:'left',vertical:'center',indent:1}, border:brd() },
+    hdrL: { font:{bold:true,sz:14,color:{rgb:WH},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:NAVY}}, alignment:{horizontal:'left',vertical:'center',indent:1} },
+    hdrS: { font:{sz:9,color:{rgb:'93C5FD'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:NAVY}}, alignment:{horizontal:'left',vertical:'center',indent:2} },
+    hdrR: { font:{sz:9,color:{rgb:'93C5FD'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:NAVY}}, alignment:{horizontal:'right',vertical:'center'} },
+    sec:  { font:{bold:true,sz:10,color:{rgb:WH},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:BL}}, alignment:{horizontal:'left',vertical:'center',indent:1}, border:{top:nb(BL),bottom:nb(BL),left:nb(BL),right:nb(BL)} },
+    secG: { font:{bold:true,sz:10,color:{rgb:WH},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:GD}}, alignment:{horizontal:'left',vertical:'center',indent:1}, border:{top:nb(GD),bottom:nb(GD),left:nb(GD),right:nb(GD)} },
+    lbl:  { font:{sz:9,color:{rgb:GY},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:LBL_BG}}, alignment:{horizontal:'left',vertical:'center',indent:1}, border:brd() },
     val:  { font:{sz:9,color:{rgb:TXT},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:WH}}, alignment:{horizontal:'right',vertical:'center'}, border:brd() },
     valL: { font:{sz:9,color:{rgb:TXT},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:WH}}, alignment:{horizontal:'left',vertical:'center',indent:1}, border:brd() },
-    valB: { font:{bold:true,sz:9,color:{rgb:BL},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:BL_BG}}, alignment:{horizontal:'right',vertical:'center'}, border:brd(BL_L) },
-    valC: { font:{sz:9,color:{rgb:'475569'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:'F0F4F8'}}, alignment:{horizontal:'right',vertical:'center'}, border:brd() },
+    valB: { font:{bold:true,sz:9,color:{rgb:'1E40AF'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:BL_BG}}, alignment:{horizontal:'right',vertical:'center'}, border:{top:b(BL_L),bottom:b(BL_L),left:b(BL_L),right:b(BL_L)} },
+    valC: { font:{sz:9,color:{rgb:'475569'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:CAL_BG}}, alignment:{horizontal:'right',vertical:'center'}, border:brd() },
     note: { font:{sz:8,italic:true,color:{rgb:'94A3B8'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:WH}}, alignment:{horizontal:'left',vertical:'center'}, border:brd() },
-    kLbl: { font:{bold:true,sz:9,color:{rgb:'92400E'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:GD_BG}}, alignment:{horizontal:'left',vertical:'center',indent:1}, border:brd(GD_BD) },
-    kVal: { font:{bold:true,sz:10,color:{rgb:GD},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:GD_BG}}, alignment:{horizontal:'right',vertical:'center'}, border:brd(GD_BD) },
-    rLbl: { font:{bold:true,sz:9,color:{rgb:'92400E'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:GD_HBG}}, alignment:{horizontal:'left',vertical:'center',indent:1}, border:brd(GD_BD) },
-    rVal: { font:{bold:true,sz:15,color:{rgb:GD},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:GD_HBG}}, alignment:{horizontal:'center',vertical:'center'}, border:brd(GD_BD) },
-    pVal: { font:{bold:true,sz:10,color:{rgb:GR},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:'ECFDF5'}}, alignment:{horizontal:'right',vertical:'center'}, border:brd('6EE7B7') },
-    lVal: { font:{bold:true,sz:10,color:{rgb:RD},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:'FEF2F2'}}, alignment:{horizontal:'right',vertical:'center'}, border:brd('FCA5A5') },
+    kLbl: { font:{bold:true,sz:9,color:{rgb:'78350F'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:GD_BG}}, alignment:{horizontal:'left',vertical:'center',indent:1}, border:brd(GD_BD) },
+    kVal: { font:{bold:true,sz:10,color:{rgb:GD},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:'FFFBEB'}}, alignment:{horizontal:'right',vertical:'center'}, border:brd(GD_BD) },
+    rLbl: { font:{bold:true,sz:10,color:{rgb:'78350F'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:GD_HBG}}, alignment:{horizontal:'left',vertical:'center',indent:1}, border:{top:b(GD_BD),bottom:b(GD_BD),left:b(GD_BD),right:b(GD_BD)} },
+    rVal: { font:{bold:true,sz:16,color:{rgb:GD},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:GD_HBG}}, alignment:{horizontal:'center',vertical:'center'}, border:{top:b(GD_BD),bottom:b(GD_BD),left:b(GD_BD),right:b(GD_BD)} },
+    pVal: { font:{bold:true,sz:10,color:{rgb:'065F46'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:'D1FAE5'}}, alignment:{horizontal:'right',vertical:'center'}, border:brd('34D399') },
+    lVal: { font:{bold:true,sz:10,color:{rgb:'7F1D1D'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:'FEE2E2'}}, alignment:{horizontal:'right',vertical:'center'}, border:brd('FCA5A5') },
     sp:   { fill:{patternType:'solid',fgColor:{rgb:SP}} },
-    eg:   { fill:{patternType:'solid',fgColor:{rgb:GD_BG}}, border:brd(GD_BD) },
-    ft:   { font:{sz:8,italic:true,color:{rgb:'92400E'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:GD_HBG}}, alignment:{horizontal:'left',vertical:'center'} },
+    eg:   { fill:{patternType:'solid',fgColor:{rgb:GD_HBG}}, border:brd(GD_BD) },
+    ft:   { font:{sz:8,italic:true,color:{rgb:'78350F'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:GD_BG}}, alignment:{horizontal:'left',vertical:'center'} },
   };
 
-  const sc = (v,s) => ({v:String(v??''),t:'s',s});
-  const nc = (v,s,z='#,##0') => ({v:Math.round(v||0),t:'n',z,s});
-  const ec = () => ({v:'',t:'s',s:{fill:{patternType:'solid',fgColor:{rgb:WH}}}});
-  const gc = () => ({v:'',t:'s',s:S.sp});
-  const eg = () => ({v:'',t:'s',s:S.eg});
+  // ── 셀 생성 헬퍼 ─────────────────────────────
+  const FMT = '#,##0;(#,##0);-';  // 음수 괄호, 0은 대시
+  const sc  = (v,s) => ({v:String(v??''),t:'s',s});
+  const nc  = (v,s) => ({v:Math.round(v||0),t:'n',z:FMT,s});
+  const ec  = () => ({v:'',t:'s',s:{fill:{patternType:'solid',fgColor:{rgb:WH}}}});
+  const gc  = () => ({v:'',t:'s',s:S.sp});
+  const eg  = () => ({v:'',t:'s',s:S.eg});
 
+  // ── 워크시트 빌더 ─────────────────────────────
   const ws = {}; const merges = []; let ri = 0;
-  // 9 cols: A(0)=col1lbl  B(1)=col1val  C(2)=spacer
-  //         D(3)=col2lbl  E(4)=col2val  F(5)=col2note  G(6)=spacer
-  //         H(7)=col3lbl  I(8)=col3val
   const CL = ['A','B','C','D','E','F','G','H','I'];
   const setC = (ci,row,c) => { ws[CL[ci]+(row+1)]=c; };
   const setR = (cells) => { for(let i=0;i<9;i++) setC(i,ri,cells[i]||ec()); ri++; };
   const mg   = (c1,c2) => merges.push({s:{r:ri,c:c1},e:{r:ri,c:c2}});
 
-  // ── HEADER ──
+  // ── 헤더 ─────────────────────────────────────
   mg(0,8);
-  setR([sc('🏠  부랜드  Booland Calculator — 경매 투자 수익률 분석 결과',S.hdrL),...Array(8).fill(ec())]);
+  setR([sc('🏠  부랜드  Booland Calculator — 경매 투자 수익률 분석 결과',S.hdrL),nv,nv,nv,nv,nv,nv,nv,nv]);
   mg(0,5); mg(6,8);
-  setR([sc('  '+(caseNo||'')+(addr!=='미입력'?'   '+addr:''),S.hdrL),...Array(5).fill(ec()),sc('분석일: '+today,S.hdrR),ec(),ec()]);
+  setR([sc('  '+(caseNo||'')+(addr!=='미입력'?'   '+addr:''),S.hdrS),nv,nv,nv,nv,nv,sc('분석일: '+today,S.hdrR),nv,nv]);
   setR(Array(9).fill(gc()));
 
-  // ── TOP SECTION HEADERS ──
+  // ── 상단 섹션 헤더 ───────────────────────────
   mg(0,1); mg(3,5); mg(7,8);
   setR([sc('📋  물건 정보',S.sec),ec(),gc(),sc('💰  낙찰가 & 초기 투자비',S.sec),ec(),ec(),gc(),sc('🏛  취득세 & 기타 비용',S.sec),ec()]);
 
-  // Computed values for top section
+  // 계산값
   const lr  = +($('loanRatio').value||0.8);
   const alr = +($('appraisalLoanRatio').value||0.6);
   const bidRatio = parseVal('appraised')>0 ? (parseVal('bidPrice')/parseVal('appraised')*100).toFixed(1)+'%' : '-';
-  const loanBasisNote = v.loan===v.loanByBid ? '낙찰가 기준 적용' : '감정가 기준 적용';
+  const loanBasisNote = v.loan===v.loanByBid ? '낙찰가 기준' : '감정가 기준';
   const saTxt = $('smallArea').value==='Y' ? '85㎡ 이하 (농특세 면제)' : '85㎡ 초과';
   const memo  = $('memo').value.trim();
   const depPct = (parseFloat($('depositRatio').value||0.1)*100).toFixed(0)+'%';
 
-  // TOP data rows: [c1lbl,c1val, c2lbl,c2val,c2note, c3lbl,c3val]
+  // TOP 데이터: [c1라벨, c1값, c2라벨, c2값, c2비고, c3라벨, c3값]
   const TOP = [
-    [sc('사건번호',S.lbl),sc(caseNo||'-',S.valL), sc('감정가',S.lbl),nc(parseVal('appraised'),S.valB),sc('감정평가 금액',S.note), sc('주택 보유수',S.lbl),sc($('houseCount').options[$('houseCount').selectedIndex].text,S.valL)],
-    [sc('물건 주소',S.lbl),sc(addr,S.valL), sc('최저 입찰가',S.lbl),nc(parseVal('minBid'),S.val),sc('법원 공고 최저가',S.note), sc('취득세 ('+(v.acqRate*100).toFixed(2)+'%)',S.lbl),nc(v.acqTax,S.val)],
-    [sc('물건 종류',S.lbl),sc($('propType').value,S.valL), sc('낙찰가 ★',S.lbl),nc(parseVal('bidPrice'),S.valB),sc('← 직접 입력 ('+bidRatio+')',S.note), sc('농어초특별세 ('+(v.ruralRate*100).toFixed(1)+'%)',S.lbl),nc(v.ruralTax,S.val)],
-    [sc('전용면적',S.lbl),sc(saTxt,S.valL), sc('낙찰가 기준 비율',S.lbl),sc((lr*100).toFixed(0)+'%',S.val),ec(), sc('지방교육세 ('+(v.eduRate*100).toFixed(2)+'%)',S.lbl),nc(v.eduTax,S.val)],
-    [sc('입찰일',S.lbl),sc($('bidDate').value||'-',S.valL), sc('감정가 기준 비율',S.lbl),sc((alr*100).toFixed(0)+'%',S.val),ec(), sc('법무비 (등기)',S.lbl),nc(parseVal('legalFee'),S.val)],
-    [sc('특이사항',S.lbl),sc(memo||'-',{...S.valL,alignment:{horizontal:'left',vertical:'center',indent:1,wrapText:true}}), sc('선순위 보증금 (방빗기)',S.lbl),nc(parseVal('seniorDeposit'),S.val),ec(), sc('세금 합계',S.lbl),nc(v.taxTotal,S.valB)],
+    [sc('사건번호',S.lbl),sc(caseNo||'-',S.valL), sc('감정가',S.lbl),nc(parseVal('appraised'),S.valB),sc('감정평가액',S.note), sc('주택 보유수',S.lbl),sc($('houseCount').options[$('houseCount').selectedIndex].text,S.valL)],
+    [sc('물건 주소',S.lbl),sc(addr,{...S.valL,font:{sz:8,color:{rgb:TXT},name:'Malgun Gothic'}}), sc('최저 입찰가',S.lbl),nc(parseVal('minBid'),S.val),sc('법원 공고',S.note), sc('취득세 ('+(v.acqRate*100).toFixed(2)+'%)',S.lbl),nc(v.acqTax,S.val)],
+    [sc('물건 종류',S.lbl),sc($('propType').value,S.valL), sc('낙찰가 ★',S.lbl),nc(parseVal('bidPrice'),S.valB),sc('직접 입력 ('+bidRatio+')',S.note), sc('농어촌특별세 ('+(v.ruralRate*100).toFixed(1)+'%)',S.lbl),nc(v.ruralTax,S.val)],
+    [sc('전용면적',S.lbl),sc(saTxt,{...S.valL,font:{sz:8,color:{rgb:TXT},name:'Malgun Gothic'}}), sc('낙찰가 기준 비율',S.lbl),sc((lr*100).toFixed(0)+'%',S.valC),ec(), sc('지방교육세 ('+(v.eduRate*100).toFixed(2)+'%)',S.lbl),nc(v.eduTax,S.val)],
+    [sc('입찰일',S.lbl),sc($('bidDate').value||'-',S.valL), sc('감정가 기준 비율',S.lbl),sc((alr*100).toFixed(0)+'%',S.valC),ec(), sc('법무비 (등기)',S.lbl),nc(parseVal('legalFee'),S.val)],
+    [sc('특이사항',S.lbl),sc(memo||'-',{...S.valL,font:{sz:8,color:{rgb:TXT},name:'Malgun Gothic'},alignment:{horizontal:'left',vertical:'center',indent:1,wrapText:true}}), sc('선순위 보증금 (방빼기)',S.lbl),nc(parseVal('seniorDeposit'),S.val),ec(), sc('세금 합계',S.lbl),nc(v.taxTotal,S.valB)],
     [ec(),ec(), sc('낙찰가 기준 한도',S.lbl),nc(v.loanByBid,S.valC),ec(), sc('수리비용',S.lbl),nc(parseVal('repairFee'),S.val)],
     [ec(),ec(), sc('감정가 기준 한도',S.lbl),nc(v.loanByAppraisal,S.valC),ec(), sc('명도비용',S.lbl),nc(parseVal('evictFee'),S.val)],
     [ec(),ec(), sc('실제 대출금 ★',S.lbl),nc(v.loan,S.valB),sc(loanBasisNote,S.note), sc('기타예비비',S.lbl),nc(parseVal('extraFee'),S.val)],
@@ -3406,47 +3414,55 @@ function exportExcel() {
 
   setR(Array(9).fill(gc()));
 
-  // ── BOTTOM SECTION HEADERS ──
+  // ── 하단 섹션 헤더 ───────────────────────────
   mg(0,1); mg(3,5); mg(7,8);
   setR([sc('🏡  임대 수입 (선택)',S.sec),ec(),gc(),sc('📈  매도 수익 분석',S.sec),ec(),ec(),gc(),sc('🚀  핵심 결과',S.secG),ec()]);
 
-  const cgM   = $('capGainMethod')?.value||'auto';
-  const mMap  = {auto:'누진세율 자동(6~45%)','0.7':'70% 단기','0.6':'60% 단기','0.2':'20% 매매사업자',corp_house:'법인-주택',corp_other:'법인-비주택',custom:'직접입력 '+($('customCapGainRate')?.value||'20')+'%'};
-  const aMode = $('agentFeeMode')?.value==='manual'?'직접 입력':'자동 (요율)';
+  const cgM  = $('capGainMethod')?.value||'auto';
+  const mMap = {auto:'누진세율(6~45%)','0.7':'70% 단기','0.6':'60% 단기','0.2':'20% 매매사업자',corp_house:'법인-주택',corp_other:'법인-비주택',custom:'직입 '+($('customCapGainRate')?.value||'20')+'%'};
+  const aMode = $('agentFeeMode')?.value==='manual'?'직접 입력':'자동(요율)';
   const nStyl = v.netProfit>=0?S.pVal:S.lVal;
-  const egNote = (t) => sc(t,{...S.note,fill:{patternType:'solid',fgColor:{rgb:GD_HBG}},alignment:{horizontal:'center',vertical:'center'},border:brd(GD_BD)});
+  const egN = (t) => sc(t,{font:{sz:9,bold:true,color:{rgb:'78350F'},name:'Malgun Gothic'},fill:{patternType:'solid',fgColor:{rgb:GD_HBG}},alignment:{horizontal:'center',vertical:'center'},border:brd(GD_BD)});
 
-  // BOTTOM data rows
+  // BOTTOM 데이터
   const BOT = [
-    [sc('대출 금리 (연)',S.lbl),sc($('loanRate').value+'%',S.val), sc('예상 매도가 ★',S.lbl),nc(parseVal('salePrice'),S.valB),ec(), sc('총 자기자본 투자금',S.kLbl),nc(v.equity,S.kVal)],
+    [sc('대출 금리 (연)',S.lbl),sc($('loanRate').value+'%',S.valC), sc('예상 매도가 ★',S.lbl),nc(parseVal('salePrice'),S.valB),ec(), sc('총 자기자본 투자금',S.kLbl),nc(v.equity,S.kVal)],
     [sc('월 대출이자',S.lbl),nc(v.monthlyLoanInterest,S.valC), sc('보유 기간',S.lbl),sc($('holdMonth').options[$('holdMonth').selectedIndex].text,S.valL),ec(), sc('양도 차익',S.kLbl),nc(v.capGain,S.kVal)],
-    [sc('전세 / 보증금',S.lbl),nc(parseVal('jeonse'),S.valB), sc('대출 금리 (연)',S.lbl),sc($('loanRate').value+'%',S.val),ec(), sc('순 이익 (세후)',S.kLbl),nc(v.netProfit,nStyl)],
-    [sc('월 임대료',S.lbl),nc(parseVal('monthlyRent'),S.valB), sc('중도 상환 수수료율',S.lbl),sc($('prepayRate').value+'%',S.val),ec(), sc('임대 수입 (보유기간)',S.kLbl),nc(v.holdRent,S.kVal)],
-    [sc('연 임대 수입',S.lbl),nc(v.annualRent,S.valC), sc('양도소득세 방식',S.lbl),sc(mMap[cgM]||'-',S.valL),ec(), sc('자기자본 수익률 (ROE)',S.rLbl),sc(v.roe.toFixed(1)+'%',S.rVal)],
-    [sc('임대 수익률',S.lbl),sc(v.rentYield.toFixed(2)+'%',S.valC), sc('기본공제',S.lbl),sc(v.capGainBasicDed>0?'250만원 자동':'없음',S.valL),ec(), eg(),egNote('연환산: '+v.roe.toFixed(1)+'%/년')],
-    [sc('월 순수익 ★',S.lbl),nc(v.monthlyNet,v.monthlyNet>=0?S.valB:{...S.valB,font:{bold:true,sz:9,color:{rgb:RD},name:'Malgun Gothic'}}), sc('매도 중개보수 방식',S.lbl),sc(aMode,S.valL),ec(), sc('연환산 수익률 (ROE/년)',S.rLbl),sc(v.roeAnn.toFixed(1)+'%/년',S.rVal)],
-    [sc('임대사업용 실투자금 ★',S.lbl),nc(v.realInvest,S.valB), sc('매도 중개보수율',S.lbl),sc((v.agentR*100).toFixed(2)+'%',S.val),ec(), eg(),egNote('총 수익: '+v.netProfit.toLocaleString('ko-KR')+'원')],
-    [sc('임대수입 연ROE ★',S.lbl),sc(v.rentRoeAnn!=null?v.rentRoeAnn.toFixed(1)+'%':'-',S.valC), sc('대출 이자 합계',S.lbl),nc(v.loanInterest,S.valC),ec(), sc('낙찰가 / 감정가 비율',S.kLbl),sc(bidRatio,{...S.kVal,alignment:{horizontal:'center',vertical:'center'}})],
-    [ec(),ec(), sc('양도소득세 (추정)',S.lbl),nc(v.capGainTax,S.valC),ec(), eg(),egNote('감정가 '+parseVal('appraised').toLocaleString('ko-KR')+'원 대비')],
+    [sc('전세 / 보증금',S.lbl),nc(parseVal('jeonse'),S.valB), sc('대출 금리 (연)',S.lbl),sc($('loanRate').value+'%',S.valC),ec(), sc('순 이익 (세후)',S.kLbl),nc(v.netProfit,nStyl)],
+    [sc('월 임대료',S.lbl),nc(parseVal('monthlyRent'),S.valB), sc('중도 상환 수수료율',S.lbl),sc($('prepayRate').value+'%',S.valC),ec(), sc('임대 수입 (보유기간)',S.kLbl),nc(v.holdRent,S.kVal)],
+    [sc('연 임대 수입',S.lbl),nc(v.annualRent,S.valC), sc('양도소득세 방식',S.lbl),sc(mMap[cgM]||'-',S.valL),ec(), sc('자기자본 수익률(ROE)',S.rLbl),sc(v.roe.toFixed(1)+'%',S.rVal)],
+    [sc('임대 수익률',S.lbl),sc(v.rentYield.toFixed(2)+'%',S.valC), sc('기본공제',S.lbl),sc(v.capGainBasicDed>0?'250만원 자동':'없음',S.valL),ec(), eg(),egN('≈ 연환산 기준')],
+    [sc('월 순수익 ★',S.lbl),nc(v.monthlyNet,v.monthlyNet>=0?S.valB:{...S.valB,font:{bold:true,sz:9,color:{rgb:RD},name:'Malgun Gothic'},fill:{patternType:'solid',fgColor:{rgb:'FEE2E2'}},border:brd('FCA5A5')}), sc('매도 중개보수 방식',S.lbl),sc(aMode,S.valL),ec(), sc('연환산 수익률(ROE/년)',S.rLbl),sc(v.roeAnn.toFixed(1)+'%/년',S.rVal)],
+    [sc('임대사업용 실투자금 ★',S.lbl),nc(v.realInvest,S.valB), sc('매도 중개보수율',S.lbl),sc((v.agentR*100).toFixed(2)+'%',S.valC),ec(), eg(),egN('총수익 '+Math.round((v.netProfit||0)/10000).toLocaleString()+'만원')],
+    [sc('임대수입 연ROE ★',S.lbl),sc(v.rentRoeAnn!=null?v.rentRoeAnn.toFixed(1)+'%':'-',S.valC), sc('대출 이자 합계',S.lbl),nc(v.loanInterest,S.valC),ec(), sc('낙찰가 / 감정가',S.kLbl),sc(bidRatio,{...S.kVal,alignment:{horizontal:'center',vertical:'center'}})],
+    [ec(),ec(), sc('양도소득세 (추정)',S.lbl),nc(v.capGainTax,S.valC),ec(), eg(),egN('감정가 대비 비율')],
     [ec(),ec(), sc('중도 상환 수수료',S.lbl),nc(v.prepayFee,S.valC),ec(), eg(),eg()],
     [ec(),ec(), sc('매도 중개보수',S.lbl),nc(v.agentFee,S.valC),ec(), eg(),eg()],
     [ec(),ec(), sc('매도 비용 합계',S.lbl),nc(v.saleExpTotal,S.valB),ec(), eg(),eg()],
   ];
   BOT.forEach(r => setR([r[0],r[1],gc(),r[2],r[3],r[4]||ec(),gc(),r[5],r[6]]));
 
-  // ── FOOTER ──
-  const cgNote={auto:'누진세율 자동(6~45%, 기본공제 250만원)','0.7':'70% 단기(1년 미만)','0.6':'60% 단기(2년 미만)','0.2':'20% 매매사업자',custom:'직접입력 '+($('customCapGainRate')?.value||'20')+'%'};
+  // ── 푸터 ─────────────────────────────────────
+  const cgNote={auto:'누진세율(6~45%, 기본공제 250만원)','0.7':'70% 단기(1년 미만)','0.6':'60% 단기(2년 미만)','0.2':'20% 매매사업자',custom:'직접입력 '+($('customCapGainRate')?.value||'20')+'%'};
+  const ftFill = {v:'',t:'s',s:S.ft};
   mg(0,8);
-  setR([sc('※ 양도소득세: '+(cgNote[cgM]||'-')+'.  실제 세금은 세무사 확인 필요.    파란색 셀 직접입력   회색 셀 자동계산   금색 카드 핵심결과',S.ft),...Array(8).fill(ec())]);
+  setR([sc('※ 양도소득세: '+(cgNote[cgM]||'-')+'.  실제 세금은 세무사 확인이 필요합니다.    🔵 파란 셀 직접입력   ⬜ 회색 셀 자동계산   🟡 금색 카드 핵심결과',S.ft),ftFill,ftFill,ftFill,ftFill,ftFill,ftFill,ftFill,ftFill]);
 
-  // ── WORKSHEET SETTINGS ──
-  ws['!ref']  = 'A1:I'+ri;
+  // ── 워크시트 마무리 ──────────────────────────
+  ws['!ref'] = 'A1:I'+ri;
   ws['!merges'] = merges;
-  ws['!cols'] = [{wch:19},{wch:14},{wch:0.5},{wch:21},{wch:14},{wch:12},{wch:0.5},{wch:18},{wch:13}];
-  ws['!rows'] = Array.from({length:ri},(_,i)=>i===0?{hpt:28}:i===1?{hpt:13}:i===2?{hpt:4}:{hpt:16});
+  ws['!cols'] = [{wch:20},{wch:14},{wch:1.2},{wch:22},{wch:13},{wch:11},{wch:1.2},{wch:20},{wch:14}];
+  ws['!rows'] = Array.from({length:ri},(_,i)=>{
+    if(i===0) return {hpt:32};
+    if(i===1) return {hpt:15};
+    if(i===2||i===16) return {hpt:7};
+    if(i===3||i===17) return {hpt:22};
+    if(i===ri-1) return {hpt:17};
+    return {hpt:18};
+  });
   ws['!pageSetup']  = {orientation:'landscape',paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:1};
   ws['!printOptions'] = {gridLines:false};
-  ws['!margins'] = {left:0.4,right:0.4,top:0.4,bottom:0.3,header:0.1,footer:0.1};
+  ws['!margins'] = {left:0.35,right:0.35,top:0.4,bottom:0.3,header:0.1,footer:0.1};
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '수익률분석');
