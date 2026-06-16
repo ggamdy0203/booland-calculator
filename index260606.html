@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -867,43 +867,9 @@ function onSidoChange(){
   document.getElementById('dongSel').innerHTML='<option value="">읍·면·동 전체</option>';
   if(code&&SIGUNGU_MAP[code])SIGUNGU_MAP[code].forEach(s=>sel.add(new Option(s.n,s.c)));
 }
-async function onSigunguChange(){
+function onSigunguChange(){
   selectedLawd=document.getElementById('sigunguSel').value;
-  const sel=document.getElementById('dongSel');
-  sel.innerHTML='<option value="">읍·면·동 전체</option>';
-  if(!selectedLawd||!apiKey)return;
-
-  sel.innerHTML='<option value="">불러오는 중...</option>';
-  sel.disabled=true;
-
-  const now=new Date();
-  const dongs=new Set();
-  const eps=Object.values(EP);
-  const TO=ms=>new Promise(r=>setTimeout(r,ms));
-  const requests=[];
-  for(let i=0;i<3;i++){
-    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
-    const ym=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0');
-    for(const ep of eps){
-      requests.push(
-        Promise.race([
-          fetchPage(ep,selectedLawd,ym,1)
-            .then(({items})=>items.forEach(item=>{const v=(item.umdNm||'').toString().trim();if(v)dongs.add(v);})),
-          TO(7000)
-        ]).catch(()=>{})
-      );
-    }
-  }
-  await Promise.all(requests);
-
-  const dongList=[...dongs].sort((a,b)=>a.localeCompare(b,'ko'));
-  sel.innerHTML='<option value="">읍·면·동 전체</option>';
-  if(dongList.length===0){
-    const o=document.createElement('option');o.disabled=true;
-    o.textContent='거래 없음 (검색 후 확인)';sel.add(o);
-  }
-  dongList.forEach(d=>sel.add(new Option(d,d)));
-  sel.disabled=false;
+  document.getElementById('dongSel').innerHTML='<option value="">읍·면·동 전체</option>';
 }
 function onDongChange(){
   if(allRows.length>0)applyBname();
@@ -1566,3 +1532,4 @@ function dlExcel(){
 </script>
 </body>
 </html>
+
