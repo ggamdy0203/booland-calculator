@@ -883,8 +883,10 @@ async function onSigunguChange(){
     const fetchDong=async(ep,ym)=>{
       const params=new URLSearchParams({serviceKey:apiKey,LAWD_CD:selectedLawd,DEAL_YMD:ym,pageNo:1,numOfRows:1000,_type:'json'});
       const res=await fetch(`${ep}?${params}`);
-      if(!res.ok)return[];
+      if(!res.ok){console.warn('동조회 HTTP오류',res.status,ep);return[];}
       const data=await res.json();
+      const resultCode=data?.response?.header?.resultCode;
+      if(resultCode&&resultCode!=='00'){console.warn('동조회 API오류',resultCode,data?.response?.header?.resultMsg,ep);return[];}
       const rawItems=data?.response?.body?.items;
       let items=Array.isArray(rawItems)?rawItems:(rawItems?.item??[]);
       if(!Array.isArray(items))items=items?[items]:[];
