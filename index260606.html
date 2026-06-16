@@ -867,9 +867,55 @@ function onSidoChange(){
   document.getElementById('dongSel').innerHTML='<option value="">읍·면·동 전체</option>';
   if(code&&SIGUNGU_MAP[code])SIGUNGU_MAP[code].forEach(s=>sel.add(new Option(s.n,s.c)));
 }
-function onSigunguChange(){
+async function onSigunguChange(){
   selectedLawd=document.getElementById('sigunguSel').value;
-  document.getElementById('dongSel').innerHTML='<option value="">읍·면·동 전체</option>';
+  const sel=document.getElementById('dongSel');
+  sel.innerHTML='<option value="">읍·면·동 전체</option>';
+  if(!selectedLawd||!apiKey)return;
+
+  sel.innerHTML='<option value="">불러오는 중...</option>';
+  sel.disabled=true;
+
+  try{
+    const now=new Date();
+    const dongs=new Set();
+    // 27번 동시호출 대신 아파트매매 1개 엔드포인트만, 최근 3개월 순차 조회
+    for(let i=0;i<3;i++){
+      const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+      const ym=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0');
+      try{
+        const {items}=await Promise.race([
+          fetchPage(EP.aptSale,selectedLawd,ym,1),
+          new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),10000))
+        ]);
+        items.forEach(item=>{const v=(item.umdNm||'').toString().trim();if(v)dongs.add(v);});
+        if(dongs.size>0)break; // 동이 나오면 더 이상 이전 달 조회 불필요
+      }catch(e){}
+    }
+    // 아파트에 동 없으면 연립다세대도 시도
+    if(dongs.size===0){
+      const now2=new Date();
+      const ym=now2.getFullYear()+String(now2.getMonth()+1).padStart(2,'0');
+      try{
+        const {items}=await Promise.race([
+          fetchPage(EP.villaSale,selectedLawd,ym,1),
+          new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),10000))
+        ]);
+        items.forEach(item=>{const v=(item.umdNm||'').toString().trim();if(v)dongs.add(v);});
+      }catch(e){}
+    }
+
+    const dongList=[...dongs].sort((a,b)=>a.localeCompare(b,'ko'));
+    sel.innerHTML='<option value="">읍·면·동 전체</option>';
+    if(dongList.length===0){
+      const o=document.createElement('option');o.disabled=true;
+      o.textContent='조회 후 동 목록이 채워집니다';sel.add(o);
+    }
+    dongList.forEach(d=>sel.add(new Option(d,d)));
+  }catch(e){
+    sel.innerHTML='<option value="">읍·면·동 전체</option>';
+  }
+  sel.disabled=false;
 }
 function onDongChange(){
   if(allRows.length>0)applyBname();
