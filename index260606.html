@@ -893,7 +893,7 @@ async function onSigunguChange(){
       return items;
     };
     const probeEps=[EP.offiSale,EP.villaSale,EP.shSale,EP.offiRent,EP.villaRent];
-    for(let i=0;i<3&&dongs.size===0;i++){
+    for(let i=0;i<3;i++){
       const d=new Date(now.getFullYear(),now.getMonth()-i,1);
       const ym=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0');
       const results=await Promise.allSettled(
