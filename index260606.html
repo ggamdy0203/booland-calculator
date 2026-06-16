@@ -880,15 +880,18 @@ async function onSigunguChange(){
   const dongs=new Set();
   const eps=Object.values(EP);
   // dandypark 방식: 3개월 × 6 엔드포인트 병렬 (JSON 응답 → umdNm 추출)
+  const TO=ms=>new Promise(r=>setTimeout(r,ms));  // 타임아웃 헬퍼
   const requests=[];
   for(let i=0;i<3;i++){
     const d=new Date(now.getFullYear(),now.getMonth()-i,1);
     const ym=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0');
     for(const ep of eps){
       requests.push(
-        fetchPage(ep,selectedLawd,ym,1)
-          .then(({items})=>items.forEach(item=>{const v=(item.umdNm||'').toString().trim();if(v)dongs.add(v);}))
-          .catch(()=>{})
+        Promise.race([
+          fetchPage(ep,selectedLawd,ym,1)
+            .then(({items})=>items.forEach(item=>{const v=(item.umdNm||'').toString().trim();if(v)dongs.add(v);})),
+          TO(7000)  // 7초 타임아웃 — API 무응답 시 건너뜀
+        ]).catch(()=>{})
       );
     }
   }
