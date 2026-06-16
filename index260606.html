@@ -1280,24 +1280,27 @@ async function doSearch(){
   const needJeonse=dtypes.includes('jeonse'), needMonthly=dtypes.includes('monthly');
 
   let done=0;
-  const TO15=ms=>new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms));
-  await Promise.all(tasks.map(async t=>{
-    try{
-      const items=await Promise.race([fetchAll(EP[t.ep],lawd,t.ym),TO15(15000)]);
-      items.forEach(item=>{
-        const row=parseRow(item,t.btype,t.dtype,t.ym);
-        if(row.dtype==='전세'&&!needJeonse)return;
-        if(row.dtype==='월세'&&!needMonthly)return;
-        if(aMin>0&&row.area>0&&row.area<aMin)return;
-        if(ax<Infinity&&row.area>0&&row.area>aMax)return;
-        const by=parseInt(row.buildYear)||0;
-        if(by&&bFrom&&by<bFrom)return;
-        if(by&&bTo<9999&&by>bTo)return;
-        allRows.push(row);
-      });
-    }catch(e){console.warn(t.ep,t.ym,e.message);}
-    done++;updateProg(done,tasks.length);
-  }));
+  const BATCH=4;
+  const TO=ms=>new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms));
+  for(let i=0;i<tasks.length;i+=BATCH){
+    await Promise.all(tasks.slice(i,i+BATCH).map(async t=>{
+      try{
+        const items=await Promise.race([fetchAll(EP[t.ep],lawd,t.ym),TO(25000)]);
+        items.forEach(item=>{
+          const row=parseRow(item,t.btype,t.dtype,t.ym);
+          if(row.dtype==='전세'&&!needJeonse)return;
+          if(row.dtype==='월세'&&!needMonthly)return;
+          if(aMin>0&&row.area>0&&row.area<aMin)return;
+          if(ax<Infinity&&row.area>0&&row.area>aMax)return;
+          const by=parseInt(row.buildYear)||0;
+          if(by&&bFrom&&by<bFrom)return;
+          if(by&&bTo<9999&&by>bTo)return;
+          allRows.push(row);
+        });
+      }catch(e){console.warn(t.ep,t.ym,e.message);}
+      done++;updateProg(done,tasks.length);
+    }));
+  }
 
   setLoading(false,tasks.length);
   populateDongs();
