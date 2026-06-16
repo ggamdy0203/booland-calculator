@@ -1004,7 +1004,6 @@ function parseRow(raw,btype,dtype,ym){
     dealY:(raw.dealYear||'').toString().trim(),
     dealM:(raw.dealMonth||'').toString().trim(),
     dealD:(raw.dealDay||'').toString().trim(),
-    dealingGbn:(raw.dealingGbn||'').toString().trim(),
     price:dtype==='sale'?pPrice(raw.dealAmount):null,
     deposit:dtype==='rent'?pPrice(raw.deposit):null,
     monthly:dtype==='rent'?rawMonthly:null,
@@ -1327,17 +1326,14 @@ function renderMap(){
         fmtP(r.deposit)+(r.monthly>0?'/'+r.monthly+'만':'');
       const date=`${r.dealY}.${String(r.dealM).padStart(2,'0')}.${String(r.dealD).padStart(2,'0')}`;
       const typeColor=r.dtype==='매매'?'#15803d':r.dtype==='전세'?'#d97706':'#dc2626';
+      // 동 번호 추출 (예: "101동")
       const dongNum=multiDong?(r.name.match(/\d+동$/)?.[0]||''):'';
-      const dgBadge=r.dealingGbn==='직거래'
-        ?'<span style="color:#c2410c;font-size:9px;font-weight:700;"> 직</span>'
-        :r.dealingGbn==='중개거래'
-        ?'<span style="color:#0369a1;font-size:9px;"> 중개</span>':'';
       return`<tr>
         <td style="color:${typeColor};font-weight:600;">${r.dtype}${dongNum?`<span style="color:#94a3b8;font-weight:400;font-size:10px;"> ${dongNum}</span>`:''}</td>
         <td style="text-align:right;">${area}</td>
         <td style="text-align:center;">${floorTxt}</td>
         <td style="text-align:right;font-weight:600;">${price}</td>
-        <td style="color:#94a3b8;white-space:nowrap;">${date}${dgBadge}</td>
+        <td style="color:#94a3b8;">${date}</td>
       </tr>`;
     }).join('');
 
@@ -1426,11 +1422,6 @@ function makeSummary(){
 /* ══ 테이블 ══ */
 const COLS=[
   {k:'dealDate',l:'거래일',f:r=>`${r.dealY}.${r.dealM}.${r.dealD}`},
-  {k:'dealingGbn',l:'거래방식',f:r=>r.dealingGbn==='직거래'
-    ?'<span style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;padding:1px 5px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap;">직거래</span>'
-    :r.dealingGbn==='중개거래'
-    ?'<span style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:1px 5px;border-radius:4px;font-size:10px;white-space:nowrap;">중개</span>'
-    :'-'},
   {k:'btype',l:'건물유형',f:r=>`<span class="tag ${r.btype==='아파트'?'tag-apt':r.btype==='오피스텔'?'tag-offi':r.btype==='단독/다가구'?'tag-sh':r.btype==='상가'?'tag-comm':'tag-villa'}">${r.btype}</span>`},
   {k:'dtype',l:'거래유형',f:r=>`<span class="tag ${r.dtype==='매매'?'tag-sale':r.dtype==='전세'?'tag-jeonse':'tag-monthly'}">${r.dtype}</span>`},
   {k:'name',l:'건물명',f:r=>r.name},
@@ -1439,10 +1430,10 @@ const COLS=[
   {k:'area',l:'전용(㎡)',f:r=>r.area?r.area.toFixed(1):'-'},
   {k:'areaPy',l:'전용(평)',f:r=>r.area?(r.area/3.305).toFixed(1):'-'},
   {k:'floor',l:'층',f:r=>r.floor||'-'},
-  {k:'buildYear',l:'건축',f:r=>r.buildYear||'-'},
+  {k:'buildYear',l:'건축년도',f:r=>r.buildYear||'-'},
   {k:'price',l:'매매금액',f:r=>r.price!=null?fmtP(r.price):'-'},
   {k:'deposit',l:'보증금',f:r=>r.deposit!=null?fmtP(r.deposit):'-'},
-  {k:'monthly',l:'월세',f:r=>r.monthly!=null&&r.monthly>0?r.monthly.toLocaleString():'-'},
+  {k:'monthly',l:'월세(만)',f:r=>r.monthly!=null&&r.monthly>0?r.monthly.toLocaleString():'-'},
   {k:'priceM2',l:'㎡당가격',f:r=>{const p=r.dtype==='매매'?r.price:r.deposit;return(p&&r.area)?fmtShort(p/r.area):'-';}}
 ];
 function renderTable(){
