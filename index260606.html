@@ -879,30 +879,21 @@ async function onSigunguChange(){
   try{
     const now=new Date();
     const dongs=new Set();
-    // 27번 동시호출 대신 아파트매매 1개 엔드포인트만, 최근 3개월 순차 조회
-    for(let i=0;i<3;i++){
-      const d=new Date(now.getFullYear(),now.getMonth()-i,1);
-      const ym=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0');
-      try{
-        const {items}=await Promise.race([
-          fetchPage(EP.aptSale,selectedLawd,ym,1),
-          new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),10000))
-        ]);
-        items.forEach(item=>{const v=(item.umdNm||'').toString().trim();if(v)dongs.add(v);});
-        if(dongs.size>0)break; // 동이 나오면 더 이상 이전 달 조회 불필요
-      }catch(e){}
-    }
-    // 아파트에 동 없으면 연립다세대도 시도
-    if(dongs.size===0){
-      const now2=new Date();
-      const ym=now2.getFullYear()+String(now2.getMonth()+1).padStart(2,'0');
-      try{
-        const {items}=await Promise.race([
-          fetchPage(EP.villaSale,selectedLawd,ym,1),
-          new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),10000))
-        ]);
-        items.forEach(item=>{const v=(item.umdNm||'').toString().trim();if(v)dongs.add(v);});
-      }catch(e){}
+    // 오피스텔 → 연립다세대 → 단독다가구 순서로 동 목록 조회 (동 나오면 중단)
+    const probeEps=[EP.offiSale,EP.villaSale,EP.shSale];
+    outer:for(const ep of probeEps){
+      for(let i=0;i<3;i++){
+        const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+        const ym=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0');
+        try{
+          const {items}=await Promise.race([
+            fetchPage(ep,selectedLawd,ym,1),
+            new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),10000))
+          ]);
+          items.forEach(item=>{const v=(item.umdNm||'').toString().trim();if(v)dongs.add(v);});
+          if(dongs.size>0)break outer;
+        }catch(e){}
+      }
     }
 
     const dongList=[...dongs].sort((a,b)=>a.localeCompare(b,'ko'));
