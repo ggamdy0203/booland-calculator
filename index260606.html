@@ -1281,11 +1281,10 @@ async function doSearch(){
 
   let done=0;
   const BATCH=4;
-  const TO=ms=>new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms));
   for(let i=0;i<tasks.length;i+=BATCH){
     await Promise.all(tasks.slice(i,i+BATCH).map(async t=>{
       try{
-        const items=await Promise.race([fetchAll(EP[t.ep],lawd,t.ym),TO(25000)]);
+        const items=await fetchAll(EP[t.ep],lawd,t.ym);
         items.forEach(item=>{
           const row=parseRow(item,t.btype,t.dtype,t.ym);
           if(row.dtype==='전세'&&!needJeonse)return;
