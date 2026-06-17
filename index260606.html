@@ -1280,7 +1280,7 @@ async function doSearch(){
   const needJeonse=dtypes.includes('jeonse'), needMonthly=dtypes.includes('monthly');
 
   let done=0;
-  const BATCH=4;
+  const BATCH=8;
   for(let i=0;i<tasks.length;i+=BATCH){
     await Promise.all(tasks.slice(i,i+BATCH).map(async t=>{
       try{
