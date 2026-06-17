@@ -4084,6 +4084,7 @@ function _renderSaveItem(s, folders) {
 }
 
 async function renderSavesList() {
+  const _scrollY = window.scrollY;
   const empty = $('savesEmpty'), list = $('savesList');
   if (FB_READY && !currentUser) {
     list.innerHTML = '';
@@ -4187,6 +4188,7 @@ async function renderSavesList() {
   // bulk bar: 선택 없으므로 숨김 (선택 시 updateSavesBulkBar()가 표시)
   document.getElementById('savesBulkBar')?.classList.add('hidden');
   updateSavesBulkBar();
+  requestAnimationFrame(() => window.scrollTo(0, _scrollY));
 }
 
 // ─── 수익률 분석 / 저장 분석 → 실투자 수익 연동 ──────────────────────────
