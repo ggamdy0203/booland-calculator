@@ -3762,6 +3762,7 @@ async function loadOrderFromCloud() {
 
 // ── 행 순서 드래그 (저장된 분석) ────────────────
 let _dragSaveId = null;
+let _dragSaveIds = null;     // 다중 선택 드래그 시 선택된 ID 배열
 let _dragSaveRowId = null;   // 순서변경 드래그 전용
 
 function onSaveRowDragOver(e, targetId) {
@@ -3801,7 +3802,10 @@ function onSaveRowDrop(e, targetId) {
 // ── 아이템 드래그 → 폴더 이동 ───────────────────
 function onItemDragStart(e, saveId) {
   _dragSaveId = saveId;
-  _dragSaveRowId = saveId;  // 순서변경 드래그도 함께 시작
+  _dragSaveRowId = saveId;
+  // 다중 선택 상태에서 선택된 항목을 드래그하면 전체 이동
+  _dragSaveIds = (selectedSaveIds.size > 1 && selectedSaveIds.has(saveId))
+    ? [...selectedSaveIds] : null;
   e.dataTransfer.effectAllowed = 'move';
   e.currentTarget.classList.add('dragging');
   e.currentTarget.classList.add('row-dragging');
@@ -3826,7 +3830,14 @@ function onFolderDrop(e, folderId, el) {
   e.preventDefault();
   el.classList.remove('drag-over');
   if (!_dragSaveId) return;
-  moveToFolder(_dragSaveId, folderId);
+  if (_dragSaveIds && _dragSaveIds.length > 1) {
+    selectedSaveIds.clear();
+    _dragSaveIds.forEach(id => selectedSaveIds.add(id));
+    bulkMoveToFolder(folderId);
+    _dragSaveIds = null;
+  } else {
+    moveToFolder(_dragSaveId, folderId);
+  }
   _dragSaveId = null;
 }
 
@@ -3885,6 +3896,7 @@ function moveToFolder(saveId, folderId) {
 }
 
 function showFolderMenu(saveId, btn) {
+  const isBulk = selectedSaveIds.size > 1 && selectedSaveIds.has(saveId);
   let menu = document.getElementById('folderMenu');
   if (!menu) {
     menu = document.createElement('div');
@@ -3893,9 +3905,13 @@ function showFolderMenu(saveId, btn) {
   }
   const folders = getFolders();
   const currentFolder = folders.find(f => f.itemIds.includes(saveId));
-  let html = `<div class="folder-menu-item ${!currentFolder ? 'active' : ''}" onclick="moveToFolder('${saveId}', null)">📌 폴더 없음</div>`;
+  let html = '';
+  if (isBulk) {
+    html += `<div style="padding:5px 12px;font-size:11px;font-weight:700;color:#7c3aed;border-bottom:1px solid #ede9fe;margin-bottom:2px;">${selectedSaveIds.size}개 선택됨</div>`;
+  }
+  html += `<div class="folder-menu-item ${!currentFolder && !isBulk ? 'active' : ''}" onclick="${isBulk ? "bulkMoveToFolder(null)" : `moveToFolder('${saveId}', null)`}">📌 폴더 없음</div>`;
   folders.forEach(f => {
-    html += `<div class="folder-menu-item ${currentFolder?.id === f.id ? 'active' : ''}" onclick="moveToFolder('${saveId}','${f.id}')">📁 ${f.name}</div>`;
+    html += `<div class="folder-menu-item ${!isBulk && currentFolder?.id === f.id ? 'active' : ''}" onclick="${isBulk ? `bulkMoveToFolder('${f.id}')` : `moveToFolder('${saveId}','${f.id}')`}">📁 ${f.name}</div>`;
   });
   if (folders.length === 0) html += `<div style="padding:8px 12px;font-size:11px;color:#9ca3af">폴더가 없습니다.<br>상단 [📁 새 폴더]로 만드세요.</div>`;
   menu.innerHTML = html;
