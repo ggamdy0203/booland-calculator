@@ -3536,6 +3536,8 @@ if (FB_READY) {
   firebase.initializeApp(FIREBASE_CONFIG);
   auth = firebase.auth();
   db   = firebase.firestore();
+  // 로그인 상태를 브라우저를 닫아도 영구 유지 (기본값이 SESSION인 환경 대비)
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
   auth.onAuthStateChanged(user => {
     currentUser = user;
     updateAuthUI();
