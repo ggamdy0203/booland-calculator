@@ -625,16 +625,9 @@
         <div class="form-row" style="flex-direction:column;align-items:flex-start;gap:6px;padding-bottom:8px">
           <div class="form-label">특이사항 / 메모</div>
           <textarea id="memo" placeholder="낙찰 조건, 권리관계, 세입자 현황, 기타 특이사항을 메모하세요..." style="width:100%;min-height:216px;resize:vertical;border:1.5px solid var(--border);border-radius:6px;padding:10px;font-size:12px;font-family:inherit;color:var(--text);background:var(--blue-light);line-height:1.6"></textarea>
-          <div style="display:flex;gap:6px;margin-top:8px;">
-            <button onclick="saveCurrent()" style="flex:0 0 40%;padding:10px;background:#1e40af;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              이 분석 저장
-            </button>
-            <button onclick="resetCalc()" title="입력값 초기화" style="flex:0 0 57%;padding:10px;background:#f1f5f9;color:#64748b;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;" onmouseover="this.style.background='#fee2e2';this.style.color='#dc2626';this.style.borderColor='#fca5a5'" onmouseout="this.style.background='#f1f5f9';this.style.color='#64748b';this.style.borderColor='#e2e8f0'">
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              초기화
-            </button>
-          </div>
+          <button onclick="saveCurrent()" style="width:100%;margin-top:8px;padding:10px;background:#1e40af;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
+            💾 이 분석 저장
+          </button>
         </div>
       </div>
     </div>
@@ -670,16 +663,8 @@
         </div>
         <div class="form-row">
           <div class="form-label" style="color:var(--blue);font-weight:700">낙찰가 ★</div>
-          <div class="form-input-wrap" style="gap:4px">
-            <div style="display:inline-flex;align-items:center;gap:2px;flex:0 0 auto;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:0 7px;font-size:12px;height:28px;box-sizing:border-box">
-              <span style="color:#3b82f6;white-space:nowrap">감정가</span>
-              <input type="text" inputmode="decimal" id="bidRatioInput"
-                style="width:40px;font-weight:700;color:#1d4ed8;border:none;background:transparent;text-align:right;outline:none;padding:0 1px;font-size:12px"
-                placeholder="75"
-                oninput="applyBidRatio()">
-              <span style="font-weight:700;color:#1d4ed8">%</span>
-            </div>
-            <input type="text" inputmode="numeric" class="currency" id="bidPrice" value="150,000,000" oninput="fmtInp(this);syncBidRatio();calc()" style="flex:1;min-width:80px">
+          <div class="form-input-wrap">
+            <input type="text" inputmode="numeric" class="currency" id="bidPrice" value="150,000,000" oninput="fmtInp(this);calc()">
             <span class="input-unit">원</span>
           </div>
         </div>
@@ -925,7 +910,7 @@
             <input type="text" class="pct input-calc" id="rentRoeAnn" readonly="">
             <span class="input-unit">%</span>
           </div>
-          <div class="form-note">월순수익×12 ÷ 자기자본</div>
+          <div class="form-note">월순수익×12 ÷ 실투자금</div>
         </div>
       </div>
     </div>
@@ -1125,7 +1110,7 @@
   <div id="opPanel" class="op-panel" style="display:none;"></div>
 
   <!-- 주소 검색 모달 -->
-  <div id="addrSearchModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;" onmousedown="window._addrBdDown=(event.target===this)" onclick="if(event.target===this&&window._addrBdDown)closeAddrSearchModal()">
+  <div id="addrSearchModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;" onclick="if(event.target===this)closeAddrSearchModal()">
     <div style="background:white;border-radius:14px;width:min(480px,95vw);max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">
       <div style="padding:18px 20px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
         <span data-modal-title style="font-size:15px;font-weight:700;color:#111827">🔍 주소를 검색해주세요</span>
@@ -1162,9 +1147,10 @@
     <iframe
       id="priceFrame"
       src="about:blank"
-      data-src="index260606.html?v=12"
+      data-src="https://dandypark.github.io/Estimating-the-amount-of-real-estate/"
       style="width:100%;height:100%;border:none;display:block;"
       allowfullscreen
+      loading="lazy"
       title="부동산 실거래가 조회"
     ></iframe>
     <div id="priceLoading" style="display:none;position:absolute;inset:0;background:white;align-items:center;justify-content:center;flex-direction:column;gap:12px;">
@@ -1172,6 +1158,11 @@
       <div style="font-size:15px;font-weight:700;color:var(--blue)">실거래가 조회 로딩 중...</div>
       <div style="font-size:12px;color:var(--gray)">잠시만 기다려 주세요</div>
     </div>
+  </div>
+  <div style="text-align:right;padding:6px 16px;font-size:11px;color:var(--gray);background:white;border-top:1px solid var(--border);">
+    출처: <a href="https://dandypark.github.io/Estimating-the-amount-of-real-estate/" target="_blank" style="color:var(--blue)">dandypark 실거래가 조회</a>
+    &nbsp;|&nbsp;
+    <a href="https://dandypark.github.io/Estimating-the-amount-of-real-estate/" target="_blank" style="color:var(--blue)">새 탭으로 열기 ↗</a>
   </div>
 </div>
 
@@ -1573,35 +1564,7 @@ function applyMinBidRatio() {
     const app = parseVal('appraised');
     if (app > 0) $('minBid').value = Math.round(app * ratio).toLocaleString('ko-KR');
   }
-  syncBidRatio(); // 감정가 변경 시 낙찰가 % 재계산
   calc();
-}
-
-/* 낙찰가 ← % 입력: 감정가 × % / 100 → 금액 자동계산 */
-function applyBidRatio() {
-  const raw = ($('bidRatioInput').value || '').replace(/[^0-9.]/g, '');
-  const pct = parseFloat(raw);
-  const app = parseVal('appraised');
-  if (!isNaN(pct) && pct > 0 && app > 0) {
-    $('bidPrice').value = Math.round(app * pct / 100).toLocaleString('ko-KR');
-  } else if (raw === '' || pct === 0) {
-    $('bidPrice').value = '';
-  }
-  calc();
-}
-
-/* 낙찰가 → % 역계산: 금액 입력 시 감정가 대비 % 표시 */
-function syncBidRatio() {
-  const bid = parseVal('bidPrice');
-  const app = parseVal('appraised');
-  const el = $('bidRatioInput');
-  if (!el) return;
-  if (app > 0 && bid > 0) {
-    const pct = bid / app * 100;
-    el.value = (pct % 1 === 0) ? pct.toFixed(0) : pct.toFixed(1);
-  } else {
-    el.value = '';
-  }
 }
 
 let costChartInst = null;
@@ -1781,11 +1744,9 @@ function computeAll() {
   const saleExpTotal = loanInterest + capGainTax + prepayFee + agentFee;
 
   const monthlyLoanInterest = loan * (loanRateP / 100) / 12;
-  // 전세/보증금·월임대료 모두 0이면 임대 미입력 → 월순수익 0 표기
-  const hasRentalInput = jeonse > 0 || monthly > 0;
-  const monthlyNet  = hasRentalInput ? monthly - monthlyLoanInterest : 0;
+  const monthlyNet  = monthly - monthlyLoanInterest;
   const realInvest  = equity - jeonse;
-  const rentRoeAnn  = (hasRentalInput && equity > 0) ? monthlyNet * 12 / equity * 100 : null;
+  const rentRoeAnn  = realInvest > 0 ? monthlyNet * 12 / realInvest * 100 : null;
   const netProfit  = capGain - saleExpTotal;
   const holdRent   = annualRent * holdYear;
   const totalReturn= netProfit + holdRent;
@@ -1798,45 +1759,6 @@ function computeAll() {
     prepayFee, agentFee, saleExpTotal, netProfit, holdRent, totalReturn,
     roe, roeAnn, holdYear, bid, saleP
   };
-}
-
-/* ── 수익률 분석 기본값 적용 (confirm 없이) ── */
-function _applyCalcDefaults() {
-  const setVal = (id, val) => { const el = $(id); if (el) el.value = val; };
-  const fmtSet = (id, val) => { const el = $(id); if (el) el.value = val ? Number(val).toLocaleString('ko-KR') : ''; };
-
-  // 주요 가격 입력 → 빈값
-  ['appraised','minBid','bidPrice','salePrice','seniorDeposit',
-   'jeonse','monthlyRent','extraFee','unpaidMgmtFee'].forEach(id => fmtSet(id, 0));
-
-  // 텍스트 필드 → 빈값
-  ['caseNo','addr','addrDong','addrHo','bidDate','memo'].forEach(id => setVal(id, ''));
-
-  // 기본 설정값
-  setVal('loanRatio',         '0.8');
-  setVal('appraisalLoanRatio','0.6');
-  setVal('depositRatio',      '0.1');
-  setVal('houseCount',        '1');
-  setVal('minBidRatio',       '');
-  setVal('bidRatioInput',     '');
-  setVal('propType',          '아파트');
-  setVal('smallArea',         'Y');
-  setVal('holdMonth',         '12');
-  setVal('loanRate',          '5');
-  setVal('prepayRate',        '1');
-  fmtSet('legalFee',  300000);
-  fmtSet('repairFee', 0);
-  fmtSet('evictFee',  0);
-  setVal('capGainMethod', 'auto');
-  if (typeof onCapGainMethodChange === 'function') onCapGainMethodChange();
-  window._selectedPnu = null;
-  calc();
-}
-
-/* ── 수익률 분석 초기화 버튼 ── */
-function resetCalc() {
-  if (!confirm('입력값을 초기화하시겠습니까?\n(기본 설정값은 유지됩니다)')) return;
-  _applyCalcDefaults();
 }
 
 function calc() {
@@ -2077,10 +1999,9 @@ function printAnalysis() {
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { setupBidDateMask(); _applyCalcDefaults(); });
+    document.addEventListener('DOMContentLoaded', setupBidDateMask);
   } else {
     setupBidDateMask();
-    _applyCalcDefaults();
   }
 })();
 
@@ -2220,11 +2141,7 @@ function selectAddrByIdx(i) {
       if (units && units.length) {
         _renderDongHoDropdowns(units);
       } else {
-        const hasDataGoKey = !!localStorage.getItem('dataGoApiKey');
-        const msg = hasDataGoKey
-          ? '목록 조회 실패 — 동·호수를 직접 입력하세요'
-          : '⚠️ 공공데이터 API 키 미설정 — 공시가격 버튼 옆 설정에서 입력하면 자동 선택 가능';
-        _renderTextFallback(msg);
+        _renderTextFallback('목록 조회 실패 — 동·호수를 직접 입력하세요');
       }
     } catch (e) {
       console.error('[동호목록] 오류:', e);
@@ -2380,8 +2297,7 @@ async function doAddrSearch() {
   /* 키 관리 — 카카오 REST API 키 + vworld 인증키 + 공공데이터포털 키 */
   function _getKakaoKey()   { return localStorage.getItem('kakaoApiKey')   || ''; }
   function _getVworldKey()  { return localStorage.getItem('vworldApiKey')  || ''; }
-  // re_api_key = index260606.html 공유 키, dataGoApiKey = index.html 전용 키
-  function _getDataGoKey()  { return localStorage.getItem('dataGoApiKey') || localStorage.getItem('re_api_key') || ''; }
+  function _getDataGoKey()  { return localStorage.getItem('dataGoApiKey')  || ''; }
   window._setKakaoKey  = k => localStorage.setItem('kakaoApiKey',  k);
   window._setVworldKey = k => localStorage.setItem('vworldApiKey', k);
   window._setDataGoKey = k => localStorage.setItem('dataGoApiKey', k);
@@ -2610,7 +2526,7 @@ async function doAddrSearch() {
       }
     } catch (_) {}
 
-    // 3) thingproxy
+    // 3) thingproxy (GET 방식 POST 불가 → 폼 인코딩 시도)
     try {
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 12000);
@@ -2621,36 +2537,6 @@ async function doAddrSearch() {
       if (r.ok) {
         const txt = await r.text();
         console.log(`[손택스 ${actionId}] thingproxy 응답:`, txt.slice(0, 400));
-        return JSON.parse(txt);
-      }
-    } catch (_) {}
-
-    // 4) corsproxy.org
-    try {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 12000);
-      const r = await fetch('https://corsproxy.org/?' + encodeURIComponent(base), {
-        method: 'POST', headers, body: bodyStr, signal: ctrl.signal
-      });
-      clearTimeout(t);
-      if (r.ok) {
-        const txt = await r.text();
-        console.log(`[손택스 ${actionId}] corsproxy.org 응답:`, txt.slice(0, 400));
-        return JSON.parse(txt);
-      }
-    } catch (_) {}
-
-    // 5) cors.eu.org
-    try {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 12000);
-      const r = await fetch('https://cors.eu.org/' + base, {
-        method: 'POST', headers, body: bodyStr, signal: ctrl.signal
-      });
-      clearTimeout(t);
-      if (r.ok) {
-        const txt = await r.text();
-        console.log(`[손택스 ${actionId}] cors.eu.org 응답:`, txt.slice(0, 400));
         return JSON.parse(txt);
       }
     } catch (_) {}
@@ -2682,12 +2568,9 @@ async function doAddrSearch() {
       throw e;
     }
 
-    // 응답 구조 유연하게 처리 (carcTsvCwchlnqrDVOList 등 다양한 필드명 지원)
-    const list = data.list || data.data?.list || data.bldList || data.resultList
-               || data.carcTsvCwchlnqrDVOList || [];
+    // 응답 구조 유연하게 처리
+    const list = data.list || data.data?.list || data.bldList || data.resultList || [];
     if (!Array.isArray(list) || !list.length) {
-      // kabSctrBldNo가 직접 최상위에 있는 경우 (단일 건물 응답)
-      if (data.kabSctrBldNo) { console.log('[손택스] 단일 건물:', data.kabSctrBldNo); return [data.kabSctrBldNo]; }
       console.log('[손택스] 건물 목록 없음:', JSON.stringify(data).slice(0, 200));
       return null;
     }
@@ -2731,152 +2614,76 @@ async function doAddrSearch() {
     return { median: prices[mid], min: prices[0], max: prices[prices.length - 1], count: prices.length };
   }
 
-  /* ── 건축물대장 전유공용면적정보 API → 동·호 목록 ── */
-  async function _fetchBrUnits(pnu, dataGoKey) {
-    const sigunguCd = pnu.slice(0, 5);
-    const bjdongCd  = pnu.slice(5, 10);
-    const platGbCd  = pnu.slice(10, 11);
-    const bun       = pnu.slice(11, 15);
-    const ji        = pnu.slice(15, 19);
-    const base = `https://apis.data.go.kr/1613000/BldRgstHubService/getBrExposPubuseAreaInfo` +
-      `?serviceKey=${dataGoKey}` +
-      `&sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}` +
-      `&platGbCd=${platGbCd}&bun=${bun}&ji=${ji}` +
-      `&numOfRows=1000&pageNo=1`;
-
-    // XML 파싱 헬퍼 (allorigins가 base64 data URL로 응답하는 경우도 처리)
-    const parseXmlUnits = rawTxt => {
-      let txt = rawTxt || '';
-      // allorigins가 "data:...;base64,XXX" 형식으로 줄 때 디코딩
-      if (txt.startsWith('data:') && txt.includes('base64,')) {
-        try { txt = atob(txt.split('base64,')[1]); } catch(_) {}
-      }
-      if (!txt || (!txt.includes('<item>') && !txt.includes('resultCode'))) return null;
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(txt, 'text/xml');
-      const items = [...xml.querySelectorAll('item')];
-      const seen = new Set(); const units = [];
-      for (const item of items) {
-        const dong = item.querySelector('dongNm')?.textContent?.trim() || '';
-        const ho   = item.querySelector('hoNm')?.textContent?.trim()   || '';
-        const key  = `${dong}|${ho}`;
-        if (ho && !seen.has(key)) { seen.add(key); units.push({ dong, ho }); }
-      }
-      return units.length ? units : null;
-    };
-
-    // 1) 직접 fetch (CORS 허용 시)
-    try {
-      const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(),10000);
-      const r = await fetch(base, { signal: ctrl.signal }); clearTimeout(t);
-      if (r.ok) { const u = parseXmlUnits(await r.text()); if (u) { console.log('[건축물대장] 직접 성공'); return u; } }
-    } catch (_) {}
-
-    // 2) allorigins /get (CORS 헤더 추가, JSON 래퍼 응답, base64 data URL 자동 디코딩)
-    try {
-      const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(),12000);
-      const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(base), { signal: ctrl.signal });
-      clearTimeout(t);
-      if (r.ok) {
-        const j = await r.json(); const raw = j.contents || '';
-        console.log('[건축물대장] allorigins/get 원본(앞200):', raw.slice(0,200));
-        const u = parseXmlUnits(raw); if (u) { console.log('[건축물대장] allorigins/get 성공:', u.length); return u; }
-      }
-    } catch (_) {}
-
-    // 3) corsproxy.io
-    try {
-      const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(),12000);
-      const r = await fetch('https://corsproxy.io/?' + encodeURIComponent(base), { signal: ctrl.signal });
-      clearTimeout(t);
-      if (r.ok) { const u = parseXmlUnits(await r.text()); if (u) { console.log('[건축물대장] corsproxy 성공'); return u; } }
-    } catch (_) {}
-
-    return null;
-  }
-
-  /* 건물 동·호 목록 조회 (주소검색 모달 2단계 드롭다운용)
-     1순위: 건축물대장 API (data.go.kr, CORS 직접 가능, 모든 건물유형)
-     2순위: vworld 공시가격 API (아파트/오피스텔)
-     3순위: 홈택스 CORS 프록시 fallback (오피스텔, 불안정) */
+  /* 건물 동·호 목록 조회 (주소검색 모달 2단계 드롭다운용) */
   window._fetchBuildingUnits = async function(pnu, propType) {
     if (!pnu || pnu.length !== 19) return null;
     const isOfficetel = propType === '오피스텔';
     const curYear = new Date().getFullYear();
-    const tryYears = [curYear, curYear - 1, curYear - 2];
+    const tryYears = [curYear, curYear - 1, curYear - 2]; // 연도 순차 시도
 
-    // ── 1순위: 건축물대장 API ──
-    const dataGoKey = _getDataGoKey();
-    if (dataGoKey) {
-      try {
-        const units = await _fetchBrUnits(pnu, dataGoKey);
-        if (units?.length) { console.log('[동호] 건축물대장 성공:', units.length); return units; }
-      } catch (e) { console.warn('[건축물대장 오류]', e.message); }
-    }
-
-    // ── 2순위: vworld 공시가격 API (물건종류 무관하게 두 엔드포인트 모두 시도) ──
-    const vworldKey = _getVworldKey();
-    if (vworldKey) {
-      const endpointList = ['getApartHousingPriceAttr', 'getOffiHousingPriceAttr'];
-
-      for (const endpoint of endpointList) {
-        const isApart   = endpoint === 'getApartHousingPriceAttr';
-        const pricesKey = isApart ? 'apartHousingPrices' : 'offiHousingPrices';
-        const itemKey   = isApart ? 'apartHousingPrice'  : 'offiHousingPrice';
-        for (const yr of tryYears) {
-          try {
-            const allUnits = [];
-            for (let page = 1; page <= 10; page++) {
-              const url = `https://api.vworld.kr/ned/data/${endpoint}` +
-                `?pnu=${encodeURIComponent(pnu)}&stdrYear=${yr}&format=json&numOfRows=100&pageNo=${page}` +
-                `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
-              const res = await _vworldFetch(url);
-              let data;
-              try { data = await res.json(); } catch { break; }
-              if (data?.error) break;
-              const prices = data?.[pricesKey];
-              let arr = [];
-              if (prices?.[itemKey]) arr = Array.isArray(prices[itemKey]) ? prices[itemKey] : [prices[itemKey]];
-              else if (Array.isArray(prices?.field)) arr = prices.field;
-              else if (prices?.hoNm) arr = [prices];
-              const pageUnits = arr.map(it => ({
-                dong: (it.dongNm || '').replace(/\s/g, ''),
-                ho:   (it.hoNm   || '').replace(/\s/g, '')
-              })).filter(u => u.ho);
-              allUnits.push(...pageUnits);
-              if (arr.length < 100) break;
-            }
-            if (allUnits.length) { console.log('[동호] vworld 성공:', endpoint, allUnits.length); return allUnits; }
-          } catch (e) { if (e.isApiError) return null; }
-        }
-      }
-    }
-
-    // ── 3순위: 홈택스 CORS 프록시 (물건종류 무관하게 항상 시도) ──
-    {
+    if (isOfficetel) {
+      // 오피스텔: 홈택스 ATESFAAA023R05 → 호 목록
       try {
         const bldNos = await _hometaxGetBldNo(pnu);
-        if (bldNos?.length) {
-          for (const yr of tryYears) {
-            for (const bldNo of bldNos) {
-              try {
-                const data = await _hometaxPost('ATESFAAA023R05', { kabSctrBldNo: bldNo, notcDt: String(yr) });
-                if (!data) continue;
-                const list = data.list || data.data?.list || data.priceList || data.resultList || [];
-                if (!Array.isArray(list) || !list.length) continue;
-                const units = list.map(it => ({
-                  dong: (it.flrNo || it.floorNo || '').replace(/\s/g, ''),
-                  ho:   (it.hoNm  || it.hoNo   || it.unitNm || '').replace(/\s/g, '')
-                })).filter(u => u.ho);
-                if (units.length) { console.log('[동호] 홈택스 성공:', units.length); return units; }
-              } catch (_) {}
-            }
+        if (!bldNos?.length) return null;
+        for (const yr of tryYears) {
+          for (const bldNo of bldNos) {
+            try {
+              const data = await _hometaxPost('ATESFAAA023R05', { kabSctrBldNo: bldNo, notcDt: String(yr) });
+              if (!data) continue;
+              const list = data.list || data.data?.list || data.priceList || data.resultList || [];
+              if (!Array.isArray(list) || !list.length) continue;
+              const units = list.map(it => ({
+                dong: (it.flrNo || it.floorNo || '').replace(/\s/g, ''),
+                ho:   (it.hoNm  || it.hoNo   || it.unitNm || '').replace(/\s/g, '')
+              })).filter(u => u.ho);
+              if (units.length) return units;
+            } catch (_) {}
           }
         }
       } catch (_) {}
+      return null;
+    } else {
+      // 아파트·빌라·단독: vworld getApartHousingPriceAttr → 동·호 목록 (페이지네이션)
+      const vworldKey = _getVworldKey();
+      if (!vworldKey) return null;
+      for (const yr of tryYears) {
+        try {
+          const allUnits = [];
+          for (let page = 1; page <= 10; page++) {
+            const url = `https://api.vworld.kr/ned/data/getApartHousingPriceAttr` +
+              `?pnu=${encodeURIComponent(pnu)}&stdrYear=${yr}&format=json&numOfRows=100&pageNo=${page}` +
+              `&key=${vworldKey}&domain=${encodeURIComponent('https://ggamdy0203.github.io')}`;
+            const res = await _vworldFetch(url);
+            let data;
+            try { data = await res.json(); } catch (parseErr) { console.warn('[동호목록] JSON파싱실패:', parseErr.message); break; }
+            console.log(`[동호목록] ${yr}p${page} raw:`, JSON.stringify(data).slice(0, 200));
+            if (data?.error) { console.warn('[동호목록] API에러:', data.error); break; }
+            const prices = data?.apartHousingPrices;
+            let arr = [];
+            if (prices?.apartHousingPrice) {
+              arr = Array.isArray(prices.apartHousingPrice) ? prices.apartHousingPrice : [prices.apartHousingPrice];
+            } else if (Array.isArray(prices?.field)) {
+              arr = prices.field; // pageNo 사용 시 데이터가 field 배열에 위치
+            } else if (prices?.hoNm) {
+              arr = [prices];
+            }
+            const pageUnits = arr.map(it => ({
+              dong: (it.dongNm || '').replace(/\s/g, ''),
+              ho:   (it.hoNm   || '').replace(/\s/g, '')
+            })).filter(u => u.ho);
+            allUnits.push(...pageUnits);
+            if (arr.length < 100) break; // 마지막 페이지
+          }
+          console.log(`[동호목록] ${yr}년 총:`, allUnits.length, '건');
+          if (allUnits.length) return allUnits;
+        } catch (e) {
+          if (e.isApiError) return null;
+          console.warn('[동호목록] vworld 오류:', e.message);
+        }
+      }
+      return null;
     }
-
-    return null;
   };
 
   /* 손택스 오피스텔 기준시가 연도별 rows 조회 */
@@ -3292,11 +3099,9 @@ function addBidToCalendar() {
   if (!date) { alert('입찰일을 먼저 선택해주세요'); return; }
   const caseNo = $('caseNo').value.trim();
   const addr   = $('addr').value.trim();
-  const title  = encodeURIComponent(caseNo ? caseNo + (addr ? ' ' + addr : '') : addr || '경매물건');
+  const title  = encodeURIComponent('입찰: ' + (caseNo ? caseNo + (addr ? ' ' + addr : '') : addr || '경매물건'));
   const ds     = date.replace(/-/g, '');
-  const d1 = new Date(date + 'T00:00:00'); d1.setDate(d1.getDate() + 1);
-  const ds2 = d1.toISOString().slice(0,10).replace(/-/g,'');
-  window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${ds}/${ds2}&details=${encodeURIComponent('Booland Calculator에서 등록')}`, '_blank');
+  window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${ds}T090000/${ds}T180000&details=${encodeURIComponent('Booland Calculator에서 등록')}`, '_blank');
 }
 
 function onAgentFeeModeChange() {
@@ -3322,151 +3127,271 @@ function exportExcel() {
   const fname  = (caseNo ? caseNo + '_' : '') + addr;
   const today  = new Date().toLocaleDateString('ko-KR');
 
-  // ── 색상 팔레트 ──────────────────────────────
-  const NAVY='0D1F3C';                                     // 헤더 진네이비
-  const BL='1D4ED8', BL_L='93C5FD', BL_BG='BFDBFE';      // 파란계열
-  const GD='92400E', GD_BG='FEF3C7', GD_BD='F59E0B', GD_HBG='FDE68A';  // 금색계열
-  const GY='334155', GY_BD='CBD5E1';                       // 회색계열
-  const LBL_BG='DBEAFE';                                   // 라벨 배경 (연파랑)
-  const CAL_BG='EFF6FF';                                   // 계산값 배경
-  const WH='FFFFFF', TXT='0F172A', GR='065F46', RD='991B1B', SP='CBD5E1';
-
-  const b   = (rgb) => ({ style:'thin', color:{rgb} });
-  const brd = (c=GY_BD) => ({ top:b(c), bottom:b(c), left:b(c), right:b(c) });
-  const nb  = (rgb) => ({ style:'medium', color:{rgb} });  // medium border for emphasis
-  const nv  = {v:'',t:'s',s:{fill:{patternType:'solid',fgColor:{rgb:NAVY}}}};  // navy filler
-
   // ── 스타일 정의 ──────────────────────────────
+  const BLUE   = '1A56DB', BLUE_L = 'DBEAFE', BLUE_BG = 'EFF6FF';
+  const GOLD   = 'D97706', GOLD_BG = 'FFFBEB', GOLD_BD = 'FCD34D';
+  const GRAY   = '6B7280', GRAY_L  = 'F3F4F6', GRAY_BD = 'E5E7EB';
+  const WHITE  = 'FFFFFF', TEXT = '111827', GREEN = '065F46', RED = '991B1B';
+  const NAVY   = '1E3A5F';
+
+  const bd = (rgb) => ({ style: 'thin', color: { rgb } });
+  const border = (c = GRAY_BD) => ({ top: bd(c), bottom: bd(c), left: bd(c), right: bd(c) });
+
   const S = {
-    hdrL: { font:{bold:true,sz:14,color:{rgb:WH},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:NAVY}}, alignment:{horizontal:'left',vertical:'center',indent:1} },
-    hdrS: { font:{sz:9,color:{rgb:'93C5FD'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:NAVY}}, alignment:{horizontal:'left',vertical:'center',indent:2} },
-    hdrR: { font:{sz:9,color:{rgb:'93C5FD'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:NAVY}}, alignment:{horizontal:'right',vertical:'center'} },
-    sec:  { font:{bold:true,sz:10,color:{rgb:WH},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:BL}}, alignment:{horizontal:'left',vertical:'center',indent:1}, border:{top:nb(BL),bottom:nb(BL),left:nb(BL),right:nb(BL)} },
-    secG: { font:{bold:true,sz:10,color:{rgb:WH},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:GD}}, alignment:{horizontal:'left',vertical:'center',indent:1}, border:{top:nb(GD),bottom:nb(GD),left:nb(GD),right:nb(GD)} },
-    lbl:  { font:{sz:9,color:{rgb:GY},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:LBL_BG}}, alignment:{horizontal:'left',vertical:'center',indent:1}, border:brd() },
-    val:  { font:{sz:9,color:{rgb:TXT},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:WH}}, alignment:{horizontal:'right',vertical:'center'}, border:brd() },
-    valL: { font:{sz:9,color:{rgb:TXT},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:WH}}, alignment:{horizontal:'left',vertical:'center',indent:1}, border:brd() },
-    valB: { font:{bold:true,sz:9,color:{rgb:'1E40AF'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:BL_BG}}, alignment:{horizontal:'right',vertical:'center'}, border:{top:b(BL_L),bottom:b(BL_L),left:b(BL_L),right:b(BL_L)} },
-    valC: { font:{sz:9,color:{rgb:'475569'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:CAL_BG}}, alignment:{horizontal:'right',vertical:'center'}, border:brd() },
-    note: { font:{sz:8,italic:true,color:{rgb:'94A3B8'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:WH}}, alignment:{horizontal:'left',vertical:'center'}, border:brd() },
-    kLbl: { font:{bold:true,sz:9,color:{rgb:'78350F'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:GD_BG}}, alignment:{horizontal:'left',vertical:'center',indent:1}, border:brd(GD_BD) },
-    kVal: { font:{bold:true,sz:10,color:{rgb:GD},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:'FFFBEB'}}, alignment:{horizontal:'right',vertical:'center'}, border:brd(GD_BD) },
-    rLbl: { font:{bold:true,sz:10,color:{rgb:'78350F'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:GD_HBG}}, alignment:{horizontal:'left',vertical:'center',indent:1}, border:{top:b(GD_BD),bottom:b(GD_BD),left:b(GD_BD),right:b(GD_BD)} },
-    rVal: { font:{bold:true,sz:16,color:{rgb:GD},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:GD_HBG}}, alignment:{horizontal:'center',vertical:'center'}, border:{top:b(GD_BD),bottom:b(GD_BD),left:b(GD_BD),right:b(GD_BD)} },
-    pVal: { font:{bold:true,sz:10,color:{rgb:'065F46'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:'D1FAE5'}}, alignment:{horizontal:'right',vertical:'center'}, border:brd('34D399') },
-    lVal: { font:{bold:true,sz:10,color:{rgb:'7F1D1D'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:'FEE2E2'}}, alignment:{horizontal:'right',vertical:'center'}, border:brd('FCA5A5') },
-    sp:   { fill:{patternType:'solid',fgColor:{rgb:SP}} },
-    eg:   { fill:{patternType:'solid',fgColor:{rgb:GD_HBG}}, border:brd(GD_BD) },
-    ft:   { font:{sz:8,italic:true,color:{rgb:'78350F'},name:'Malgun Gothic'}, fill:{patternType:'solid',fgColor:{rgb:GD_BG}}, alignment:{horizontal:'left',vertical:'center'} },
+    title: {
+      font: { bold: true, sz: 15, color: { rgb: WHITE }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: BLUE } },
+      alignment: { horizontal: 'left', vertical: 'center' }
+    },
+    subtitle: {
+      font: { sz: 10, color: { rgb: 'BFDBFE' }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: BLUE } },
+      alignment: { horizontal: 'right', vertical: 'center' }
+    },
+    section: {
+      font: { bold: true, sz: 11, color: { rgb: WHITE }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: NAVY } },
+      alignment: { horizontal: 'left', vertical: 'center' }
+    },
+    label: {
+      font: { sz: 10, color: { rgb: GRAY }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: GRAY_L } },
+      alignment: { horizontal: 'left', vertical: 'center', indent: 1 },
+      border: border()
+    },
+    valIn: {
+      font: { sz: 10, color: { rgb: '1D4ED8' }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: BLUE_BG } },
+      alignment: { horizontal: 'right', vertical: 'center' },
+      border: border()
+    },
+    valCalc: {
+      font: { sz: 10, color: { rgb: GRAY }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: GRAY_L } },
+      alignment: { horizontal: 'right', vertical: 'center' },
+      border: border()
+    },
+    note: {
+      font: { sz: 9, italic: true, color: { rgb: '9CA3AF' }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: WHITE } },
+      alignment: { horizontal: 'left', vertical: 'center' },
+      border: border()
+    },
+    keyLabel: {
+      font: { bold: true, sz: 11, color: { rgb: '92400E' }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: GOLD_BG } },
+      alignment: { horizontal: 'left', vertical: 'center', indent: 1 },
+      border: border(GOLD_BD)
+    },
+    keyVal: {
+      font: { bold: true, sz: 12, color: { rgb: GOLD }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: GOLD_BG } },
+      alignment: { horizontal: 'right', vertical: 'center' },
+      border: border(GOLD_BD)
+    },
+    roeLabel: {
+      font: { bold: true, sz: 13, color: { rgb: '92400E' }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: GOLD_BG } },
+      alignment: { horizontal: 'left', vertical: 'center', indent: 1 },
+      border: border(GOLD_BD)
+    },
+    roeVal: {
+      font: { bold: true, sz: 16, color: { rgb: GOLD }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: GOLD_BG } },
+      alignment: { horizontal: 'right', vertical: 'center' },
+      border: border(GOLD_BD)
+    },
+    profitVal: {
+      font: { bold: true, sz: 12, color: { rgb: GREEN }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: 'ECFDF5' } },
+      alignment: { horizontal: 'right', vertical: 'center' },
+      border: border('6EE7B7')
+    },
+    lossVal: {
+      font: { bold: true, sz: 12, color: { rgb: RED }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: 'FEF2F2' } },
+      alignment: { horizontal: 'right', vertical: 'center' },
+      border: border('FCA5A5')
+    },
+    warn: {
+      font: { sz: 9, italic: true, color: { rgb: '92400E' }, name: 'Malgun Gothic' },
+      fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } },
+      alignment: { horizontal: 'left', vertical: 'center', wrapText: true }
+    },
+    empty: {
+      fill: { patternType: 'solid', fgColor: { rgb: WHITE } }
+    }
   };
 
   // ── 셀 생성 헬퍼 ─────────────────────────────
-  const FMT = '#,##0;(#,##0);-';  // 음수 괄호, 0은 대시
-  const sc  = (v,s) => ({v:String(v??''),t:'s',s});
-  const nc  = (v,s) => ({v:Math.round(v||0),t:'n',z:FMT,s});
-  const ec  = () => ({v:'',t:'s',s:{fill:{patternType:'solid',fgColor:{rgb:WH}}}});
-  const gc  = () => ({v:'',t:'s',s:S.sp});
-  const eg  = () => ({v:'',t:'s',s:S.eg});
+  const nc = (v, s, z) => {           // number cell
+    const c = { v: Math.round(v), t: 'n', s };
+    if (z) c.z = z;
+    return c;
+  };
+  const sc = (v, s) => ({ v: String(v ?? ''), t: 's', s });  // string cell
+  const ec = ()     => ({ v: '', t: 's', s: S.empty });      // empty cell
 
   // ── 워크시트 빌더 ─────────────────────────────
-  const ws = {}; const merges = []; let ri = 0;
-  const CL = ['A','B','C','D','E','F','G','H','I'];
-  const setC = (ci,row,c) => { ws[CL[ci]+(row+1)]=c; };
-  const setR = (cells) => { for(let i=0;i<9;i++) setC(i,ri,cells[i]||ec()); ri++; };
-  const mg   = (c1,c2) => merges.push({s:{r:ri,c:c1},e:{r:ri,c:c2}});
+  const ws   = {};
+  const merges = [];
+  let   ri   = 0; // 현재 행 (0-based)
+  const COLS = ['A','B','C','D','E','F','G'];
 
-  // ── 헤더 ─────────────────────────────────────
-  mg(0,8);
-  setR([sc('🏠  부랜드  Booland Calculator — 경매 투자 수익률 분석 결과',S.hdrL),nv,nv,nv,nv,nv,nv,nv,nv]);
-  mg(0,5); mg(6,8);
-  setR([sc('  '+(caseNo||'')+(addr!=='미입력'?'   '+addr:''),S.hdrS),nv,nv,nv,nv,nv,sc('분석일: '+today,S.hdrR),nv,nv]);
-  setR(Array(9).fill(gc()));
+  function setCell(col, row, cell) { ws[COLS[col] + (row + 1)] = cell; }
 
-  // ── 상단 섹션 헤더 ───────────────────────────
-  mg(0,1); mg(3,5); mg(7,8);
-  setR([sc('📋  물건 정보',S.sec),ec(),gc(),sc('💰  낙찰가 & 초기 투자비',S.sec),ec(),ec(),gc(),sc('🏛  취득세 & 기타 비용',S.sec),ec()]);
+  function fillRow(cells) {
+    cells.forEach((cell, ci) => setCell(ci, ri, cell || ec()));
+    ri++;
+  }
 
-  // 계산값
-  const lr  = +($('loanRatio').value||0.8);
-  const alr = +($('appraisalLoanRatio').value||0.6);
-  const bidRatio = parseVal('appraised')>0 ? (parseVal('bidPrice')/parseVal('appraised')*100).toFixed(1)+'%' : '-';
-  const loanBasisNote = v.loan===v.loanByBid ? '낙찰가 기준' : '감정가 기준';
-  const saTxt = $('smallArea').value==='Y' ? '85㎡ 이하 (농특세 면제)' : '85㎡ 초과';
-  const memo  = $('memo').value.trim();
-  const depPct = (parseFloat($('depositRatio').value||0.1)*100).toFixed(0)+'%';
+  function merge(c1, c2) { merges.push({ s: { r: ri, c: c1 }, e: { r: ri, c: c2 } }); }
 
-  // TOP 데이터: [c1라벨, c1값, c2라벨, c2값, c2비고, c3라벨, c3값]
-  const TOP = [
-    [sc('사건번호',S.lbl),sc(caseNo||'-',S.valL), sc('감정가',S.lbl),nc(parseVal('appraised'),S.valB),sc('감정평가액',S.note), sc('주택 보유수',S.lbl),sc($('houseCount').options[$('houseCount').selectedIndex].text,S.valL)],
-    [sc('물건 주소',S.lbl),sc(addr,{...S.valL,font:{sz:8,color:{rgb:TXT},name:'Malgun Gothic'}}), sc('최저 입찰가',S.lbl),nc(parseVal('minBid'),S.val),sc('법원 공고',S.note), sc('취득세 ('+(v.acqRate*100).toFixed(2)+'%)',S.lbl),nc(v.acqTax,S.val)],
-    [sc('물건 종류',S.lbl),sc($('propType').value,S.valL), sc('낙찰가 ★',S.lbl),nc(parseVal('bidPrice'),S.valB),sc('직접 입력 ('+bidRatio+')',S.note), sc('농어촌특별세 ('+(v.ruralRate*100).toFixed(1)+'%)',S.lbl),nc(v.ruralTax,S.val)],
-    [sc('전용면적',S.lbl),sc(saTxt,{...S.valL,font:{sz:8,color:{rgb:TXT},name:'Malgun Gothic'}}), sc('낙찰가 기준 비율',S.lbl),sc((lr*100).toFixed(0)+'%',S.valC),ec(), sc('지방교육세 ('+(v.eduRate*100).toFixed(2)+'%)',S.lbl),nc(v.eduTax,S.val)],
-    [sc('입찰일',S.lbl),sc($('bidDate').value||'-',S.valL), sc('감정가 기준 비율',S.lbl),sc((alr*100).toFixed(0)+'%',S.valC),ec(), sc('법무비 (등기)',S.lbl),nc(parseVal('legalFee'),S.val)],
-    [sc('특이사항',S.lbl),sc(memo||'-',{...S.valL,font:{sz:8,color:{rgb:TXT},name:'Malgun Gothic'},alignment:{horizontal:'left',vertical:'center',indent:1,wrapText:true}}), sc('선순위 보증금 (방빼기)',S.lbl),nc(parseVal('seniorDeposit'),S.val),ec(), sc('세금 합계',S.lbl),nc(v.taxTotal,S.valB)],
-    [ec(),ec(), sc('낙찰가 기준 한도',S.lbl),nc(v.loanByBid,S.valC),ec(), sc('수리비용',S.lbl),nc(parseVal('repairFee'),S.val)],
-    [ec(),ec(), sc('감정가 기준 한도',S.lbl),nc(v.loanByAppraisal,S.valC),ec(), sc('명도비용',S.lbl),nc(parseVal('evictFee'),S.val)],
-    [ec(),ec(), sc('실제 대출금 ★',S.lbl),nc(v.loan,S.valB),sc(loanBasisNote,S.note), sc('기타예비비',S.lbl),nc(parseVal('extraFee'),S.val)],
-    [ec(),ec(), sc('월 대출이자',S.lbl),nc(v.monthlyLoanInterest,S.valC),ec(), sc('미납관리비',S.lbl),nc(parseVal('unpaidMgmtFee'),S.val)],
-    [ec(),ec(), sc('입찰 보증금 ('+depPct+')',S.lbl),nc(v.dep,S.valC),ec(), sc('기타 비용 합계',S.lbl),nc(v.miscTotal,S.valB)],
-    [ec(),ec(), sc('잔금',S.lbl),nc(v.bal,S.valC),ec(), ec(),ec()],
-  ];
-  TOP.forEach(r => setR([r[0],r[1],gc(),r[2],r[3],r[4]||ec(),gc(),r[5],r[6]]));
+  // 섹션 헤더 (B~F 병합)
+  function sectionRow(text) {
+    merge(1, 6);
+    fillRow([ec(), sc(text, S.section), ec(), ec(), ec(), ec(), ec()]);
+  }
 
-  setR(Array(9).fill(gc()));
+  // 일반 데이터 행: [라벨(C), 값(D), 비고(F)]
+  function dataRow(label, val, note = '', isCalc = false, isNum = true) {
+    const vs = isCalc ? S.valCalc : S.valIn;
+    const valCell = isNum
+      ? nc(val, vs, '#,##0')
+      : sc(val, { ...vs, alignment: { ...vs.alignment, horizontal: 'left' } });
+    fillRow([ec(), ec(), sc('  ' + label, S.label), valCell, ec(), sc(note, S.note), ec()]);
+  }
 
-  // ── 하단 섹션 헤더 ───────────────────────────
-  mg(0,1); mg(3,5); mg(7,8);
-  setR([sc('🏡  임대 수입 (선택)',S.sec),ec(),gc(),sc('📈  매도 수익 분석',S.sec),ec(),ec(),gc(),sc('🚀  핵심 결과',S.secG),ec()]);
+  // 핵심 결과 행 (B~C 병합)
+  function keyRow(label, val, note = '', isROE = false, isProfit = false) {
+    merge(1, 2);
+    const ls = isROE ? S.roeLabel : S.keyLabel;
+    const vs = isROE ? S.roeVal : isProfit ? (val >= 0 ? S.profitVal : S.lossVal) : S.keyVal;
+    fillRow([ec(), sc(label, ls), ec(), nc(val, vs, '#,##0'), ec(), sc(note, S.note), ec()]);
+  }
 
-  const cgM  = $('capGainMethod')?.value||'auto';
-  const mMap = {auto:'누진세율(6~45%)','0.7':'70% 단기','0.6':'60% 단기','0.2':'20% 매매사업자',corp_house:'법인-주택',corp_other:'법인-비주택',custom:'직입 '+($('customCapGainRate')?.value||'20')+'%'};
-  const aMode = $('agentFeeMode')?.value==='manual'?'직접 입력':'자동(요율)';
-  const nStyl = v.netProfit>=0?S.pVal:S.lVal;
-  const egN = (t) => sc(t,{font:{sz:9,bold:true,color:{rgb:'78350F'},name:'Malgun Gothic'},fill:{patternType:'solid',fgColor:{rgb:GD_HBG}},alignment:{horizontal:'center',vertical:'center'},border:brd(GD_BD)});
+  function keyPctRow(label, val) {
+    merge(1, 2);
+    const pctCell = { v: val / 100, t: 'n', z: '0.00%', s: S.roeVal };
+    fillRow([ec(), sc(label, S.roeLabel), ec(), pctCell, ec(), ec(), ec()]);
+  }
 
-  // BOTTOM 데이터
-  const BOT = [
-    [sc('대출 금리 (연)',S.lbl),sc($('loanRate').value+'%',S.valC), sc('예상 매도가 ★',S.lbl),nc(parseVal('salePrice'),S.valB),ec(), sc('총 자기자본 투자금',S.kLbl),nc(v.equity,S.kVal)],
-    [sc('월 대출이자',S.lbl),nc(v.monthlyLoanInterest,S.valC), sc('보유 기간',S.lbl),sc($('holdMonth').options[$('holdMonth').selectedIndex].text,S.valL),ec(), sc('양도 차익',S.kLbl),nc(v.capGain,S.kVal)],
-    [sc('전세 / 보증금',S.lbl),nc(parseVal('jeonse'),S.valB), sc('대출 금리 (연)',S.lbl),sc($('loanRate').value+'%',S.valC),ec(), sc('순 이익 (세후)',S.kLbl),nc(v.netProfit,nStyl)],
-    [sc('월 임대료',S.lbl),nc(parseVal('monthlyRent'),S.valB), sc('중도 상환 수수료율',S.lbl),sc($('prepayRate').value+'%',S.valC),ec(), sc('임대 수입 (보유기간)',S.kLbl),nc(v.holdRent,S.kVal)],
-    [sc('연 임대 수입',S.lbl),nc(v.annualRent,S.valC), sc('양도소득세 방식',S.lbl),sc(mMap[cgM]||'-',S.valL),ec(), sc('자기자본 수익률(ROE)',S.rLbl),sc(v.roe.toFixed(1)+'%',S.rVal)],
-    [sc('임대 수익률',S.lbl),sc(v.rentYield.toFixed(2)+'%',S.valC), sc('기본공제',S.lbl),sc(v.capGainBasicDed>0?'250만원 자동':'없음',S.valL),ec(), eg(),egN('≈ 연환산 기준')],
-    [sc('월 순수익 ★',S.lbl),nc(v.monthlyNet,v.monthlyNet>=0?S.valB:{...S.valB,font:{bold:true,sz:9,color:{rgb:RD},name:'Malgun Gothic'},fill:{patternType:'solid',fgColor:{rgb:'FEE2E2'}},border:brd('FCA5A5')}), sc('매도 중개보수 방식',S.lbl),sc(aMode,S.valL),ec(), sc('연환산 수익률(ROE/년)',S.rLbl),sc(v.roeAnn.toFixed(1)+'%/년',S.rVal)],
-    [sc('임대사업용 실투자금 ★',S.lbl),nc(v.realInvest,S.valB), sc('매도 중개보수율',S.lbl),sc((v.agentR*100).toFixed(2)+'%',S.valC),ec(), eg(),egN('총수익 '+Math.round((v.netProfit||0)/10000).toLocaleString()+'만원')],
-    [sc('임대수입 연ROE ★',S.lbl),sc(v.rentRoeAnn!=null?v.rentRoeAnn.toFixed(1)+'%':'-',S.valC), sc('대출 이자 합계',S.lbl),nc(v.loanInterest,S.valC),ec(), sc('낙찰가 / 감정가',S.kLbl),sc(bidRatio,{...S.kVal,alignment:{horizontal:'center',vertical:'center'}})],
-    [ec(),ec(), sc('양도소득세 (추정)',S.lbl),nc(v.capGainTax,S.valC),ec(), eg(),egN('감정가 대비 비율')],
-    [ec(),ec(), sc('중도 상환 수수료',S.lbl),nc(v.prepayFee,S.valC),ec(), eg(),eg()],
-    [ec(),ec(), sc('매도 중개보수',S.lbl),nc(v.agentFee,S.valC),ec(), eg(),eg()],
-    [ec(),ec(), sc('매도 비용 합계',S.lbl),nc(v.saleExpTotal,S.valB),ec(), eg(),eg()],
-  ];
-  BOT.forEach(r => setR([r[0],r[1],gc(),r[2],r[3],r[4]||ec(),gc(),r[5],r[6]]));
+  function emptyRow() { fillRow([ec(),ec(),ec(),ec(),ec(),ec(),ec()]); }
 
-  // ── 푸터 ─────────────────────────────────────
-  const cgNote={auto:'누진세율(6~45%, 기본공제 250만원)','0.7':'70% 단기(1년 미만)','0.6':'60% 단기(2년 미만)','0.2':'20% 매매사업자',custom:'직접입력 '+($('customCapGainRate')?.value||'20')+'%'};
-  const ftFill = {v:'',t:'s',s:S.ft};
-  mg(0,8);
-  setR([sc('※ 양도소득세: '+(cgNote[cgM]||'-')+'.  실제 세금은 세무사 확인이 필요합니다.    🔵 파란 셀 직접입력   ⬜ 회색 셀 자동계산   🟡 금색 카드 핵심결과',S.ft),ftFill,ftFill,ftFill,ftFill,ftFill,ftFill,ftFill,ftFill]);
+  // ── 데이터 작성 ──────────────────────────────
+
+  // 제목
+  emptyRow();
+  merge(1, 6);
+  fillRow([ec(), sc('🏠  Booland Calculator — 경매 투자 수익률 분석 결과', S.title), ec(), ec(), ec(), ec(), ec()]);
+  merge(1, 6);
+  fillRow([ec(), sc('분석일: ' + today + '   |   ' + (caseNo || '') + (addr !== '미입력' ? '  ' + addr : ''), S.subtitle), ec(), ec(), ec(), ec(), ec()]);
+  emptyRow();
+
+  // 물건 정보
+  sectionRow('📋  물건 정보');
+  dataRow('사건번호', caseNo || '-', '', false, false);
+  dataRow('물건 주소', addr, '', false, false);
+  dataRow('물건 종류', $('propType').value, '', false, false);
+  const memoText = $('memo').value.trim();
+  if (memoText) dataRow('특이사항 / 메모', memoText, '', false, false);
+  emptyRow();
+
+  // 낙찰가 & 초기 투자비
+  sectionRow('💰  낙찰가 & 초기 투자비');
+  dataRow('감정가',           parseVal('appraised'), '감정평가 금액');
+  dataRow('최저 입찰가',      parseVal('minBid'),    '법원 공고 최저가');
+  dataRow('낙찰가',           parseVal('bidPrice'),  '← 직접 입력');
+  dataRow('대출 비율',        (parseFloat($('loanRatio').value) * 100).toFixed(0) + '%', '선택', false, false);
+  dataRow('대출금',           v.loan,   '자동계산', true);
+  dataRow('입찰 보증금 (' + (parseFloat($('depositRatio').value) * 100).toFixed(0) + '%)', v.dep, '자동계산', true);
+  dataRow('잔금',             v.bal,    '자동계산', true);
+  emptyRow();
+
+  // 취득세 & 기타 비용
+  sectionRow('🏛  취득세 & 기타 비용');
+  dataRow('주택 보유수',      $('houseCount').options[$('houseCount').selectedIndex].text, '', false, false);
+  dataRow('취득세율',          (v.acqRate * 100).toFixed(2) + '%', '낙찰가 기준 자동계산', true, false);
+  dataRow('취득세',            v.acqTax,              '낙찰가 × 취득세율', true);
+  dataRow('농어촌특별세율',    (v.ruralRate * 100).toFixed(1) + '%', '85㎡ 이하 면제', true, false);
+  dataRow('농어촌특별세',      v.ruralTax,            '낙찰가 × 농특세율', true);
+  dataRow('지방교육세율',      (v.eduRate * 100).toFixed(2) + '%', '취득세율의 10%', true, false);
+  dataRow('지방교육세',        v.eduTax,              '낙찰가 × 지교세율', true);
+  dataRow('법무비 (등기)',     parseVal('legalFee'), '평균 30만원');
+  dataRow('세금 합계',        v.taxTotal,            '자동합산', true);
+  dataRow('수리비용',         parseVal('repairFee'), '리모델링 등');
+  dataRow('명도비용',         parseVal('evictFee'),  '평당 15~20만원 기준');
+  dataRow('기타예비비',       parseVal('extraFee'),      '예비 비용');
+  dataRow('미납관리비',       parseVal('unpaidMgmtFee'), '체납 관리비');
+  dataRow('기타 비용 합계',   v.miscTotal,               '자동합산', true);
+  emptyRow();
+
+  // 총 자기자본 (중간 강조)
+  keyRow('📌  총 자기자본 투자금', v.equity, '자동합산');
+  emptyRow();
+
+  // 임대 수입
+  sectionRow('🏡  임대 수입 (선택)');
+  dataRow('전세 / 보증금',   parseVal('jeonse'),      '전세/보증금');
+  dataRow('월 임대료',       parseVal('monthlyRent'), '월세');
+  dataRow('연 임대 수입',    v.annualRent,             '자동계산', true);
+  dataRow('임대 수익률',     v.rentYield.toFixed(2) + '%', '연 임대 / 총투자금', true, false);
+  dataRow('월 순수익',           v.monthlyNet,  '월세 − 월 대출이자', true);
+  dataRow('임대사업용 실투자금', v.realInvest,  '자기자본 − 보증금', true);
+  if (v.rentRoeAnn != null) dataRow('임대수입 연ROE', v.rentRoeAnn.toFixed(1) + '%', '월순수익×12 ÷ 실투자금', true, false);
+  emptyRow();
+
+  // 매도 수익 분석
+  sectionRow('📈  매도 수익 분석');
+  dataRow('예상 매도가',        parseVal('salePrice'), '목표 매도 가격');
+  dataRow('보유 기간',          $('holdMonth').options[$('holdMonth').selectedIndex].text, '선택', false, false);
+  dataRow('대출 금리 (연)',     $('loanRate').value + '%', '현재 금리 기준', false, false);
+  dataRow('중도 상환 수수료율', $('prepayRate').value + '%', '통상 0.5~1.5%', false, false);
+  dataRow('매도 중개보수율', (v.agentR * 100).toFixed(2) + '%', '매도가 기준 자동 적용', true, false);
+  emptyRow();
+  dataRow('대출 이자 합계',    v.loanInterest, '대출금 × 금리 × 보유기간', true);
+  const methodMap2 = { auto: '누진세율 자동(6~45%)', '0.7': '70% 단기', '0.6': '60% 단기', '0.2': '20% 매매사업자', corp_house: '법인-주택(법인세+중과20%+지방소득세)', corp_other: '법인-비주택(법인세+지방소득세)', custom: '직접입력 ' + ($('customCapGainRate').value || '20') + '%' };
+  dataRow('양도소득세 (추정)', v.capGainTax, '기본공제 ' + (v.capGainBasicDed > 0 ? '250만 · ' : '없음 · ') + methodMap2[$('capGainMethod').value], true);
+  dataRow('중도 상환 수수료',  v.prepayFee,    '대출금 × 수수료율', true);
+  dataRow('매도 중개보수',     v.agentFee,     '매도가 × 수수료율', true);
+  dataRow('매도 비용 합계',    v.saleExpTotal, '자동합산', true);
+  emptyRow();
+
+  // 핵심 결과
+  sectionRow('🚀  핵심 결과');
+  keyRow('양도 차익',              v.capGain,    '');
+  keyRow('순 이익 (세후)',         v.netProfit,  '', false, true);
+  keyRow('임대 수입 (보유기간)',   v.holdRent,   '');
+  keyRow('총 자기자본 투자금',     v.equity,     '');
+  keyPctRow('🚀  자기자본 수익률 (ROE)',  v.roe);
+  keyPctRow('연환산 수익률 (ROE/년)',     v.roeAnn);
+  emptyRow();
+
+  // 주석
+  merge(1, 6);
+  const cgNote = { auto: '누진세율 자동(6~45%, 기본공제 250만원)', '0.7': '70% 단기(1년 미만)', '0.6': '60% 단기(2년 미만)', '0.2': '20% 매매사업자', custom: '직접입력 ' + ($('customCapGainRate').value || '20') + '%' };
+  fillRow([ec(), sc('※ 양도소득세 적용방식: ' + cgNote[$('capGainMethod').value] + '. 실제 세금은 세무사 확인이 필요합니다.', S.warn), ec(), ec(), ec(), ec(), ec()]);
 
   // ── 워크시트 마무리 ──────────────────────────
-  ws['!ref'] = 'A1:I'+ri;
+  ws['!ref'] = 'A1:G' + ri;
   ws['!merges'] = merges;
-  ws['!cols'] = [{wch:20},{wch:14},{wch:1.2},{wch:22},{wch:13},{wch:11},{wch:1.2},{wch:20},{wch:14}];
-  ws['!rows'] = Array.from({length:ri},(_,i)=>{
-    if(i===0) return {hpt:32};
-    if(i===1) return {hpt:15};
-    if(i===2||i===16) return {hpt:7};
-    if(i===3||i===17) return {hpt:22};
-    if(i===ri-1) return {hpt:17};
-    return {hpt:18};
-  });
-  ws['!pageSetup']  = {orientation:'landscape',paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:1};
-  ws['!printOptions'] = {gridLines:false};
-  ws['!margins'] = {left:0.35,right:0.35,top:0.4,bottom:0.3,header:0.1,footer:0.1};
+  ws['!cols'] = [
+    { wch: 2 },   // A
+    { wch: 26 },  // B 섹션/키라벨
+    { wch: 22 },  // C 라벨
+    { wch: 18 },  // D 값
+    { wch: 2 },   // E
+    { wch: 28 },  // F 비고
+    { wch: 2 },   // G
+  ];
+  // 제목행 높이
+  ws['!rows'] = Array.from({ length: ri }, (_, i) =>
+    i === 1 ? { hpt: 26 } : { hpt: 18 }
+  );
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '수익률분석');
-  XLSX.writeFile(wb, fname+'.xlsx');
+  XLSX.writeFile(wb, fname + '.xlsx');
 }
 
 function showTab(name, tabEl) {
@@ -3482,10 +3407,9 @@ function showTab(name, tabEl) {
     const frame = document.getElementById('priceFrame');
     if (frame && frame.src === 'about:blank') {
       const loading = document.getElementById('priceLoading');
-      if (loading) loading.style.display = 'flex';
+      if (loading) { loading.style.display = 'flex'; }
       frame.src = frame.dataset.src;
       frame.onload = () => { if (loading) loading.style.display = 'none'; };
-      frame.onerror = () => { if (loading) loading.style.display = 'none'; };
     }
   }
 }
@@ -3518,6 +3442,10 @@ if (FB_READY) {
   firebase.initializeApp(FIREBASE_CONFIG);
   auth = firebase.auth();
   db   = firebase.firestore();
+
+  // 브라우저 세션 간 로그인 상태 유지 (탭 닫아도 유지)
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+
   auth.onAuthStateChanged(user => {
     currentUser = user;
     updateAuthUI();
@@ -3530,6 +3458,15 @@ if (FB_READY) {
       if (document.getElementById('tab-saves').classList.contains('active')) renderSavesList();
       if (document.getElementById('tab-invest').classList.contains('active')) renderInvestTab();
     }
+  });
+
+  // 자리 비웠다 돌아왔을 때 현재 탭 데이터 자동 새로고침
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' || !currentUser) return;
+    const activePage = document.querySelector('.page.active');
+    if (!activePage) return;
+    if (activePage.id === 'tab-saves') renderSavesList();
+    if (activePage.id === 'tab-invest') renderInvestTab();
   });
 }
 
@@ -3902,13 +3839,9 @@ function _renderSaveItem(s, folders) {
   const fmtDate= d => d ? d.replace(/-/g, '.') : null;
   const title  = [s.caseNo, s.addr].filter(Boolean).join(' · ') || '(제목 없음)';
   const memoHtml = s.memo ? s.memo.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
-  // 저장값이 문자열("25,000,000")이므로 숫자 파싱 후 비교
-  const _pN = v => parseInt(String(v||'').replace(/[^0-9]/g,''),10)||0;
-  const _savedHasRental = _pN(s.jeonse) > 0 || _pN(s.monthlyRent) > 0;
-  const monthlyNetVal = s.monthlyNet !== undefined && s.monthlyNet !== null
-    ? (_savedHasRental ? s.monthlyNet : 0) : null;
+  const monthlyNetVal = s.monthlyNet !== undefined && s.monthlyNet !== null ? s.monthlyNet : null;
   const realInvestVal = s.realInvest !== undefined && s.realInvest !== null ? s.realInvest : null;
-  const rentRoeAnnVal = (_savedHasRental && s.rentRoeAnn !== undefined && s.rentRoeAnn !== null) ? s.rentRoeAnn : null;
+  const rentRoeAnnVal = s.rentRoeAnn !== undefined && s.rentRoeAnn !== null ? s.rentRoeAnn : null;
   const annualNetVal  = monthlyNetVal !== null ? monthlyNetVal * 12 : null;
   const hasRental     = monthlyNetVal !== null || realInvestVal !== null;
   const bidDateStr = fmtDate(s.bidDate);
@@ -3984,7 +3917,15 @@ async function renderSavesList() {
   let saves = [];
   try {
     if (FB_READY && currentUser) {
-      const snap = await db.collection('users').doc(currentUser.uid).collection('saves').orderBy('savedAtMs','desc').get();
+      const fetchSaves = () => db.collection('users').doc(currentUser.uid).collection('saves').orderBy('savedAtMs','desc').get();
+      let snap;
+      try {
+        snap = await fetchSaves();
+      } catch(e) {
+        // 토큰 만료 등으로 실패 시 강제 갱신 후 재시도
+        await currentUser.getIdToken(true);
+        snap = await fetchSaves();
+      }
       saves = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     } else { saves = getSaves(); }
   } catch(e) { list.innerHTML = `<div style="color:red;padding:20px">오류: ${e.message}</div>`; return; }
@@ -4468,13 +4409,11 @@ async function saveInvestEntry() {
     entry.holdingMonths = _calcHoldingMonths(entry.bidDate, entry.saleDate);
   } else {
     const rent = ivNum('iv-monthlyRent'), loan = ivNum('iv-monthlyLoan'), eq = ivNum('iv-equity-h');
-    const dep = ivNum('iv-deposit');
-    entry.deposit = dep; entry.monthlyRent = rent;
+    entry.deposit = ivNum('iv-deposit'); entry.monthlyRent = rent;
     entry.monthlyLoan = loan; entry.equity = eq;
     entry.curMarket = ivNum('iv-curMarket');
-    const hasIvRental = dep > 0 || rent > 0;
-    entry.monthlyNet = hasIvRental ? rent - loan : 0;
-    entry.rentRoeAnn = (hasIvRental && eq > 0) ? entry.monthlyNet * 12 / eq * 100 : null;
+    entry.monthlyNet = rent - loan;
+    entry.rentRoeAnn = eq > 0 ? entry.monthlyNet * 12 / eq * 100 : null;
     entry.holdingMonths = _calcHoldingMonths(entry.bidDate, null);
   }
   try {
