@@ -239,6 +239,14 @@
   .drag-handle-col:hover { color:var(--blue); }
   .drag-handle-col:active { cursor:grabbing; }
   .save-item.row-drag-over { border-color:var(--blue) !important; border-top:2px solid var(--blue) !important; background:#f0f9ff; }
+  .saves-bulk-bar { display:flex;align-items:center;gap:8px;padding:7px 12px;background:#f0f9ff;border:1.5px solid #93c5fd;border-radius:8px;margin-bottom:8px; }
+  .saves-bulk-bar.hidden { display:none; }
+  .save-item-cb { width:16px;height:16px;cursor:pointer;accent-color:var(--blue);flex-shrink:0; }
+  .save-item.cb-selected { border-color:var(--blue);background:#f0f9ff; }
+  .btn-bulk { padding:4px 10px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid; }
+  .btn-bulk-folder { background:#f5f3ff;color:#7c3aed;border-color:#ddd6fe; }
+  .btn-bulk-del { background:white;color:var(--red);border-color:var(--red); }
+  .btn-bulk:disabled { opacity:0.4;cursor:not-allowed; }
   .invest-item.row-drag-over { border-color:var(--blue) !important; border-top:2px solid var(--blue) !important; background:#f0f9ff; }
   .save-item.row-dragging, .invest-item.row-dragging { opacity:0.45; }
   .invest-item-title { font-size:13px; font-weight:700; color:var(--text); margin:4px 0 2px; }
@@ -560,6 +568,7 @@
   <div class="tab" onclick="showTab('saves')" id="tab-btn-saves">📁 저장된 분석 <span id="savesCount" style="background:#1a56db;color:white;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:3px;display:none">0</span></div>
   <div class="tab" onclick="showTab('invest')">💰 실투자 수익</div>
   <div class="tab" onclick="showTab('price')">🏠 실거래가 조회</div>
+  <div class="tab" onclick="showTab('gongsiga')">🏛 공시가 및 보증보험</div>
   <div class="tab" onclick="showTab('tax')">📖 세율 참고표</div>
 </div>
 
@@ -1166,6 +1175,25 @@
   </div>
 </div>
 
+<!-- ═══════════════ TAB: 공시가 및 보증보험 ═══════════════ -->
+<div id="tab-gongsiga" class="page" style="padding:0;">
+  <div style="width:100%;height:calc(100vh - 120px);min-height:600px;position:relative;">
+    <iframe
+      id="gongsigaFrame"
+      src="about:blank"
+      data-src="https://busan-bid-tool.onrender.com"
+      style="width:100%;height:100%;border:none;display:block;"
+      allowfullscreen
+      title="공시가 및 보증보험 조회"
+    ></iframe>
+    <div id="gongsigaLoading" style="display:none;position:absolute;inset:0;background:white;align-items:center;justify-content:center;flex-direction:column;gap:12px;">
+      <div style="font-size:40px">🏛</div>
+      <div style="font-size:15px;font-weight:700;color:var(--blue)">공시가 및 보증보험 로딩 중...</div>
+      <div style="font-size:12px;color:var(--gray)">잠시만 기다려 주세요</div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════ TAB 5: 저장된 분석 ═══════════════ -->
 <div id="tab-saves" class="page">
   <div class="card">
@@ -1177,6 +1205,15 @@
       </div>
     </div>
     <div class="card-body">
+      <div id="savesBulkBar" class="saves-bulk-bar hidden">
+        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;font-weight:700;user-select:none;white-space:nowrap;">
+          <input type="checkbox" id="selectAllCb" class="save-item-cb" onchange="toggleSelectAllSaves(this)"> 전체선택
+        </label>
+        <span id="bulkSelectedCount" style="font-size:12px;color:#1d4ed8;font-weight:600;white-space:nowrap;">0개 선택</span>
+        <div style="flex:1"></div>
+        <button id="bulkMoveBtn" class="btn-bulk btn-bulk-folder" onclick="showBulkFolderMenu(this)" disabled>📁 폴더 이동</button>
+        <button id="bulkDelBtn"  class="btn-bulk btn-bulk-del"    onclick="bulkDeleteSaves()"         disabled>🗑 선택 삭제</button>
+      </div>
       <div id="savesEmpty" class="save-empty">💾 저장된 분석이 없습니다.<br><span style="font-size:12px">수익률 분석 탭에서 <strong>분석 저장</strong> 버튼을 눌러 저장해보세요.</span></div>
       <div id="savesList"></div>
     </div>
@@ -3412,6 +3449,16 @@ function showTab(name, tabEl) {
       frame.onload = () => { if (loading) loading.style.display = 'none'; };
     }
   }
+  if (name === 'gongsiga') {
+    const frame = document.getElementById('gongsigaFrame');
+    if (frame && frame.src === 'about:blank') {
+      const loading = document.getElementById('gongsigaLoading');
+      if (loading) loading.style.display = 'flex';
+      frame.src = frame.dataset.src;
+      frame.onload = () => { if (loading) loading.style.display = 'none'; };
+      frame.onerror = () => { if (loading) loading.style.display = 'none'; };
+    }
+  }
 }
 
 // ─── Firebase 설정 ────────────────────────────────────────────────────────────
@@ -3525,6 +3572,7 @@ function showLoginError(msg) { const e = $('loginError'); e.textContent = msg; e
 
 const STORAGE_KEY = 'booland_saves';
 function getSaves() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch { return []; } }
+let selectedSaveIds = new Set();
 
 function showToast(msg) {
   let t = document.getElementById('toast');
@@ -3627,8 +3675,8 @@ async function loadSave(id) {
   } catch(e) { alert('불러오기 실패: ' + e.message); }
 }
 
-async function deleteSave(id) {
-  if (!confirm('이 분석을 삭제하시겠습니까?')) return;
+async function deleteSave(id, silent=false) {
+  if (!silent && !confirm('이 분석을 삭제하시겠습니까?')) return;
   try {
     if (FB_READY && currentUser) {
       await db.collection('users').doc(currentUser.uid).collection('saves').doc(id).delete();
@@ -3636,8 +3684,8 @@ async function deleteSave(id) {
       const saves = getSaves().filter(s => s.id !== id);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(saves));
     }
-    renderSavesList(); showToast('🗑 삭제되었습니다.');
-  } catch(e) { alert('삭제 실패: ' + e.message); }
+    if (!silent) { renderSavesList(); showToast('🗑 삭제되었습니다.'); }
+  } catch(e) { if (!silent) alert('삭제 실패: ' + e.message); }
 }
 
 async function clearAllSaves() {
@@ -3681,6 +3729,7 @@ async function loadOrderFromCloud() {
 
 // ── 행 순서 드래그 (저장된 분석) ────────────────
 let _dragSaveId = null;
+let _dragSaveIds = null;     // 다중 선택 드래그 시 선택된 ID 배열
 let _dragSaveRowId = null;   // 순서변경 드래그 전용
 
 function onSaveRowDragOver(e, targetId) {
@@ -3720,7 +3769,10 @@ function onSaveRowDrop(e, targetId) {
 // ── 아이템 드래그 → 폴더 이동 ───────────────────
 function onItemDragStart(e, saveId) {
   _dragSaveId = saveId;
-  _dragSaveRowId = saveId;  // 순서변경 드래그도 함께 시작
+  _dragSaveRowId = saveId;
+  // 다중 선택 상태에서 선택된 항목을 드래그하면 전체 이동
+  _dragSaveIds = (selectedSaveIds.size > 1 && selectedSaveIds.has(saveId))
+    ? [...selectedSaveIds] : null;
   e.dataTransfer.effectAllowed = 'move';
   e.currentTarget.classList.add('dragging');
   e.currentTarget.classList.add('row-dragging');
@@ -3745,7 +3797,14 @@ function onFolderDrop(e, folderId, el) {
   e.preventDefault();
   el.classList.remove('drag-over');
   if (!_dragSaveId) return;
-  moveToFolder(_dragSaveId, folderId);
+  if (_dragSaveIds && _dragSaveIds.length > 1) {
+    selectedSaveIds.clear();
+    _dragSaveIds.forEach(id => selectedSaveIds.add(id));
+    bulkMoveToFolder(folderId);
+    _dragSaveIds = null;
+  } else {
+    moveToFolder(_dragSaveId, folderId);
+  }
   _dragSaveId = null;
 }
 
@@ -3804,6 +3863,7 @@ function moveToFolder(saveId, folderId) {
 }
 
 function showFolderMenu(saveId, btn) {
+  const isBulk = selectedSaveIds.size > 1 && selectedSaveIds.has(saveId);
   let menu = document.getElementById('folderMenu');
   if (!menu) {
     menu = document.createElement('div');
@@ -3812,9 +3872,13 @@ function showFolderMenu(saveId, btn) {
   }
   const folders = getFolders();
   const currentFolder = folders.find(f => f.itemIds.includes(saveId));
-  let html = `<div class="folder-menu-item ${!currentFolder ? 'active' : ''}" onclick="moveToFolder('${saveId}', null)">📌 폴더 없음</div>`;
+  let html = '';
+  if (isBulk) {
+    html += `<div style="padding:5px 12px;font-size:11px;font-weight:700;color:#7c3aed;border-bottom:1px solid #ede9fe;margin-bottom:2px;">${selectedSaveIds.size}개 선택됨</div>`;
+  }
+  html += `<div class="folder-menu-item ${!currentFolder && !isBulk ? 'active' : ''}" onclick="${isBulk ? "bulkMoveToFolder(null)" : `moveToFolder('${saveId}', null)`}">📌 폴더 없음</div>`;
   folders.forEach(f => {
-    html += `<div class="folder-menu-item ${currentFolder?.id === f.id ? 'active' : ''}" onclick="moveToFolder('${saveId}','${f.id}')">📁 ${f.name}</div>`;
+    html += `<div class="folder-menu-item ${!isBulk && currentFolder?.id === f.id ? 'active' : ''}" onclick="${isBulk ? `bulkMoveToFolder('${f.id}')` : `moveToFolder('${saveId}','${f.id}')`}">📁 ${f.name}</div>`;
   });
   if (folders.length === 0) html += `<div style="padding:8px 12px;font-size:11px;color:#9ca3af">폴더가 없습니다.<br>상단 [📁 새 폴더]로 만드세요.</div>`;
   menu.innerHTML = html;
@@ -3828,6 +3892,102 @@ function showFolderMenu(saveId, btn) {
 function hideFolderMenu() {
   const m = document.getElementById('folderMenu');
   if (m) m.style.display = 'none';
+}
+
+// ── 체크박스 bulk 선택 ──────────────────────────
+function toggleSaveSelect(id, cb) {
+  const el = cb.closest('.save-item');
+  if (cb.checked) { selectedSaveIds.add(id); el && el.classList.add('cb-selected'); }
+  else { selectedSaveIds.delete(id); el && el.classList.remove('cb-selected'); }
+  updateSavesBulkBar();
+}
+
+function toggleSelectAllSaves(masterCb) {
+  const allCbs = document.querySelectorAll('#savesList .save-item-cb');
+  allCbs.forEach(cb => {
+    const id = cb.closest('.save-item')?.dataset.id;
+    if (!id) return;
+    cb.checked = masterCb.checked;
+    const el = cb.closest('.save-item');
+    if (masterCb.checked) { selectedSaveIds.add(id); el && el.classList.add('cb-selected'); }
+    else { selectedSaveIds.delete(id); el && el.classList.remove('cb-selected'); }
+  });
+  updateSavesBulkBar();
+}
+
+function updateSavesBulkBar() {
+  const bar   = document.getElementById('savesBulkBar');
+  const count = document.getElementById('bulkSelectedCount');
+  const moveBtn = document.getElementById('bulkMoveBtn');
+  const delBtn  = document.getElementById('bulkDelBtn');
+  const n = selectedSaveIds.size;
+  if (n > 0) {
+    bar.classList.remove('hidden');
+    count.textContent = `${n}개 선택`;
+    moveBtn.disabled = false;
+    delBtn.disabled  = false;
+  } else {
+    bar.classList.add('hidden');
+    moveBtn.disabled = true;
+    delBtn.disabled  = true;
+  }
+  // 전체선택 체크박스 동기화
+  const allCbs = document.querySelectorAll('#savesList .save-item-cb');
+  const masterCb = document.getElementById('selectAllCb');
+  if (masterCb && allCbs.length > 0) {
+    masterCb.checked = allCbs.length === n && n > 0;
+    masterCb.indeterminate = n > 0 && n < allCbs.length;
+  }
+}
+
+async function bulkDeleteSaves() {
+  const ids = [...selectedSaveIds];
+  if (ids.length === 0) return;
+  if (!confirm(`선택한 ${ids.length}개를 모두 삭제하시겠습니까?`)) return;
+  for (const id of ids) await deleteSave(id, true);
+  selectedSaveIds.clear();
+  renderSavesList();
+  showToast(`🗑 ${ids.length}개 삭제되었습니다.`);
+}
+
+function showBulkFolderMenu(btn) {
+  const folders = getFolders();
+  hideFolderMenu();
+  if (folders.length === 0) {
+    showToast('📁 폴더가 없습니다. 먼저 폴더를 만들어주세요.');
+    return;
+  }
+  let menu = document.getElementById('folderMenu');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.id = 'folderMenu';
+    menu.style.cssText = 'position:fixed;background:white;border:1.5px solid #e5e7eb;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.13);z-index:9999;min-width:160px;padding:4px 0;font-size:13px;';
+    document.body.appendChild(menu);
+  }
+  menu.innerHTML = `<div style="padding:6px 14px;font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:0.05em;">폴더 선택</div>`
+    + folders.map(f => `<div onclick="bulkMoveToFolder('${f.id}')" style="padding:8px 14px;cursor:pointer;display:flex;align-items:center;gap:6px;" onmouseover="this.style.background='#f5f3ff'" onmouseout="this.style.background=''">📁 ${f.name}</div>`).join('');
+  const rect = btn.getBoundingClientRect();
+  menu.style.top  = (rect.bottom + 4) + 'px';
+  menu.style.left = (rect.left) + 'px';
+  menu.style.display = '';
+  setTimeout(() => document.addEventListener('click', hideFolderMenu, {once:true}), 0);
+}
+
+function bulkMoveToFolder(folderId) {
+  hideFolderMenu();
+  const ids = [...selectedSaveIds];
+  if (ids.length === 0) return;
+  const folders = getFolders();
+  const updated = folders.map(f => {
+    let itemIds = f.itemIds.filter(id => !ids.includes(id));
+    if (f.id === folderId) itemIds = [...new Set([...itemIds, ...ids])];
+    return { ...f, itemIds };
+  });
+  saveFolders(updated);
+  selectedSaveIds.clear();
+  renderSavesList();
+  const folder = updated.find(f => f.id === folderId);
+  showToast(`📁 ${ids.length}개 → "${folder?.name || '폴더'}"로 이동했습니다.`);
 }
 
 // ── 저장 목록 렌더 ──────────────────────────────
@@ -3864,10 +4024,13 @@ function _renderSaveItem(s, folders) {
     ? `<div class="save-item-memo">${memoHtml.split('\n').map(l=>`<div class="save-item-memo-line">${l||'&nbsp;'}</div>`).join('')}</div>`
     : `<div class="save-memo-empty" style="min-height:36px;background:var(--gray-light);border-radius:6px;border-left:3px solid #e5e7eb;"></div>`;
 
-  return `<div class="save-item" data-id="${s.id}" draggable="true"
+  const isChecked = selectedSaveIds.has(s.id);
+  return `<div class="save-item${isChecked?' cb-selected':''}" data-id="${s.id}" draggable="true"
       ondragstart="onItemDragStart(event,'${s.id}')" ondragend="onItemDragEnd(event)"
       ondragover="onSaveRowDragOver(event,'${s.id}')" ondragleave="onSaveRowDragLeave(event)" ondrop="onSaveRowDrop(event,'${s.id}')">
     <div class="save-item-inner" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
+      <!-- 체크박스 -->
+      <input type="checkbox" class="save-item-cb" ${isChecked?'checked':''} onclick="event.stopPropagation()" onchange="toggleSaveSelect('${s.id}',this)">
       <!-- 드래그 핸들 -->
       <span class="drag-handle-col" title="드래그하여 순서 변경">⠿</span>
 
@@ -3900,6 +4063,7 @@ function _renderSaveItem(s, folders) {
 }
 
 async function renderSavesList() {
+  const _scrollY = window.scrollY;
   const empty = $('savesEmpty'), list = $('savesList');
   if (FB_READY && !currentUser) {
     list.innerHTML = '';
@@ -3914,6 +4078,7 @@ async function renderSavesList() {
   }
   list.innerHTML = '<div style="text-align:center;padding:24px;color:#9ca3af;font-size:13px">불러오는 중...</div>';
   empty.style.display = 'none';
+  selectedSaveIds.clear();
   let saves = [];
   try {
     if (FB_READY && currentUser) {
@@ -3936,6 +4101,7 @@ async function renderSavesList() {
   if (saves.length === 0 && folders.length === 0) {
     list.innerHTML = '';
     empty.style.display = '';
+    document.getElementById('savesBulkBar')?.classList.add('hidden');
     empty.innerHTML = '💾 저장된 분석이 없습니다.<br><span style="font-size:12px">물건 정보 탭의 <strong>이 분석 저장</strong> 버튼을 눌러 저장해보세요.</span>';
     return;
   }
@@ -4006,6 +4172,10 @@ async function renderSavesList() {
   }
 
   list.innerHTML = html || '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">저장된 항목이 없습니다.</div>';
+  // bulk bar: 선택 없으므로 숨김 (선택 시 updateSavesBulkBar()가 표시)
+  document.getElementById('savesBulkBar')?.classList.add('hidden');
+  updateSavesBulkBar();
+  requestAnimationFrame(() => window.scrollTo(0, _scrollY));
 }
 
 // ─── 수익률 분석 / 저장 분석 → 실투자 수익 연동 ──────────────────────────
