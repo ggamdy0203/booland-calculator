@@ -631,6 +631,22 @@
             </button>
           </div>
         </div>
+        <div class="form-row">
+          <div class="form-label" style="color:#b45309;font-weight:700">SS입찰가</div>
+          <div class="form-input-wrap" style="gap:6px">
+            <input type="text" class="currency input-calc" id="ssBidPrice" readonly style="flex:1;background:var(--gray-light);font-weight:700;color:#b45309">
+            <span class="input-unit">원</span>
+          </div>
+          <input type="hidden" id="hugLimit" value="0">
+        </div>
+        <div class="form-row">
+          <div class="form-label" style="font-size:11px;color:#9ca3af;padding-left:8px">└ 차감액</div>
+          <div class="form-input-wrap">
+            <input type="text" inputmode="numeric" class="currency" id="ssDeduct" value="20,000,000" oninput="fmtInp(this);calcSSBid()">
+            <span class="input-unit">원</span>
+          </div>
+        </div>
+        <div style="font-size:10px;color:#9ca3af;padding:0 0 4px 2px;margin-top:-4px">※ SS입찰가 = 허그한도(공시가 탭에서 클릭) − 세금 합계 − 차감액</div>
         <div class="form-row" style="flex-direction:column;align-items:flex-start;gap:6px;padding-bottom:8px">
           <div class="form-label">특이사항 / 메모</div>
           <textarea id="memo" placeholder="낙찰 조건, 권리관계, 세입자 현황, 기타 특이사항을 메모하세요..." style="width:100%;min-height:216px;resize:vertical;border:1.5px solid var(--border);border-radius:6px;padding:10px;font-size:12px;font-family:inherit;color:var(--text);background:var(--blue-light);line-height:1.6"></textarea>
@@ -1620,29 +1636,28 @@ function renderResult(geo, data) {
 
 // ── 허그한도 클릭 → 수익률 분석 탭에 자동 반영 ──────────────────
 function sendHugToCalc(type, i) {
-  let addrText, memoText;
+  let addrText, hugVal;
   if (type === 'gj') {
     const r = gItems[i];
     if (!r) return;
-    const hug = Math.round(r.total_price * 1.26);
+    hugVal = Math.round(r.total_price * 1.26);
     addrText = `${r.bldg_name || ''} ${r.ho_no ? r.ho_no + '호' : ''}`.trim();
-    memoText = `[공시가 및 보증보험]\n기준시가: ${Number(r.total_price).toLocaleString('ko-KR')}원\n허그한도: ${Number(hug).toLocaleString('ko-KR')}원\n고시가격: ${Number(r.price).toLocaleString('ko-KR')}원/㎡\n(2026년 기준 · 오피스텔)`;
   } else {
     const r = gGDItems[i];
     if (!r) return;
-    const hug = Math.round(r.price * 1.26);
+    hugVal = Math.round(r.price * 1.26);
     addrText = `${r.danji_nm || ''} ${r.dong ? r.dong + '동 ' : ''}${r.ho_nm ? r.ho_nm + '호' : ''}`.trim();
-    memoText = `[공시가 및 보증보험]\n공시가격: ${Number(r.price).toLocaleString('ko-KR')}원\n허그한도: ${Number(hug).toLocaleString('ko-KR')}원\n(2026년 기준 · 공동주택)`;
   }
 
   const addrEl = document.getElementById('addr');
-  const memoEl = document.getElementById('memo');
+  const hugEl  = document.getElementById('hugLimit');
   if (addrEl) addrEl.value = addrText;
-  if (memoEl) memoEl.value = memoText;
+  if (hugEl)  hugEl.value  = hugVal;
 
   const calcTabBtn = [...document.querySelectorAll('.tab')].find(t => (t.getAttribute('onclick')||'').includes("showTab('calc')"));
   if (typeof showTab === 'function') showTab('calc', calcTabBtn);
-  if (typeof showToast === 'function') showToast('✅ 수익률 분석에 적용되었습니다');
+  if (typeof calcSSBid === 'function') calcSSBid();
+  if (typeof showToast === 'function') showToast('✅ SS입찰가에 적용되었습니다');
 }
 
 // ── 낙찰분석 토글 (오피스텔) ──────────────────────────────────
@@ -2501,6 +2516,14 @@ function setFmt(id, n) {
   $(id).value = isNaN(n) ? '' : Math.round(n).toLocaleString('ko-KR');
 }
 
+// SS입찰가 = 허그한도 - 세금 합계 - 차감액(기본 2천만, 직접입력 가능)
+function calcSSBid() {
+  const hug    = parseVal('hugLimit');
+  const tax    = parseVal('taxTotal');
+  const deduct = parseVal('ssDeduct');
+  setFmt('ssBidPrice', hug - tax - deduct);
+}
+
 function getAcqTaxBreakdown(price, houseCount, propType, smallArea) {
   // 비주거용 (오피스텔·상가·토지): 취득세 4%, 농특 0.2%, 지교 0.4%
   if (propType === '오피스텔' || propType === '상가' || propType === '토지') {
@@ -2730,6 +2753,7 @@ function calc() {
   $('eduTaxLabel').textContent  = `지방교육세 (${(v.eduRate * 100).toFixed(2)}%)`;
   setFmt('eduTax',         v.eduTax);
   setFmt('taxTotal',     v.taxTotal);
+  calcSSBid();
   setFmt('miscTotal',    v.miscTotal);
   setFmt('annualRent',   v.annualRent);
   $('rentYield').value  = v.rentYield.toFixed(2);
