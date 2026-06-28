@@ -4437,7 +4437,42 @@ if (FB_READY) {
   db.enablePersistence({ synchronizeTabs: true }).catch(err => console.warn('Firestore persistence 비활성:', err.code));
   // 로그인 상태를 브라우저를 닫아도 영구 유지 (기본값이 SESSION인 환경 대비)
   auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+  // 예상치 못한 로그아웃 원인 진단용 — 탭이 숨겨진 시점 기록
+  let _lastHiddenAt = null;
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') _lastHiddenAt = Date.now();
+  });
+
+  // 토큰 갱신 성공/실패 로그 (예상치 못한 로그아웃 발생 시 원인 추적용 — localStorage에 누적)
+  auth.onIdTokenChanged(async user => {
+    if (!user) return;
+    try {
+      const result = await user.getIdTokenResult();
+      const log = JSON.parse(localStorage.getItem('booland_token_log') || '[]');
+      log.push({ time: new Date().toISOString(), issued: result.issuedAtTime, exp: result.expirationTime });
+      if (log.length > 20) log.shift();
+      localStorage.setItem('booland_token_log', JSON.stringify(log));
+    } catch(e) {
+      console.error('[토큰 갱신 오류]', e.code, e.message);
+      try { localStorage.setItem('booland_token_error', JSON.stringify({ time: new Date().toISOString(), code: e.code, message: e.message })); } catch(_) {}
+    }
+  });
+
   auth.onAuthStateChanged(user => {
+    const prevUser = currentUser;
+    // 명시적 로그아웃이 아닌데 로그인→로그아웃으로 바뀌면 진단 정보 저장 (다음에 또 발생 시 원인 추적용)
+    if (prevUser && !user && !window._explicitSignOut) {
+      const idleMs = _lastHiddenAt ? Date.now() - _lastHiddenAt : null;
+      const diag = {
+        time: new Date().toISOString(),
+        idleMinutes: idleMs ? Math.round(idleMs / 60000) : null,
+        prevUid: prevUser.uid,
+        prevEmail: prevUser.email,
+      };
+      console.warn('[예상치 못한 로그아웃 감지]', diag);
+      try { localStorage.setItem('booland_unexpected_logout', JSON.stringify(diag)); } catch(_) {}
+    }
+    window._explicitSignOut = false;
     currentUser = user;
     updateAuthUI();
     updateSavesCount();
@@ -4507,6 +4542,7 @@ async function signUpWithEmail() {
 }
 async function signOutUser() {
   if (!confirm('로그아웃 하시겠습니까?')) return;
+  window._explicitSignOut = true;
   await auth.signOut();
   renderSavesList();
 }
