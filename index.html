@@ -4432,6 +4432,9 @@ if (FB_READY) {
   firebase.initializeApp(FIREBASE_CONFIG);
   auth = firebase.auth();
   db   = firebase.firestore();
+  // 오프라인 캐시 활성화 — 네트워크 일시 끊김/탭 깨어날 때 저장된 분석이 "0개"로 잘못 표시되는 문제 방지
+  // (IndexedDB에 마지막으로 받은 데이터를 캐싱해두고, 네트워크 실패 시에도 캐시로 즉시 표시)
+  db.enablePersistence({ synchronizeTabs: true }).catch(err => console.warn('Firestore persistence 비활성:', err.code));
   // 로그인 상태를 브라우저를 닫아도 영구 유지 (기본값이 SESSION인 환경 대비)
   auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
   auth.onAuthStateChanged(user => {
