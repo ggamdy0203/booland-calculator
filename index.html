@@ -1648,18 +1648,21 @@ let profitChartInst = null;
 function fmtInp(el) {
   const pos = el.selectionStart;
   const before = el.value.length;
+  const isNeg = el.value.startsWith('-');
   const raw = el.value.replace(/[^0-9]/g, '');
   const num = parseInt(raw, 10);
-  el.value = isNaN(num) ? '' : num.toLocaleString('ko-KR');
+  el.value = (isNeg ? '-' : '') + (isNaN(num) ? '' : num.toLocaleString('ko-KR'));
   // 커서 위치 보정 (추가된 콤마 수 반영)
   const diff = el.value.length - before;
   el.setSelectionRange(pos + diff, pos + diff);
 }
 
-// 콤마 제거 후 숫자 파싱
+// 콤마 제거 후 숫자 파싱 (음수 지원)
 function parseVal(id) {
-  const v = $(id).value.replace(/[^0-9]/g, '');
-  return parseInt(v || '0', 10);
+  const v = $(id).value;
+  const isNeg = v.startsWith('-');
+  const n = parseInt(v.replace(/[^0-9]/g, '') || '0', 10);
+  return isNeg ? -n : n;
 }
 
 // 계산 결과를 콤마 포맷으로 설정
