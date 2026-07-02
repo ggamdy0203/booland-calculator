@@ -74,6 +74,9 @@
   .rangehint{display:block; font-size:10px; color:var(--sub); margin-top:2px;}
   .rowResetBtn{background:none; border:1px solid var(--accent); color:var(--accent); font-size:11px; font-weight:700; padding:2px 9px; border-radius:20px; cursor:pointer; margin-left:6px; vertical-align:middle;}
   .rowResetBtn:active{background:var(--accent); color:#fff;}
+  .laborCountRow{display:flex; align-items:center; gap:5px; font-size:11px; color:var(--sub); margin-top:2px;}
+  .laborCountInput{width:48px; text-align:center; border:1px solid var(--line); border-radius:6px; padding:2px 4px; font-size:12px; font-family:inherit; background:#fbfcfe; color:var(--ink);}
+  .laborCountInput:focus{outline:2px solid var(--accent); border-color:transparent;}
   .procedure{font-size:13px; color:var(--sub);}
   .procedure .step{display:flex; gap:8px; margin-bottom:6px;}
   .procedure .step b{color:var(--ink); min-width:86px;}
@@ -159,7 +162,7 @@
       <div class="field">
         <label>대출(경락잔금) 금액</label>
         <div class="unit-row">
-          <input type="number" id="loan" value="0" min="0" step="100" inputmode="numeric">
+          <input type="text" id="loan" value="0" inputmode="numeric" oninput="onCommaInput(this)">
           <span class="u">만원</span>
         </div>
       </div>
@@ -173,14 +176,14 @@
       <div class="field">
         <label>예상 월 임대료 (기회비용)</label>
         <div class="unit-row">
-          <input type="number" id="monthlyRent" value="0" min="0" step="5" inputmode="numeric">
+          <input type="text" id="monthlyRent" value="0" inputmode="numeric" oninput="onCommaInput(this)">
           <span class="u">만원</span>
         </div>
       </div>
       <div class="field">
         <label>월 관리비·기타 유지비</label>
         <div class="unit-row">
-          <input type="number" id="monthlyEtc" value="0" min="0" step="1" inputmode="numeric">
+          <input type="text" id="monthlyEtc" value="0" inputmode="numeric" oninput="onCommaInput(this)">
           <span class="u">만원</span>
         </div>
       </div>
@@ -193,15 +196,15 @@
     <summary>단가 설정 (지역·시기에 따라 조정, 자동 저장)</summary>
     <div class="card">
       <div class="rate-grid">
-        <div class="field"><label>노무비 1인당 (원)</label><input type="number" id="r_labor" step="10000"></div>
-        <div class="field"><label>집행관 수수료·여비 (원)</label><input type="number" id="r_officer" step="10000"></div>
-        <div class="field"><label>강제 개문비 (원)</label><input type="number" id="r_key" step="10000"></div>
-        <div class="field"><label>사다리차 (원/회)</label><input type="number" id="r_ladder" step="10000"></div>
-        <div class="field"><label>5톤 트럭 운반비 (원/대)</label><input type="number" id="r_truck" step="10000"></div>
-        <div class="field"><label>컨테이너 보관료 (원/월·개)</label><input type="number" id="r_storage" step="10000"></div>
+        <div class="field"><label>노무비 1인당 (원)</label><input type="text" id="r_labor" inputmode="numeric" oninput="onCommaInput(this)"></div>
+        <div class="field"><label>집행관 수수료·여비 (원)</label><input type="text" id="r_officer" inputmode="numeric" oninput="onCommaInput(this)"></div>
+        <div class="field"><label>강제 개문비 (원)</label><input type="text" id="r_key" inputmode="numeric" oninput="onCommaInput(this)"></div>
+        <div class="field"><label>사다리차 (원/회)</label><input type="text" id="r_ladder" inputmode="numeric" oninput="onCommaInput(this)"></div>
+        <div class="field"><label>5톤 트럭 운반비 (원/대)</label><input type="text" id="r_truck" inputmode="numeric" oninput="onCommaInput(this)"></div>
+        <div class="field"><label>컨테이너 보관료 (원/월·개)</label><input type="text" id="r_storage" inputmode="numeric" oninput="onCommaInput(this)"></div>
         <div class="field"><label>보관 기간 (개월)</label><input type="number" id="r_storageMonths" step="1"></div>
-        <div class="field"><label>동산경매 절차비 (원)</label><input type="number" id="r_auction" step="50000"></div>
-        <div class="field"><label>포장이사비 평당 단가 (원)</label><input type="number" id="r_moving" step="10000"></div>
+        <div class="field"><label>동산경매 절차비 (원)</label><input type="text" id="r_auction" inputmode="numeric" oninput="onCommaInput(this)"></div>
+        <div class="field"><label>포장이사비 평당 단가 (원)</label><input type="text" id="r_moving" inputmode="numeric" oninput="onCommaInput(this)"></div>
       </div>
       <button class="act b-copy" style="margin-top:12px; width:100%;" onclick="resetRates()">기본값으로 초기화</button>
     </div>
@@ -279,17 +282,27 @@ function loadRates(){
     return Object.assign({}, DEFAULT_RATES, s);
   }catch(e){ return Object.assign({}, DEFAULT_RATES); }
 }
+// 콤마 표시된 숫자 입력값 → 순수 숫자로 변환
+function parseNum(v){ return Number(String(v).replace(/,/g,'').trim()) || 0; }
+// 입력창에 천단위 콤마를 실시간으로 반영 (타이핑 중 커서 위치 유지)
+function onCommaInput(el){
+  const tail = el.value.length - el.selectionEnd;
+  const raw = el.value.replace(/[^0-9]/g,'');
+  el.value = raw ? Number(raw).toLocaleString('ko-KR') : '';
+  const pos = Math.max(0, el.value.length - tail);
+  el.setSelectionRange(pos, pos);
+}
 function saveRates(){
   RATE_KEYS.forEach(k=>{
-    const el = document.getElementById('r_'+(k==='storageMonths'?'storageMonths':k));
-    if(el && el.value !== '') rates[k] = Number(el.value);
+    const el = document.getElementById('r_'+k);
+    if(el && el.value !== '') rates[k] = parseNum(el.value);
   });
   localStorage.setItem('md_rates', JSON.stringify(rates));
 }
 function fillRateInputs(){
   RATE_KEYS.forEach(k=>{
     const el = document.getElementById('r_'+k);
-    if(el) el.value = rates[k];
+    if(el) el.value = k==='storageMonths' ? rates[k] : Number(rates[k]).toLocaleString('ko-KR');
   });
 }
 function resetRates(){
@@ -343,8 +356,9 @@ function calc(){
   // ── 강제집행 비용 ──
   const [lMin,lMax] = laborers(py);
   const laborAdj = occ==='commercial' ? 1.2 : 1;   // 상가: 집기·시설 반출 가중
+  const laborCount = Math.round((lMin+lMax)/2);
   const rows = [];
-  rows.push(['노무비', `${lMin}~${lMax}명 × ${manwon(rates.labor)}${occ==='commercial'?' ×1.2(상가)':''}`, lMin*rates.labor*laborAdj, lMax*rates.labor*laborAdj]);
+  rows.push(['노무비', `× ${manwon(rates.labor)}${occ==='commercial'?' ×1.2(상가)':''}`, lMin*rates.labor*laborAdj, lMax*rates.labor*laborAdj]);
   rows.push(['집행관 수수료·여비', '계고 + 본집행', rates.officer, rates.officer]);
   if(needKey) rows.push(['강제 개문비', '열쇠공 (폐문부재 시)', rates.key, rates.key]);
   const needLadder = !hasElev && floor >= 2;
@@ -356,27 +370,29 @@ function calc(){
   if(incAuction) rows.push(['동산경매 절차비', '감정·매각 (짐 미수령 시)', rates.auction, rates.auction]);
 
   // ── 지연 손실 ──
-  const loan = (Number(document.getElementById('loan').value)||0)*10000;
+  const loan = parseNum(document.getElementById('loan').value)*10000;
   const loanRate = (Number(document.getElementById('loanRate').value)||0)/100;
-  const rent = (Number(document.getElementById('monthlyRent').value)||0)*10000;
-  const etc = (Number(document.getElementById('monthlyEtc').value)||0)*10000;
+  const rent = parseNum(document.getElementById('monthlyRent').value)*10000;
+  const etc = parseNum(document.getElementById('monthlyEtc').value)*10000;
   const monthlyLoss = loan*loanRate/12 + rent + etc;
   const delayLoss = monthlyLoss * delayM;
   const movingCost = py * rates.moving;   // 실제 포장이사비 수준
 
   rowOverrides = {};
-  calcContext = { py, occ, lMin, lMax, rows, monthlyLoss, delayLoss, delayM, movingCost };
+  calcContext = { py, occ, lMin, lMax, laborAdj, laborCount, rows, monthlyLoss, delayLoss, delayM, movingCost };
   document.getElementById('resetOverridesBtn').style.display = 'none';
   renderResult(true);
 }
 
 function renderResult(scroll){
   if(!calcContext) return;
-  const { py, occ, lMin, lMax, rows, monthlyLoss, delayLoss, delayM, movingCost } = calcContext;
+  const { py, occ, lMin, lMax, laborAdj, laborCount, rows, monthlyLoss, delayLoss, delayM, movingCost } = calcContext;
+  const laborRowValue = () => laborCount * rates.labor * laborAdj;
 
   let totMin=0, totMax=0;
   rows.forEach((r,i)=>{
     const ov = rowOverrides[i];
+    if(i===0 && ov==null){ totMin += laborRowValue(); totMax += laborRowValue(); return; }
     totMin += ov!=null ? ov : r[2];
     totMax += ov!=null ? ov : r[3];
   });
@@ -405,14 +421,16 @@ function renderResult(scroll){
   if(mid < low) mid = (low+high)/2;
 
   // ── 렌더 ──
-  document.getElementById('laborBadge').textContent = `노무자 ${lMin}~${lMax}명 기준`;
+  document.getElementById('laborBadge').textContent = `노무자 ${laborCount}명 (기준 ${lMin}~${lMax}명)`;
   let html = '<tr><th>항목</th><th>금액</th></tr>';
   rows.forEach((r,i)=>{
     const ov = rowOverrides[i];
+    const isLabor = i===0;
     const min = r[2], max = r[3];
-    const value = ov!=null ? ov : Math.round((min+max)/2);
-    const rangeText = min!==max ? `<span class="rangehint">기본 범위 ${won(min)} ~ ${won(max)}</span>` : '';
-    html += `<tr><td>${r[0]}<span class="memo">${r[1]}</span>${rangeText}</td><td class="amtCell"><input type="number" class="amtInput" data-idx="${i}" step="10000" min="0" value="${Math.round(value)}"></td></tr>`;
+    const value = ov!=null ? ov : (isLabor ? laborRowValue() : Math.round((min+max)/2));
+    const rangeText = !isLabor && min!==max ? `<span class="rangehint">기본 범위 ${won(min)} ~ ${won(max)}</span>` : '';
+    const laborCountHtml = isLabor ? `<div class="laborCountRow">인원 <input type="number" class="laborCountInput" id="laborCountInput" min="1" step="1" value="${laborCount}"> 명 (기준 ${lMin}~${lMax}명)</div>` : '';
+    html += `<tr><td>${r[0]}<span class="memo">${r[1]}</span>${laborCountHtml}${rangeText}</td><td class="amtCell"><input type="text" class="amtInput" data-idx="${i}" inputmode="numeric" value="${Math.round(value).toLocaleString('ko-KR')}"></td></tr>`;
   });
   html += `<tr class="total"><td>강제집행 실비 합계</td><td>${totMin===totMax ? won(totMid) : won(totMin)+' ~ '+won(totMax)}</td></tr>`;
   if(monthlyLoss>0){
@@ -439,7 +457,9 @@ function renderResult(scroll){
 
   const summaryRows = rows.map((r,i)=>{
     const ov = rowOverrides[i];
-    return ov!=null ? [r[0], r[1]+' (직접입력)', ov, ov] : r;
+    if(ov!=null) return [r[0], r[1]+' (직접입력)', ov, ov];
+    if(i===0){ const v = laborRowValue(); return [r[0], `${laborCount}명 ${r[1]}`, v, v]; }
+    return r;
   });
   lastSummary = buildSummary(py, occ, summaryRows, totMin, totMax, monthlyLoss, delayLoss, delayM, low, mid, high);
 
@@ -456,14 +476,26 @@ function resetOverrides(){
   renderResult(false);
 }
 
+document.getElementById('costTable').addEventListener('input', (e)=>{
+  if(e.target.classList.contains('amtInput')) onCommaInput(e.target);
+});
 document.getElementById('costTable').addEventListener('change', (e)=>{
   const t = e.target;
-  if(!t.classList.contains('amtInput')) return;
-  const idx = Number(t.dataset.idx);
-  const val = Number(t.value);
-  if(!isFinite(val) || val < 0) return;
-  rowOverrides[idx] = val;
-  renderResult(false);
+  if(t.classList.contains('laborCountInput')){
+    const val = Math.max(1, Math.round(Number(t.value)||1));
+    calcContext.laborCount = val;
+    delete rowOverrides[0];
+    renderResult(false);
+    return;
+  }
+  if(t.classList.contains('amtInput')){
+    const idx = Number(t.dataset.idx);
+    const val = parseNum(t.value);
+    if(!isFinite(val) || val < 0) return;
+    rowOverrides[idx] = val;
+    if(idx===0) calcContext.laborCount = Math.round((calcContext.lMin+calcContext.lMax)/2);
+    renderResult(false);
+  }
 });
 
 function setMarker(id, pct, val){
