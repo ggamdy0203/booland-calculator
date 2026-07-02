@@ -411,11 +411,14 @@ function renderResult(scroll){
     midD='실제 포장이사비 수준';
     highD='집행비용의 70% 한도';
   } else {
-    const midRatio = occ==='owner' ? 0.8 : 0.75;
-    low = movingCost; mid = totMid*midRatio; high = totMid + delayLoss;
-    lowD='실제 포장이사비 수준';
-    midD=`강제집행 실비의 ${Math.round(midRatio*100)}%`;
-    highD='집행 실비 + 지연손실 '+delayM+'개월';
+    const bumpRatio = occ==='owner' ? 0.15 : 0.10;   // 첫 제시(강제집행 실비) 대비 적정 타결선 가산율
+    low = totMid;
+    mid = totMid * (1 + bumpRatio);
+    high = totMid + delayLoss;
+    if(high < mid) high = mid;
+    lowD='';
+    midD='';
+    highD='적정 타결선을 넘으면 협상보다 강제집행이 낫습니다';
   }
   if(high < mid) high = mid;
   if(mid < low) mid = (low+high)/2;
@@ -518,11 +521,11 @@ function strategyHtml(occ, tot, delayLoss, delayM){
       <li>배당받는 금액만큼은 명도확인서가 지렛대가 됩니다. 이를 기본 카드로 쓰세요.</li>
       <li>손실 본 보증금에 대한 감정적 반발이 있으므로, 실제 이사비 수준의 현실적 금액으로 접근하는 것이 빠릅니다.</li>${common}</ul>`,
     no_dividend: `<h3>📌 무배당 임차인 — 강제집행 비용이 협상 기준</h3><ul>
-      <li>첫 제시는 하한(실제 이사비)부터. "강제집행 가면 이 돈도 못 받고 집행비용까지 청구됩니다."</li>
-      <li>적정선(집행 실비의 75%)까지는 올려줘도 <b>내가 이득</b>입니다 — 시간과 소송 스트레스를 아끼는 값입니다.</li>
-      <li>상한을 넘는 요구는 거절하세요. 그 돈이면 강제집행이 더 쌉니다.</li>${common}</ul>`,
+      <li>첫 제시는 강제집행 예상 비용 총액부터. "이 돈은 어차피 강제집행에 쓸 비용이니, 그냥 드릴 테니 조용히 나가주세요."</li>
+      <li>적정 타결선까지는 올려줘도 <b>내가 이득</b>입니다 — 시간과 소송 스트레스를 아끼는 값입니다.</li>
+      <li>절대 상한을 넘는 요구는 거절하세요. 그 돈이면 강제집행이 더 쌉니다.</li>${common}</ul>`,
     owner: `<h3>📌 소유자(채무자) 점유 — 감정 관리가 핵심</h3><ul>
-      <li>집을 잃은 당사자라 저항이 가장 큽니다. 시간을 끌수록 내 손실(월 ${won(delayLoss && delayM ? delayLoss/delayM : 0)})이 커지므로 적정선을 다소 높게(80%) 잡았습니다.</li>
+      <li>집을 잃은 당사자라 저항이 가장 큽니다. 시간을 끌수록 내 손실(월 ${won(delayLoss && delayM ? delayLoss/delayM : 0)})이 커지므로 적정 타결선을 다소 높게 잡았습니다.</li>
       <li>"강제집행되면 이사비 한 푼 없이 짐이 컨테이너로 갑니다. 보관료도 청구됩니다" — 사실 그대로 안내하세요.</li>
       <li>퇴거일을 못 박는 것이 금액보다 중요합니다. 합의서에 <b>위약 시 이사비 무효 + 즉시 집행</b> 조항을 넣으세요.</li>${common}</ul>`,
     commercial: `<h3>📌 상가 점유자 — 시설·집기가 변수</h3><ul>
