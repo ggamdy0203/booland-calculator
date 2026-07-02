@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>명도 협상 계산기 — 강제집행 비용 기준</title>
+<style>
+  :root{
+    --bg:#f4f6fa; --card:#ffffff; --ink:#1c2333; --sub:#6b7488;
+    --accent:#2563eb; --accent2:#1e40af; --line:#e4e8f0;
+    --low:#16a34a; --mid:#d97706; --high:#dc2626;
+    --chip:#eef2ff;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif; background:var(--bg); color:var(--ink); padding:16px; line-height:1.55;}
+  .wrap{max-width:760px; margin:0 auto;}
+  header{text-align:center; margin:8px 0 20px;}
+  header h1{font-size:22px; font-weight:800;}
+  header p{color:var(--sub); font-size:13px; margin-top:4px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:14px; box-shadow:0 1px 3px rgba(20,30,60,.05);}
+  .card h2{font-size:15px; font-weight:700; margin-bottom:12px; display:flex; align-items:center; gap:6px;}
+  .card h2 .n{background:var(--accent); color:#fff; width:20px; height:20px; border-radius:50%; font-size:12px; display:inline-flex; align-items:center; justify-content:center;}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  @media(max-width:520px){.grid{grid-template-columns:1fr;}}
+  .field label{display:block; font-size:12px; font-weight:600; color:var(--sub); margin-bottom:4px;}
+  .field input,.field select{width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:9px; font-size:15px; background:#fbfcfe; color:var(--ink);}
+  .field input:focus,.field select:focus{outline:2px solid var(--accent); border-color:transparent;}
+  .unit-row{display:flex; align-items:center; gap:8px;}
+  .unit-row input{flex:1;}
+  .unit-row .u{font-size:13px; color:var(--sub); white-space:nowrap;}
+  .toggle-row{display:flex; align-items:center; gap:8px; padding:8px 0; font-size:14px;}
+  .toggle-row input{width:18px; height:18px; accent-color:var(--accent);}
+  table{width:100%; border-collapse:collapse; font-size:14px;}
+  th,td{padding:8px 6px; text-align:right; border-bottom:1px solid var(--line);}
+  th:first-child,td:first-child{text-align:left;}
+  th{color:var(--sub); font-size:12px; font-weight:600;}
+  td .memo{display:block; font-size:11px; color:var(--sub);}
+  tr.total td{font-weight:800; font-size:15px; border-top:2px solid var(--ink); border-bottom:none; padding-top:10px;}
+  .rangebar{position:relative; height:78px; margin:22px 4px 8px;}
+  .rangebar .track{position:absolute; top:34px; left:0; right:0; height:10px; border-radius:6px;
+    background:linear-gradient(90deg,var(--low),var(--mid),var(--high));}
+  .marker{position:absolute; top:0; bottom:0; width:0; font-weight:700; white-space:nowrap;}
+  .marker .dot{position:absolute; top:29px; left:0; transform:translateX(-50%); width:14px; height:14px; border-radius:50%; border:3px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.3);}
+  .marker .amt{position:absolute; left:0; transform:translateX(-50%); font-size:12px;}
+  .marker.top .amt{top:6px;}
+  .marker.bottom .amt{top:54px;}
+  .nego-cards{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:18px;}
+  @media(max-width:520px){.nego-cards{grid-template-columns:1fr;}}
+  .nego{border-radius:12px; padding:14px 12px; text-align:center; border:2px solid var(--line);}
+  .nego .t{font-size:12px; font-weight:700; color:var(--sub);}
+  .nego .v{font-size:20px; font-weight:800; margin:4px 0;}
+  .nego .d{font-size:11px; color:var(--sub);}
+  .nego.low{border-color:var(--low);} .nego.low .v{color:var(--low);}
+  .nego.mid{border-color:var(--mid); background:#fffbeb;} .nego.mid .v{color:var(--mid);}
+  .nego.high{border-color:var(--high);} .nego.high .v{color:var(--high);}
+  .tips{background:#f8fafc; border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-top:14px;}
+  .tips h3{font-size:13px; margin-bottom:8px; color:var(--accent2);}
+  .tips ul{padding-left:18px; font-size:13px;}
+  .tips li{margin-bottom:6px;}
+  details.rates{margin-bottom:14px;}
+  details.rates summary{cursor:pointer; font-size:13px; font-weight:700; color:var(--accent2); padding:10px 14px; background:var(--chip); border-radius:10px; list-style:none;}
+  details.rates summary::before{content:'⚙️ ';}
+  details.rates .card{margin-top:8px;}
+  .rate-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  @media(max-width:520px){.rate-grid{grid-template-columns:1fr;}}
+  .btnrow{display:flex; gap:10px; margin-top:6px;}
+  button.act{flex:1; padding:13px; border:none; border-radius:11px; font-size:15px; font-weight:700; cursor:pointer;}
+  .b-calc{background:var(--accent); color:#fff;}
+  .b-calc:active{background:var(--accent2);}
+  .b-copy{background:#fff; color:var(--accent); border:2px solid var(--accent) !important;}
+  .procedure{font-size:13px; color:var(--sub);}
+  .procedure .step{display:flex; gap:8px; margin-bottom:6px;}
+  .procedure .step b{color:var(--ink); min-width:86px;}
+  .badge{display:inline-block; background:var(--chip); color:var(--accent2); font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; margin-left:6px;}
+  .note{font-size:11px; color:var(--sub); margin-top:10px;}
+  #result{display:none;}
+  .flash{animation:flash .6s;}
+  @keyframes flash{0%{background:#fef9c3;}100%{background:transparent;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🏠 명도 협상 계산기</h1>
+    <p>강제집행 실비 기준으로 적정 이사비 협상 범위를 산출합니다</p>
+  </header>
+
+  <!-- ① 물건 정보 -->
+  <div class="card">
+    <h2><span class="n">1</span> 물건 · 점유자 정보</h2>
+    <div class="grid">
+      <div class="field">
+        <label>전용면적</label>
+        <div class="unit-row">
+          <input type="number" id="area" value="25" min="1" step="0.5" inputmode="decimal">
+          <select id="areaUnit" style="width:70px; padding:10px 6px;">
+            <option value="py">평</option>
+            <option value="m2">㎡</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>점유자 유형</label>
+        <select id="occupant">
+          <option value="dividend_full">임차인 — 보증금 전액 배당</option>
+          <option value="dividend_part">임차인 — 일부/소액 배당</option>
+          <option value="no_dividend" selected>임차인 — 배당 없음</option>
+          <option value="owner">소유자(채무자) 점유</option>
+          <option value="commercial">상가 점유자</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>층수</label>
+        <input type="number" id="floor" value="3" min="1" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>엘리베이터</label>
+        <select id="elevator">
+          <option value="y" selected>있음</option>
+          <option value="n">없음</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>짐(유체동산) 규모</label>
+        <select id="stuff">
+          <option value="0.6">적음 (원룸·짐 정리된 상태)</option>
+          <option value="1" selected>보통 (일반 가정집)</option>
+          <option value="1.5">많음 (살림 많음·상가 집기)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>예상 지연 기간 (버틸 경우)</label>
+        <div class="unit-row">
+          <input type="number" id="delayMonths" value="3" min="0" step="0.5" inputmode="decimal">
+          <span class="u">개월</span>
+        </div>
+      </div>
+    </div>
+    <div class="toggle-row" style="margin-top:8px;">
+      <input type="checkbox" id="needKey" checked>
+      <label for="needKey" style="margin:0; font-size:14px; color:var(--ink); font-weight:500;">강제 개문 필요 (폐문부재·문 안 열어줌)</label>
+    </div>
+    <div class="toggle-row">
+      <input type="checkbox" id="auctionCost">
+      <label for="auctionCost" style="margin:0; font-size:14px; color:var(--ink); font-weight:500;">동산경매 비용 포함 (짐을 안 찾아갈 가능성 높음)</label>
+    </div>
+  </div>
+
+  <!-- ② 금융 비용 -->
+  <div class="card">
+    <h2><span class="n">2</span> 지연 시 내 손실 (협상 상한 근거)</h2>
+    <div class="grid">
+      <div class="field">
+        <label>대출(경락잔금) 금액</label>
+        <div class="unit-row">
+          <input type="number" id="loan" value="0" min="0" step="100" inputmode="numeric">
+          <span class="u">만원</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>대출 금리 (연)</label>
+        <div class="unit-row">
+          <input type="number" id="loanRate" value="5.0" min="0" step="0.1" inputmode="decimal">
+          <span class="u">%</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>예상 월 임대료 (기회비용)</label>
+        <div class="unit-row">
+          <input type="number" id="monthlyRent" value="0" min="0" step="5" inputmode="numeric">
+          <span class="u">만원</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>월 관리비·기타 유지비</label>
+        <div class="unit-row">
+          <input type="number" id="monthlyEtc" value="0" min="0" step="1" inputmode="numeric">
+          <span class="u">만원</span>
+        </div>
+      </div>
+    </div>
+    <p class="note">💡 명도가 늦어지는 만큼 매달 나가는 이자·못 받는 임대료가 곧 협상 여력입니다. 상한 = 강제집행 실비 + 지연 손실.</p>
+  </div>
+
+  <!-- 단가 설정 -->
+  <details class="rates">
+    <summary>단가 설정 (지역·시기에 따라 조정, 자동 저장)</summary>
+    <div class="card">
+      <div class="rate-grid">
+        <div class="field"><label>노무비 1인당 (원)</label><input type="number" id="r_labor" step="10000"></div>
+        <div class="field"><label>집행관 수수료·여비 (원)</label><input type="number" id="r_officer" step="10000"></div>
+        <div class="field"><label>강제 개문비 (원)</label><input type="number" id="r_key" step="10000"></div>
+        <div class="field"><label>사다리차 (원/회)</label><input type="number" id="r_ladder" step="10000"></div>
+        <div class="field"><label>5톤 트럭 운반비 (원/대)</label><input type="number" id="r_truck" step="10000"></div>
+        <div class="field"><label>컨테이너 보관료 (원/월·개)</label><input type="number" id="r_storage" step="10000"></div>
+        <div class="field"><label>보관 기간 (개월)</label><input type="number" id="r_storageMonths" step="1"></div>
+        <div class="field"><label>동산경매 절차비 (원)</label><input type="number" id="r_auction" step="50000"></div>
+        <div class="field"><label>포장이사비 평당 단가 (원)</label><input type="number" id="r_moving" step="10000"></div>
+      </div>
+      <button class="act b-copy" style="margin-top:12px; width:100%;" onclick="resetRates()">기본값으로 초기화</button>
+    </div>
+  </details>
+
+  <div class="btnrow">
+    <button class="act b-calc" onclick="calc()">계산하기</button>
+  </div>
+
+  <!-- 결과 -->
+  <div id="result">
+    <!-- ③ 비용 내역 -->
+    <div class="card" style="margin-top:14px;">
+      <h2><span class="n">3</span> 강제집행 예상 비용 <span class="badge" id="laborBadge"></span></h2>
+      <table id="costTable"></table>
+      <p class="note">※ 노무자 수는 집행관 실무 기준(평수별)이며 현장 상황·법원별로 차이가 있습니다. 강제집행 비용은 추후 <b>집행비용액 확정결정</b>으로 점유자에게 청구 가능하지만, 회수 가능성은 낮게 보는 것이 안전합니다.</p>
+    </div>
+
+    <!-- ④ 협상 범위 -->
+    <div class="card">
+      <h2><span class="n">4</span> 이사비 협상 범위</h2>
+      <div class="rangebar">
+        <div class="track"></div>
+        <div class="marker top" id="mLow" style="color:var(--low);"><span class="amt"></span><div class="dot" style="background:var(--low);"></div></div>
+        <div class="marker bottom" id="mMid" style="color:var(--mid);"><span class="amt"></span><div class="dot" style="background:var(--mid);"></div></div>
+        <div class="marker top" id="mHigh" style="color:var(--high);"><span class="amt"></span><div class="dot" style="background:var(--high);"></div></div>
+      </div>
+      <div class="nego-cards">
+        <div class="nego low"><div class="t">🟢 첫 제시 (하한)</div><div class="v" id="nLow"></div><div class="d" id="nLowD"></div></div>
+        <div class="nego mid"><div class="t">🟡 적정 타결선</div><div class="v" id="nMid"></div><div class="d" id="nMidD"></div></div>
+        <div class="nego high"><div class="t">🔴 절대 상한</div><div class="v" id="nHigh"></div><div class="d" id="nHighD"></div></div>
+      </div>
+      <div class="tips" id="strategy"></div>
+    </div>
+
+    <!-- ⑤ 절차 안내 -->
+    <div class="card">
+      <h2><span class="n">5</span> 강제집행 절차 · 기간 (협상 압박 카드)</h2>
+      <div class="procedure">
+        <div class="step"><b>잔금 납부</b><span>인도명령 신청 (잔금과 동시 신청 권장, 6개월 내)</span></div>
+        <div class="step"><b>+1~3주</b><span>인도명령 결정 → 점유자에게 송달</span></div>
+        <div class="step"><b>+2~4주</b><span>송달증명·집행문 부여 → 강제집행 신청, 집행비용 예납</span></div>
+        <div class="step"><b>+2~4주</b><span>집행관 현장 계고 (자진 이행 최고, 통상 2주 유예)</span></div>
+        <div class="step"><b>+2~4주</b><span><b style="color:var(--high);">본집행 (강제 개문·짐 반출)</b> — 통상 잔금 후 2~4개월</span></div>
+      </div>
+      <p class="note">협상 시: "인도명령은 이미 신청되어 있고, 강제집행되면 이사비는커녕 집행비용까지 청구됩니다. 지금 합의하시는 게 서로에게 이익입니다."</p>
+    </div>
+
+    <div class="btnrow" style="margin-bottom:30px;">
+      <button class="act b-copy" onclick="copySummary()">📋 결과 요약 복사</button>
+    </div>
+  </div>
+
+  <p class="note" style="text-align:center; margin-bottom:24px;">본 계산기는 실무 평균 단가 기반 추정치이며 법적 효력이 없습니다. 실제 비용은 관할 법원 집행관사무소 기준을 따릅니다.</p>
+</div>
+
+<script>
+const DEFAULT_RATES = {
+  labor: 150000,        // 노무비 1인당 (실무 13~15만)
+  officer: 200000,      // 집행관 수수료·여비 (계고+본집행 출장 포함)
+  key: 100000,          // 강제 개문
+  ladder: 300000,       // 사다리차
+  truck: 500000,        // 5톤 트럭 1대
+  storage: 200000,      // 5톤 컨테이너 월 보관료
+  storageMonths: 3,     // 통상 3개월 선납
+  auction: 300000,      // 동산경매(감정·매각) 절차비
+  moving: 100000        // 포장이사비 평당
+};
+const RATE_KEYS = Object.keys(DEFAULT_RATES);
+let rates = loadRates();
+
+function loadRates(){
+  try{
+    const s = JSON.parse(localStorage.getItem('md_rates')||'{}');
+    return Object.assign({}, DEFAULT_RATES, s);
+  }catch(e){ return Object.assign({}, DEFAULT_RATES); }
+}
+function saveRates(){
+  RATE_KEYS.forEach(k=>{
+    const el = document.getElementById('r_'+(k==='storageMonths'?'storageMonths':k));
+    if(el && el.value !== '') rates[k] = Number(el.value);
+  });
+  localStorage.setItem('md_rates', JSON.stringify(rates));
+}
+function fillRateInputs(){
+  RATE_KEYS.forEach(k=>{
+    const el = document.getElementById('r_'+k);
+    if(el) el.value = rates[k];
+  });
+}
+function resetRates(){
+  rates = Object.assign({}, DEFAULT_RATES);
+  localStorage.removeItem('md_rates');
+  fillRateInputs();
+  if(document.getElementById('result').style.display==='block') calc();
+}
+fillRateInputs();
+RATE_KEYS.forEach(k=>{
+  const el = document.getElementById('r_'+k);
+  if(el) el.addEventListener('change', ()=>{ saveRates(); if(document.getElementById('result').style.display==='block') calc(); });
+});
+
+// 평수별 노무자 수 (집행관 실무 기준)
+function laborers(py){
+  if(py < 5)  return [2,4];
+  if(py < 10) return [5,7];
+  if(py < 20) return [8,10];
+  if(py < 30) return [11,13];
+  if(py < 40) return [14,16];
+  if(py < 50) return [17,19];
+  const extra = Math.ceil((py-50)/10)*2;
+  return [17+extra, 19+extra];
+}
+const won = n => Math.round(n).toLocaleString('ko-KR') + '원';
+const manwon = n => {
+  const m = Math.round(n/10000);
+  return m >= 10000 ? (m/10000).toFixed(m%10000?1:0)+'억'+(m%10000? (m%10000).toLocaleString()+'만원':'원') : m.toLocaleString()+'만원';
+};
+
+let lastSummary = '';
+
+function calc(){
+  saveRates();
+  const unit = document.getElementById('areaUnit').value;
+  let py = Number(document.getElementById('area').value)||0;
+  if(unit==='m2') py = py/3.3058;
+  if(py<=0){ alert('전용면적을 입력하세요.'); return; }
+
+  const occ = document.getElementById('occupant').value;
+  const floor = Number(document.getElementById('floor').value)||1;
+  const hasElev = document.getElementById('elevator').value==='y';
+  const stuffF = Number(document.getElementById('stuff').value);
+  const delayM = Number(document.getElementById('delayMonths').value)||0;
+  const needKey = document.getElementById('needKey').checked;
+  const incAuction = document.getElementById('auctionCost').checked;
+
+  // ── 강제집행 비용 ──
+  const [lMin,lMax] = laborers(py);
+  const lMid = Math.round((lMin+lMax)/2);
+  const laborAdj = occ==='commercial' ? 1.2 : 1;   // 상가: 집기·시설 반출 가중
+  const rows = [];
+  const laborMid = lMid * rates.labor * laborAdj;
+  rows.push(['노무비', `${lMin}~${lMax}명 × ${manwon(rates.labor)}${occ==='commercial'?' ×1.2(상가)':''}`, lMin*rates.labor*laborAdj, lMax*rates.labor*laborAdj]);
+  rows.push(['집행관 수수료·여비', '계고 + 본집행', rates.officer, rates.officer]);
+  if(needKey) rows.push(['강제 개문비', '열쇠공 (폐문부재 시)', rates.key, rates.key]);
+  const needLadder = !hasElev && floor >= 2;
+  if(needLadder) rows.push(['사다리차', `${floor}층 · 엘리베이터 없음`, rates.ladder, rates.ladder]);
+  const trucks = Math.max(1, Math.round(py/25 * stuffF));
+  rows.push(['운반비', `5톤 트럭 ${trucks}대`, trucks*rates.truck, trucks*rates.truck]);
+  const storageTotal = trucks * rates.storage * rates.storageMonths;
+  rows.push(['보관료', `컨테이너 ${trucks}개 × ${rates.storageMonths}개월`, storageTotal, storageTotal]);
+  if(incAuction) rows.push(['동산경매 절차비', '감정·매각 (짐 미수령 시)', rates.auction, rates.auction]);
+
+  let totMin=0, totMax=0;
+  rows.forEach(r=>{ totMin+=r[2]; totMax+=r[3]; });
+  const totMid = (totMin+totMax)/2;
+
+  // ── 지연 손실 ──
+  const loan = (Number(document.getElementById('loan').value)||0)*10000;
+  const loanRate = (Number(document.getElementById('loanRate').value)||0)/100;
+  const rent = (Number(document.getElementById('monthlyRent').value)||0)*10000;
+  const etc = (Number(document.getElementById('monthlyEtc').value)||0)*10000;
+  const monthlyLoss = loan*loanRate/12 + rent + etc;
+  const delayLoss = monthlyLoss * delayM;
+
+  // ── 협상 범위 ──
+  const movingCost = py * rates.moving;   // 실제 포장이사비 수준
+  let low, mid, high, lowD, midD, highD;
+  if(occ==='dividend_full'){
+    low = 0; mid = Math.min(movingCost*0.5, 1000000); high = movingCost;
+    lowD='명도확인서가 지렛대 — 원칙상 0원';
+    midD='소액 성의 표시 수준';
+    highD='실제 이사비 수준 (그 이상 불필요)';
+  } else if(occ==='dividend_part'){
+    low = movingCost*0.5; mid = movingCost; high = Math.min(totMid*0.7, movingCost + delayLoss*0.5);
+    lowD='이사비 절반 수준부터 시작';
+    midD='실제 포장이사비 수준';
+    highD='집행비용의 70% 한도';
+  } else {
+    const midRatio = occ==='owner' ? 0.8 : 0.75;
+    low = movingCost; mid = totMid*midRatio; high = totMid + delayLoss;
+    lowD='실제 포장이사비 수준';
+    midD=`강제집행 실비의 ${Math.round(midRatio*100)}%`;
+    highD='집행 실비 + 지연손실 '+delayM+'개월';
+  }
+  if(high < mid) high = mid;
+  if(mid < low) mid = (low+high)/2;
+
+  // ── 렌더 ──
+  document.getElementById('laborBadge').textContent = `노무자 ${lMin}~${lMax}명 기준`;
+  let html = '<tr><th>항목</th><th>금액</th></tr>';
+  rows.forEach(r=>{
+    const amt = r[2]===r[3] ? won(r[2]) : `${won(r[2])} ~ ${won(r[3])}`;
+    html += `<tr><td>${r[0]}<span class="memo">${r[1]}</span></td><td>${amt}</td></tr>`;
+  });
+  html += `<tr class="total"><td>강제집행 실비 합계</td><td>${won(totMin)} ~ ${won(totMax)}</td></tr>`;
+  if(monthlyLoss>0){
+    html += `<tr><td>지연 손실<span class="memo">월 ${won(monthlyLoss)} × ${delayM}개월 (이자+임대료+유지비)</span></td><td>${won(delayLoss)}</td></tr>`;
+    html += `<tr class="total"><td>버틸 경우 총 손실</td><td style="color:var(--high);">${won(totMid+delayLoss)}</td></tr>`;
+  }
+  document.getElementById('costTable').innerHTML = html;
+
+  // 게이지
+  const span = Math.max(high - 0, 1);
+  const pos = v => Math.min(96, Math.max(4, v/span*92 + 4));
+  setMarker('mLow', pos(low), low);
+  setMarker('mMid', pos(mid), mid);
+  setMarker('mHigh', pos(high), high);
+  document.getElementById('nLow').textContent = manwon(low);
+  document.getElementById('nMid').textContent = manwon(mid);
+  document.getElementById('nHigh').textContent = manwon(high);
+  document.getElementById('nLowD').textContent = lowD;
+  document.getElementById('nMidD').textContent = midD;
+  document.getElementById('nHighD').textContent = highD;
+
+  document.getElementById('strategy').innerHTML = strategyHtml(occ, totMid, delayLoss, delayM);
+
+  lastSummary = buildSummary(py, occ, rows, totMin, totMax, monthlyLoss, delayLoss, delayM, low, mid, high);
+
+  const res = document.getElementById('result');
+  res.style.display='block';
+  res.classList.remove('flash'); void res.offsetWidth; res.classList.add('flash');
+  res.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function setMarker(id, pct, val){
+  const el = document.getElementById(id);
+  el.style.left = pct+'%';
+  el.querySelector('.amt').textContent = manwon(val);
+}
+
+function strategyHtml(occ, tot, delayLoss, delayM){
+  const common = `
+    <li>이사비는 <b>이사 당일, 짐 다 뺀 후 현장에서</b> 지급합니다. 절대 선지급 금지.</li>
+    <li>합의 시 <b>이사비 지급 합의서</b> 작성: 퇴거일, 금액, 관리비 정산, 짐 전부 반출, 열쇠 인계 명시.</li>
+    <li>협상과 별개로 <b>인도명령·강제집행 절차는 계속 진행</b>합니다 (절차 중단은 최대 협상력 상실).</li>`;
+  const map = {
+    dividend_full: `<h3>📌 전액 배당 임차인 — 갑은 나</h3><ul>
+      <li>임차인은 <b>내 명도확인서 + 인감증명서</b>가 없으면 배당금을 못 받습니다. 이사비를 줄 이유가 원칙적으로 없습니다.</li>
+      <li>"이사 확인되면 즉시 명도확인서 드리겠습니다" — 배당기일 전 이사 조건으로 협의하세요.</li>
+      <li>임차인이 이사비를 요구하면: 배당으로 보증금 전액 회수하므로 손해가 없음을 상기시키되, 원만한 마무리를 위해 소액(이사 당일 지급)은 고려할 수 있습니다.</li>${common}</ul>`,
+    dividend_part: `<h3>📌 일부/소액 배당 임차인 — 배당 지렛대 + 소정의 위로</h3><ul>
+      <li>배당받는 금액만큼은 명도확인서가 지렛대가 됩니다. 이를 기본 카드로 쓰세요.</li>
+      <li>손실 본 보증금에 대한 감정적 반발이 있으므로, 실제 이사비 수준의 현실적 금액으로 접근하는 것이 빠릅니다.</li>${common}</ul>`,
+    no_dividend: `<h3>📌 무배당 임차인 — 강제집행 비용이 협상 기준</h3><ul>
+      <li>첫 제시는 하한(실제 이사비)부터. "강제집행 가면 이 돈도 못 받고 집행비용까지 청구됩니다."</li>
+      <li>적정선(집행 실비의 75%)까지는 올려줘도 <b>내가 이득</b>입니다 — 시간과 소송 스트레스를 아끼는 값입니다.</li>
+      <li>상한을 넘는 요구는 거절하세요. 그 돈이면 강제집행이 더 쌉니다.</li>${common}</ul>`,
+    owner: `<h3>📌 소유자(채무자) 점유 — 감정 관리가 핵심</h3><ul>
+      <li>집을 잃은 당사자라 저항이 가장 큽니다. 시간을 끌수록 내 손실(월 ${won(delayLoss && delayM ? delayLoss/delayM : 0)})이 커지므로 적정선을 다소 높게(80%) 잡았습니다.</li>
+      <li>"강제집행되면 이사비 한 푼 없이 짐이 컨테이너로 갑니다. 보관료도 청구됩니다" — 사실 그대로 안내하세요.</li>
+      <li>퇴거일을 못 박는 것이 금액보다 중요합니다. 합의서에 <b>위약 시 이사비 무효 + 즉시 집행</b> 조항을 넣으세요.</li>${common}</ul>`,
+    commercial: `<h3>📌 상가 점유자 — 시설·집기가 변수</h3><ul>
+      <li>상가는 집기 반출 비용이 커서 노무비를 1.2배로 가중했습니다. 대형 설비·냉동시설 등은 별도 견적이 필요합니다.</li>
+      <li>점유자가 시설비·권리금을 요구해도 <b>낙찰자는 인수 의무가 없습니다</b>. 다만 필요한 시설이면 철거비만큼 깎아서 매수하는 협상도 가능합니다.</li>
+      <li>영업 중인 상가는 단전·단수 예고(관리단 통해), 인도명령 절차 진행이 압박 카드입니다.</li>${common}</ul>`
+  };
+  return map[occ] || '';
+}
+
+function buildSummary(py, occ, rows, totMin, totMax, monthlyLoss, delayLoss, delayM, low, mid, high){
+  const occName = document.getElementById('occupant').selectedOptions[0].textContent;
+  let s = `[명도 협상 계산 결과]\n`;
+  s += `전용 ${py.toFixed(1)}평 · ${occName}\n\n`;
+  s += `■ 강제집행 예상 비용\n`;
+  rows.forEach(r=>{
+    s += ` - ${r[0]} (${r[1]}): ${r[2]===r[3]?won(r[2]):won(r[2])+'~'+won(r[3])}\n`;
+  });
+  s += ` ▶ 합계: ${won(totMin)} ~ ${won(totMax)}\n`;
+  if(monthlyLoss>0) s += `■ 지연 손실: 월 ${won(monthlyLoss)} × ${delayM}개월 = ${won(delayLoss)}\n`;
+  s += `\n■ 이사비 협상 범위\n`;
+  s += ` 🟢 첫 제시: ${manwon(low)}\n 🟡 적정 타결: ${manwon(mid)}\n 🔴 절대 상한: ${manwon(high)}\n`;
+  return s;
+}
+
+function copySummary(){
+  if(!lastSummary) return;
+  navigator.clipboard.writeText(lastSummary).then(()=>{
+    alert('결과 요약이 복사되었습니다.');
+  }).catch(()=>{
+    prompt('아래 내용을 복사하세요', lastSummary);
+  });
+}
+</script>
+</body>
+</html>
