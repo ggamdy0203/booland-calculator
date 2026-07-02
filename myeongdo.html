@@ -68,6 +68,12 @@
   .b-calc{background:var(--accent); color:#fff;}
   .b-calc:active{background:var(--accent2);}
   .b-copy{background:#fff; color:var(--accent); border:2px solid var(--accent) !important;}
+  .amtInput{width:130px; max-width:100%; text-align:right; border:1px solid var(--line); border-radius:8px; padding:6px 8px; font-size:14px; font-family:inherit; background:#fbfcfe; color:var(--ink);}
+  .amtInput:focus{outline:2px solid var(--accent); border-color:transparent;}
+  td.amtCell{white-space:nowrap;}
+  .rangehint{display:block; font-size:10px; color:var(--sub); margin-top:2px;}
+  .rowResetBtn{background:none; border:1px solid var(--accent); color:var(--accent); font-size:11px; font-weight:700; padding:2px 9px; border-radius:20px; cursor:pointer; margin-left:6px; vertical-align:middle;}
+  .rowResetBtn:active{background:var(--accent); color:#fff;}
   .procedure{font-size:13px; color:var(--sub);}
   .procedure .step{display:flex; gap:8px; margin-bottom:6px;}
   .procedure .step b{color:var(--ink); min-width:86px;}
@@ -209,9 +215,9 @@
   <div id="result">
     <!-- ③ 비용 내역 -->
     <div class="card" style="margin-top:14px;">
-      <h2><span class="n">3</span> 강제집행 예상 비용 <span class="badge" id="laborBadge"></span></h2>
+      <h2><span class="n">3</span> 강제집행 예상 비용 <span class="badge" id="laborBadge"></span><button type="button" class="rowResetBtn" id="resetOverridesBtn" onclick="resetOverrides()" style="display:none;">↺ 직접입력 초기화</button></h2>
       <table id="costTable"></table>
-      <p class="note">※ 노무자 수는 집행관 실무 기준(평수별)이며 현장 상황·법원별로 차이가 있습니다. 강제집행 비용은 추후 <b>집행비용액 확정결정</b>으로 점유자에게 청구 가능하지만, 회수 가능성은 낮게 보는 것이 안전합니다.</p>
+      <p class="note">※ 노무자 수는 집행관 실무 기준(평수별)이며 현장 상황·법원별로 차이가 있습니다. 각 항목의 금액 칸을 클릭해 실제 견적으로 직접 수정할 수 있으며, 수정 즉시 아래 협상 범위에 반영됩니다. 강제집행 비용은 추후 <b>집행비용액 확정결정</b>으로 점유자에게 청구 가능하지만, 회수 가능성은 낮게 보는 것이 안전합니다.</p>
     </div>
 
     <!-- ④ 협상 범위 -->
@@ -316,6 +322,8 @@ const manwon = n => {
 };
 
 let lastSummary = '';
+let rowOverrides = {};   // idx -> 사용자가 직접 입력한 금액 (min=max로 취급)
+let calcContext = null;  // calc() 이후 렌더에 필요한 컨텍스트 보관
 
 function calc(){
   saveRates();
@@ -334,10 +342,8 @@ function calc(){
 
   // ── 강제집행 비용 ──
   const [lMin,lMax] = laborers(py);
-  const lMid = Math.round((lMin+lMax)/2);
   const laborAdj = occ==='commercial' ? 1.2 : 1;   // 상가: 집기·시설 반출 가중
   const rows = [];
-  const laborMid = lMid * rates.labor * laborAdj;
   rows.push(['노무비', `${lMin}~${lMax}명 × ${manwon(rates.labor)}${occ==='commercial'?' ×1.2(상가)':''}`, lMin*rates.labor*laborAdj, lMax*rates.labor*laborAdj]);
   rows.push(['집행관 수수료·여비', '계고 + 본집행', rates.officer, rates.officer]);
   if(needKey) rows.push(['강제 개문비', '열쇠공 (폐문부재 시)', rates.key, rates.key]);
@@ -349,10 +355,6 @@ function calc(){
   rows.push(['보관료', `컨테이너 ${trucks}개 × ${rates.storageMonths}개월`, storageTotal, storageTotal]);
   if(incAuction) rows.push(['동산경매 절차비', '감정·매각 (짐 미수령 시)', rates.auction, rates.auction]);
 
-  let totMin=0, totMax=0;
-  rows.forEach(r=>{ totMin+=r[2]; totMax+=r[3]; });
-  const totMid = (totMin+totMax)/2;
-
   // ── 지연 손실 ──
   const loan = (Number(document.getElementById('loan').value)||0)*10000;
   const loanRate = (Number(document.getElementById('loanRate').value)||0)/100;
@@ -360,9 +362,27 @@ function calc(){
   const etc = (Number(document.getElementById('monthlyEtc').value)||0)*10000;
   const monthlyLoss = loan*loanRate/12 + rent + etc;
   const delayLoss = monthlyLoss * delayM;
+  const movingCost = py * rates.moving;   // 실제 포장이사비 수준
+
+  rowOverrides = {};
+  calcContext = { py, occ, lMin, lMax, rows, monthlyLoss, delayLoss, delayM, movingCost };
+  document.getElementById('resetOverridesBtn').style.display = 'none';
+  renderResult(true);
+}
+
+function renderResult(scroll){
+  if(!calcContext) return;
+  const { py, occ, lMin, lMax, rows, monthlyLoss, delayLoss, delayM, movingCost } = calcContext;
+
+  let totMin=0, totMax=0;
+  rows.forEach((r,i)=>{
+    const ov = rowOverrides[i];
+    totMin += ov!=null ? ov : r[2];
+    totMax += ov!=null ? ov : r[3];
+  });
+  const totMid = (totMin+totMax)/2;
 
   // ── 협상 범위 ──
-  const movingCost = py * rates.moving;   // 실제 포장이사비 수준
   let low, mid, high, lowD, midD, highD;
   if(occ==='dividend_full'){
     low = 0; mid = Math.min(movingCost*0.5, 1000000); high = movingCost;
@@ -387,16 +407,20 @@ function calc(){
   // ── 렌더 ──
   document.getElementById('laborBadge').textContent = `노무자 ${lMin}~${lMax}명 기준`;
   let html = '<tr><th>항목</th><th>금액</th></tr>';
-  rows.forEach(r=>{
-    const amt = r[2]===r[3] ? won(r[2]) : `${won(r[2])} ~ ${won(r[3])}`;
-    html += `<tr><td>${r[0]}<span class="memo">${r[1]}</span></td><td>${amt}</td></tr>`;
+  rows.forEach((r,i)=>{
+    const ov = rowOverrides[i];
+    const min = r[2], max = r[3];
+    const value = ov!=null ? ov : Math.round((min+max)/2);
+    const rangeText = min!==max ? `<span class="rangehint">기본 범위 ${won(min)} ~ ${won(max)}</span>` : '';
+    html += `<tr><td>${r[0]}<span class="memo">${r[1]}</span>${rangeText}</td><td class="amtCell"><input type="number" class="amtInput" data-idx="${i}" step="10000" min="0" value="${Math.round(value)}"></td></tr>`;
   });
-  html += `<tr class="total"><td>강제집행 실비 합계</td><td>${won(totMin)} ~ ${won(totMax)}</td></tr>`;
+  html += `<tr class="total"><td>강제집행 실비 합계</td><td>${totMin===totMax ? won(totMid) : won(totMin)+' ~ '+won(totMax)}</td></tr>`;
   if(monthlyLoss>0){
     html += `<tr><td>지연 손실<span class="memo">월 ${won(monthlyLoss)} × ${delayM}개월 (이자+임대료+유지비)</span></td><td>${won(delayLoss)}</td></tr>`;
     html += `<tr class="total"><td>버틸 경우 총 손실</td><td style="color:var(--high);">${won(totMid+delayLoss)}</td></tr>`;
   }
   document.getElementById('costTable').innerHTML = html;
+  document.getElementById('resetOverridesBtn').style.display = Object.keys(rowOverrides).length ? 'inline-block' : 'none';
 
   // 게이지
   const span = Math.max(high - 0, 1);
@@ -413,13 +437,34 @@ function calc(){
 
   document.getElementById('strategy').innerHTML = strategyHtml(occ, totMid, delayLoss, delayM);
 
-  lastSummary = buildSummary(py, occ, rows, totMin, totMax, monthlyLoss, delayLoss, delayM, low, mid, high);
+  const summaryRows = rows.map((r,i)=>{
+    const ov = rowOverrides[i];
+    return ov!=null ? [r[0], r[1]+' (직접입력)', ov, ov] : r;
+  });
+  lastSummary = buildSummary(py, occ, summaryRows, totMin, totMax, monthlyLoss, delayLoss, delayM, low, mid, high);
 
   const res = document.getElementById('result');
   res.style.display='block';
-  res.classList.remove('flash'); void res.offsetWidth; res.classList.add('flash');
-  res.scrollIntoView({behavior:'smooth', block:'start'});
+  if(scroll){
+    res.classList.remove('flash'); void res.offsetWidth; res.classList.add('flash');
+    res.scrollIntoView({behavior:'smooth', block:'start'});
+  }
 }
+
+function resetOverrides(){
+  rowOverrides = {};
+  renderResult(false);
+}
+
+document.getElementById('costTable').addEventListener('change', (e)=>{
+  const t = e.target;
+  if(!t.classList.contains('amtInput')) return;
+  const idx = Number(t.dataset.idx);
+  const val = Number(t.value);
+  if(!isFinite(val) || val < 0) return;
+  rowOverrides[idx] = val;
+  renderResult(false);
+});
 
 function setMarker(id, pct, val){
   const el = document.getElementById(id);
