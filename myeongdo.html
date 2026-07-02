@@ -443,9 +443,9 @@ function renderResult(scroll){
   document.getElementById('costTable').innerHTML = html;
   document.getElementById('resetOverridesBtn').style.display = Object.keys(rowOverrides).length ? 'inline-block' : 'none';
 
-  // 게이지
-  const span = Math.max(high - 0, 1);
-  const pos = v => Math.min(96, Math.max(4, v/span*92 + 4));
+  // 게이지 — 첫 제시~절대 상한 구간을 막대 전체(초록~빨강)에 매핑
+  const span = Math.max(high - low, 1);
+  const pos = v => Math.min(96, Math.max(4, (v-low)/span*92 + 4));
   setMarker('mLow', pos(low), low);
   setMarker('mMid', pos(mid), mid);
   setMarker('mHigh', pos(high), high);
